@@ -22,9 +22,10 @@ Outros scripts:
 
 | Comando | O que faz |
 |---|---|
-| `npm run build` | Gera o build de produção. Precisa passar sem erro nem warning de tipo antes de cada commit. |
+| `npm run build` | Roda o verificador de tokens e gera o build de produção. Precisa passar sem erro nem warning de tipo antes de cada commit. |
 | `npm run start` | Serve o build de produção em <http://localhost:3000>. |
 | `npm run lint` | Roda o ESLint. |
+| `npm run verificar:tokens` | Acusa classes fora da identidade visual (paleta padrão do Tailwind, sombras, pesos, supressão de foco, `dark:`, hex no código, `localStorage` fora de `lib/storage.ts`). Obrigatório depois de cada `npx shadcn add`; veja `CLAUDE.md`. |
 
 ## Deploy na Vercel
 

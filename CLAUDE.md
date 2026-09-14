@@ -150,7 +150,10 @@ sobre `@base-ui/react`), lucide-react 1.x.
 ### Classes utilitárias disponíveis
 
 A paleta padrão do Tailwind está **desligada** (`--color-*: initial`). Classes como
-`bg-orange-500` ou `text-gray-600` não geram CSS; use apenas os tokens:
+`bg-orange-500` ou `text-gray-600` não geram CSS — e **não dão erro**: o elemento só fica sem
+a cor. Para essa falha não passar despercebida, `scripts/verificar-tokens.mjs` roda antes de
+todo `npm run build` e reprova o build se encontrar alguma classe ou padrão fora do sistema
+(veja "Procedimento obrigatório após `shadcn add`"). Use apenas os tokens:
 
 | Uso | Classes |
 |---|---|
@@ -175,11 +178,12 @@ A paleta padrão do Tailwind está **desligada** (`--color-*: initial`). Classes
 
 - **`cn`** vem de `@/lib/utils`, nunca direto do pacote `cn`: o de `lib/utils.ts` conhece os
   tokens próprios e não descarta `text-h1` ao juntar com `text-foreground`.
-- **Componentes shadcn** adicionados com `npx shadcn@latest add` precisam ser ajustados antes
-  do commit: remover as classes que suprimem o contorno de foco e os anéis `focus-visible:ring-*`
-  (o foco é global), remover as classes `dark:`, trocar `shadow-*` por `shadow-overlay` (ou
-  nada), trocar `font-semibold` por `font-medium`/`font-bold`, garantir alvo de 44 px e usar
-  `transition-colors` em vez de `transition-all`. Veja `components/ui/button.tsx` como modelo.
+- **Componentes shadcn** só entram seguindo o procedimento abaixo. Modelo de componente já
+  ajustado: `components/ui/button.tsx`.
+- **`npm run verificar:tokens`** roda o verificador isoladamente; `npm run build` o executa
+  antes (script `prebuild`), inclusive no deploy da Vercel. Um falso positivo pode ser
+  liberado com o comentário `tokens-ok: <motivo>` na mesma linha — sempre com o motivo, que
+  passa pela revisão.
 - **Comentários também são lidos pelo Tailwind**: não escreva nomes de classe proibidos nem
   em comentário, porque o CSS delas é gerado mesmo assim.
 - **Sem modo escuro**: a variante `dark:` está presa a uma classe `.dark` que nunca é aplicada.
@@ -187,3 +191,50 @@ A paleta padrão do Tailwind está **desligada** (`--color-*: initial`). Classes
   `circle-dashed` → `CircleDashed`, `x-circle` → `CircleX`.
 - Textos da interface em português, reproduzidos literalmente da especificação.
 - Um commit por etapa, mensagem em português, com `npm run build` limpo.
+
+### Procedimento obrigatório após `shadcn add`
+
+Os componentes shadcn chegam com classes da paleta padrão (o overlay do `dialog` usa
+`bg-black/10`), `outline-none`, anéis `focus-visible:ring-*`, classes `dark:`, alvos de 24 a
+32 px e textos em inglês. Com a paleta desligada, as cores simplesmente não geram CSS: o modal
+abre sem escurecer o fundo e nada acusa o problema. **Nenhum componente adicionado é commitado
+sem passar por todos estes passos:**
+
+1. **Comece com a árvore limpa** (`git status`), para que o diff mostre só o que o shadcn trouxe.
+2. **Veja antes o que será gravado:** `npx shadcn@latest add <componente> --dry-run`. Se algum
+   arquivo existente aparecer como `overwrite` (o `dialog` depende do `button` e tenta
+   sobrescrever `components/ui/button.tsx`), rode o `add` sem flags e **responda N** quando ele
+   perguntar se deve sobrescrever. **Nunca use `-o`/`--overwrite`.** Se algo já ajustado foi
+   sobrescrito, desfaça com `git restore <arquivo>`.
+3. **Rode `npm run verificar:tokens`** e corrija cada item. Cada violação mostra o arquivo, a
+   linha e o token substituto. Referência rápida:
+
+   | Chega do shadcn | Vira |
+   |---|---|
+   | `bg-black/NN` (overlay) | `bg-foreground/NN` |
+   | `text-white` / `bg-white` | `text-primary-foreground` / `bg-surface` |
+   | cinzas (`gray`, `zinc`, `neutral`, `stone`, `slate`) | `text-foreground`, `text-muted-foreground`, `bg-muted`, `border-border`, `border-input-border` |
+   | vermelhos / verdes / azuis | `danger` / `success` / `review` (com `-bg` para fundo) |
+   | laranja ou âmbar | nunca status: `primary`, `text-accent-text`, `bg-accent-soft`, `brand` |
+   | `shadow`, `shadow-xs`, `shadow-sm` | remover (separação por borda) |
+   | `shadow-md`, `shadow-lg`, `shadow-xl` em modal, dropdown ou tooltip | `shadow-overlay` |
+   | `font-semibold` | `font-medium` (rótulo) ou `font-bold` (título) |
+   | `outline-none`, `outline-hidden`, `focus-visible:ring-*` | remover (o foco é global) |
+   | `dark:*` | remover |
+   | `transition-all`, `transition` | `transition-colors`, `transition-opacity` ou `transition-transform` |
+   | `import { cn } from "cn"` | `import { cn } from "@/lib/utils"` |
+
+4. **Revise à mão o que o script não detecta:**
+   - **alvo de 44 px:** `h-6`, `h-7`, `h-8`, `size-6` a `size-9` em elementos clicáveis viram
+     `min-h-target` ou `size-target`. Os tamanhos `xs`, `sm` e `icon-sm` do botão não existem
+     aqui (o TypeScript acusa quando um componente os usa);
+   - **linha de tabela:** `h-10` vira `h-row`;
+   - **tipografia:** `text-sm`, `text-base` e `leading-none` viram `text-label`, `text-body` ou
+     `text-caption`; o título de modal segue a escala (`text-h2`);
+   - **idioma:** textos em inglês, inclusive os `sr-only` ("Close" vira "Fechar");
+   - **mobile e A+:** `whitespace-nowrap` que possa estourar em 375 px ou com texto a 125 %;
+   - **`git diff app/globals.css`:** o shadcn pode injetar variáveis em `oklch(...)` e um bloco
+     `.dark`; remova-os ou aponte-os para os tokens existentes.
+5. **`npm run build`**: o `prebuild` roda o verificador de novo, e o build falha se sobrar
+   alguma violação.
+6. **Verifique no navegador** (Tab, 375 px, A+) e só então commite.
