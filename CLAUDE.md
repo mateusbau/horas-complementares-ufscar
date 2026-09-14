@@ -162,6 +162,7 @@ todo `npm run build` e reprova o build se encontrar alguma classe ou padrão for
 | Texto/link laranja | `text-accent-text` |
 | Fundo suave / item ativo | `bg-accent-soft` |
 | Neutros | `bg-background`, `bg-surface`, `bg-muted`, `border-border`, `border-input-border`, `text-foreground`, `text-muted-foreground` |
+| Escurecimento de fundo (modal, menu deslizante) | somente `bg-overlay`, sem modificador de opacidade (ver "Decisão: overlay") |
 | Status | `text-success` + `bg-success-bg`, `text-review` + `bg-review-bg`, `text-pending` + `bg-pending-bg`, `text-danger` + `bg-danger-bg` |
 | Tipografia | `text-h1`, `text-h2`, `text-h3`, `text-body`, `text-label`, `text-caption` (tamanho, altura de linha e peso juntos) |
 | Altura de linha | `leading-heading` (1,2), `leading-body` (1,5), `leading-secondary` (1,45) |
@@ -173,6 +174,19 @@ todo `npm run build` e reprova o build se encontrar alguma classe ou padrão for
 | Transição | `transition-colors`, `transition-opacity`, `transition-transform` (160 ms e easing já são o padrão) |
 
 `h1`, `h2` e `h3` já recebem a escala tipográfica pela camada base.
+
+### Decisão: overlay
+
+A identidade visual da seção 3 não define a cor de escurecimento atrás de modal. Decisão
+tomada: token `--overlay` = `--foreground` (`#1C1917`) a **50 %** de opacidade, exposto como
+`bg-overlay`. Os 50 % são o menor valor redondo em que a superfície branca do modal atinge
+contraste de 3:1 contra o fundo escurecido (WCAG 1.4.11): 3,47:1 sobre a página e 3,35:1
+sobre um card. A 40 % cairia para 2,5:1. É a **única** cor de overlay do sistema — modal,
+confirmação e menu deslizante do mobile usam o mesmo `bg-overlay`, sem `/NN`. O valor é
+escrito como `rgb(28 25 23 / 0.5)`, não com `color-mix()`: para `color-mix` o minificador gera
+um fallback sem transparência, que deixaria o overlay opaco em navegador sem suporte. O verificador
+reprova `bg-black/NN`, fundos neutros escuros translúcidos, `bg-foreground/NN` e
+`bg-overlay/NN`.
 
 ### Regras de código
 
@@ -211,7 +225,7 @@ sem passar por todos estes passos:**
 
    | Chega do shadcn | Vira |
    |---|---|
-   | `bg-black/NN` (overlay) | `bg-foreground/NN` |
+   | `bg-black/NN`, `bg-zinc-950/NN` e todo fundo escuro translúcido (overlay) | `bg-overlay`, sempre, sem `/NN` |
    | `text-white` / `bg-white` | `text-primary-foreground` / `bg-surface` |
    | cinzas (`gray`, `zinc`, `neutral`, `stone`, `slate`) | `text-foreground`, `text-muted-foreground`, `bg-muted`, `border-border`, `border-input-border` |
    | vermelhos / verdes / azuis | `danger` / `success` / `review` (com `-bg` para fundo) |

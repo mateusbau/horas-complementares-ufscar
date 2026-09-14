@@ -19,6 +19,7 @@ const cores = [
   { token: "--foreground", classe: "bg-foreground", uso: "Texto" },
   { token: "--muted-foreground", classe: "bg-muted-foreground", uso: "Texto secundário" },
   { token: "--muted", classe: "bg-muted", uso: "Skeleton" },
+  { token: "--overlay", classe: "bg-overlay", uso: "Escurecimento atrás de modal, 50 %" },
 ];
 
 const status = [

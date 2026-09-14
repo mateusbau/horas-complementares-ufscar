@@ -83,6 +83,17 @@ table, .tabular { font-variant-numeric: tabular-nums; }
   /* Superfície neutra de skeleton e fundos discretos (seção 8: #F5F5F4) */
   --muted: #F5F5F4;
 
+  /*
+   * Escurecimento de fundo atrás de modal e menu deslizante: --foreground a 50 %.
+   * É o menor valor redondo em que a superfície branca do modal atinge 3:1 contra
+   * o que fica atrás dela (WCAG 1.4.11): 3,47:1 sobre a página e 3,35:1 sobre um
+   * card. A 40 % cairia para 2,5:1. Única cor de overlay do sistema.
+   * Escrito como rgb() com alfa, e não color-mix(): o minificador gera para
+   * color-mix um fallback sem transparência, que deixaria o overlay opaco em
+   * navegadores sem suporte. Se --foreground mudar, atualize aqui também.
+   */
+  --overlay: rgb(28 25 23 / 0.5);  /* #1C1917 (--foreground) a 50 % */
+
   /* Aliases com os nomes que os componentes shadcn/ui esperam */
   --primary-foreground:   var(--primary-fg);
   --card:                 var(--surface);
@@ -119,6 +130,7 @@ table, .tabular { font-variant-numeric: tabular-nums; }
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-overlay: var(--overlay);
 
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);

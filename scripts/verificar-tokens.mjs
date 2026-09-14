@@ -41,10 +41,15 @@ const FAMILIAS = [
   [["violet", "purple", "fuchsia", "pink"], "cor fora da identidade visual: escolha um token de CLAUDE.md"],
 ]
 
-function sugestaoCor(prop, cor) {
+const ESCURECIMENTO =
+  "escurecimento de fundo (modal, menu deslizante) é sempre bg-overlay, sem modificador de opacidade"
+
+function sugestaoCor(prop, cor, tom, opacidade) {
+  const escura = cor === "black" || (NEUTROS.has(cor) && tom >= 800)
+  if (prop === "bg" && escura && opacidade) return ESCURECIMENTO
   if (cor === "black") {
     return prop === "bg"
-      ? "preto não existe na paleta: overlay de modal usa bg-foreground/{opacidade}"
+      ? "preto não existe na paleta: bg-overlay se for escurecimento de fundo, bg-foreground se for superfície escura"
       : `preto não existe na paleta: ${prop}-foreground`
   }
   if (cor === "white") {
@@ -66,10 +71,18 @@ const REGRAS = [
   {
     id: "paleta",
     padrao: new RegExp(
-      `(?<![\\w-])(${PROPRIEDADES})-(${CORES})(?:-\\d{2,3})?(?:\\/[\\w.%\\[\\]]+)?(?![\\w-])`,
+      `(?<![\\w-])(${PROPRIEDADES})-(${CORES})(?:-(\\d{2,3}))?(\\/[\\w.%\\[\\]]+)?(?![\\w-])`,
       "g"
     ),
-    sugestao: (m) => sugestaoCor(m[1], m[2]),
+    sugestao: (m) => sugestaoCor(m[1], m[2], Number(m[3] ?? 0), m[4]),
+  },
+  {
+    id: "overlay",
+    padrao: /(?<![\w-])bg-(?:overlay|foreground)\/[\w.%[\]]+/g,
+    sugestao: (m) =>
+      m[0].startsWith("bg-overlay")
+        ? "bg-overlay já carrega a opacidade decidida (50 %): use bg-overlay puro"
+        : ESCURECIMENTO,
   },
   {
     id: "contorno",
