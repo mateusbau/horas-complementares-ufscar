@@ -21,7 +21,7 @@ export function MobileNav({ perfil }: { perfil: Perfil }) {
   const fechar = () => setAberto(false)
 
   return (
-    <div className="flex items-center justify-between gap-4 border-b bg-surface px-4 py-2 md:hidden print:hidden">
+    <header className="flex items-center justify-between gap-4 border-b bg-surface px-4 py-2 md:hidden print:hidden">
       <Marca compacta />
       <Sheet open={aberto} onOpenChange={setAberto}>
         <SheetTrigger render={<Button variant="outline" size="icon" />}>
@@ -41,6 +41,6 @@ export function MobileNav({ perfil }: { perfil: Perfil }) {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </header>
   )
 }
