@@ -228,6 +228,43 @@ export async function obterProgresso(discenteId?: string): Promise<Progresso> {
   return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
 }
 
+// --- Rascunho da tela 04 ------------------------------------------------------------------
+// Autosave do formulário de nova atividade. Guarda dados parciais (nada aqui
+// precisa ser válido) para o aluno não perder o que digitou; não é uma
+// Atividade e não aparece em listarAtividades().
+
+const CHAVE_RASCUNHO = "horas-complementares:rascunho-nova-atividade"
+
+export type Rascunho = Partial<NovaAtividade> & { atualizadoEm: string }
+
+function ehRascunho(valor: unknown): valor is Rascunho {
+  return typeof valor === "object" && valor !== null && typeof (valor as Partial<Rascunho>).atualizadoEm === "string"
+}
+
+export async function salvarRascunho(dados: Partial<NovaAtividade>): Promise<Rascunho> {
+  await esperar()
+  const rascunho: Rascunho = { ...dados, atualizadoEm: new Date().toISOString() }
+  armazenamento().setItem(CHAVE_RASCUNHO, JSON.stringify(rascunho))
+  return copia(rascunho)
+}
+
+/** `null` quando não há rascunho salvo (ou está corrompido). */
+export async function obterRascunho(): Promise<Rascunho | null> {
+  await esperar()
+  try {
+    const bruto = armazenamento().getItem(CHAVE_RASCUNHO)
+    const valor: unknown = bruto ? JSON.parse(bruto) : null
+    return ehRascunho(valor) ? valor : null
+  } catch {
+    return null
+  }
+}
+
+export async function limparRascunho(): Promise<void> {
+  await esperar()
+  armazenamento().removeItem(CHAVE_RASCUNHO)
+}
+
 // --- Docente ------------------------------------------------------------------------------
 
 /**

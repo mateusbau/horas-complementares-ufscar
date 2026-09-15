@@ -115,3 +115,19 @@ export function formatarEspera(dias: number): string {
   if (dias < 1) return "menos de 1 dia"
   return dias === 1 ? "1 dia" : `${numero.format(dias)} dias`
 }
+
+/** Indicador de autosave: "Rascunho salvo agora", "Rascunho salvo há 2 min". */
+export function formatarRascunhoSalvo(desde: string, agora: Date): string {
+  const minutos = Math.floor((agora.getTime() - new Date(desde).getTime()) / 60000)
+  if (minutos < 1) return "Rascunho salvo agora"
+  if (minutos < 60) return `Rascunho salvo há ${numero.format(minutos)} min`
+  const horas = Math.floor(minutos / 60)
+  return `Rascunho salvo há ${numero.format(horas)} ${horas === 1 ? "hora" : "horas"}`
+}
+
+/** "certificado-git-secot.pdf · 1,2 MB" (só o tamanho, sem o nome). */
+export function formatarTamanhoArquivo(bytes: number): string {
+  const mb = bytes / (1024 * 1024)
+  if (mb >= 0.1) return `${numero.format(Math.round(mb * 10) / 10)} MB`
+  return `${numero.format(Math.max(1, Math.round(bytes / 1024)))} KB`
+}

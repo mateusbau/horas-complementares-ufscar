@@ -1,9 +1,9 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 5 concluídas e publicadas na Vercel (push em `main`,
-commit `71ffee8`). Próximas: etapas 6 (Listagem) e 7 (Formulário). **Antes de começar, leia
-`PROXIMA-ETAPA.md`**, com as decisões da equipe ainda não aplicadas no código.
+Estado em **2026-09-15**: etapas 1 a 7 concluídas e publicadas na Vercel (push em `main`).
+Próxima: etapa 8 (Detalhe da atividade). **Antes de começar, leia `PROXIMA-ETAPA.md`** — o que
+sobrou das decisões da equipe (parte já foi aplicada nas etapas 6 e 7) e o escopo de corte.
 
 ---
 
@@ -44,7 +44,9 @@ verificador de tokens (ver seção 4).
 | Correção do domínio pela seção 3.5.4 do PPC | Concluída | `711d4ea` |
 | 4 · Login (tela 01) | Concluída e verificada | `8eb51fa` |
 | 5 · Painel do discente (tela 02) | Concluída e verificada | `71ffee8` |
-| 6 a 12 | Não iniciadas | — |
+| 6 · Listagem (tela 03) | Concluída e verificada | `b6c5ee2` |
+| 7 · Formulário (tela 04) | Concluída e verificada | commit desta etapa |
+| 8 a 12 | Não iniciadas | — |
 
 **Pendência explícita:** o visitante docente cai em `/docente/casca`
 (`INICIO_DO_PERFIL.docente`, em `lib/rotas.ts`) até a tela 06 nascer em `/docente`, na etapa
@@ -74,6 +76,21 @@ Arquivos das etapas 4 e 5:
 - `app/(discente)/painel/page.tsx`, `components/painel/` e `components/progresso/` — painel
   do discente (02): anel, "o que fecha o que falta", barras por grupo, acesso rápido.
 - `app/not-found.tsx` — página própria para endereço inexistente, em português.
+
+Arquivos das etapas 6 e 7:
+
+- `app/(discente)/atividades/page.tsx` e `components/atividade/` (`ListaAtividades`,
+  `TabelaAtividades`, `FiltroStatus`, `StatusBadge`) — listagem (03): busca, filtro, ordenação,
+  tabela em 768 px+ com cards abaixo disso, estado vazio, `?demo=vazio`.
+- `app/(discente)/atividades/nova/page.tsx` e `components/atividade/FormularioNovaAtividade.tsx`
+  — formulário (04). Componentes de apoio em `components/formulario/`: `CampoConfirmacao`
+  (notas (*)/(**)) e `CampoComprovante` (arrastar e soltar, com o botão como único caminho
+  garantido por teclado). Primitivos novos: `components/ui/select.tsx`, `checkbox.tsx`.
+- `lib/storage.ts`: `salvarRascunho`/`obterRascunho`/`limparRascunho` — rascunho do formulário,
+  à parte de `Atividade` (aceita dados parciais, nunca aparece em `listarAtividades()`).
+- `lib/formatacao.ts`: `formatarPremissaCredito`, `formatarExplicacaoRequisito`,
+  `formatarRascunhoSalvo`, `formatarTamanhoArquivo` — ainda faltam no relatório e no detalhe
+  (`PROXIMA-ETAPA.md`).
 
 ---
 
@@ -144,16 +161,10 @@ Arquivos das etapas 4 e 5:
 
 ## 5. O que falta, por etapa
 
-- **6 · Listagem (03):** filtro, busca, ordenação, estado vazio (`?demo=vazio`), cards no mobile.
-  Pela régua do crédito: coluna de tipo da Tabela 7 (não "categoria") e créditos como número
-  principal; atualizar os textos da tela 03 no `PROMPT-INICIAL.md`.
-- **7 · Formulário (04):** quantidade na unidade do tipo (`pergunta` do catálogo; **horas do
-  comprovante** nos tipos "N h/semestre"), as validações (`avisosDeCadastro`, inclusive o
-  aviso de horas acima do máximo, e `validarNovaAtividade`), comprovante exigido em texto
-  literal, rascunho automático (criar funções de rascunho no storage). Validação ao sair do
-  campo com as duas exceções do login (campo não editado; foco indo a botão do formulário) e
-  o componente `components/formulario/Campo`.
-- **8 · Detalhe (05):** linha do tempo a partir de `historico`; parecer do adendo no #5.
+- **8 · Detalhe (05):** linha do tempo a partir de `historico`; parecer do adendo no #5
+  (devolvido, com o texto literal do docente). Pela régua do crédito: nada de "Carga
+  solicitada" nem "Categoria" — ver `PROXIMA-ETAPA.md` para os textos ainda pendentes e para
+  onde `formatarExplicacaoRequisito` também deveria aparecer aqui.
 - **9 · Painel do docente (06) + fila completa:** remover `/docente/casca` e o item temporário.
   Decidir como o docente chega ao catálogo: `/catalogo` está no grupo `(discente)` e mostraria
   a sidebar do discente.
@@ -165,56 +176,48 @@ Arquivos das etapas 4 e 5:
   `/docente/orientandos`, `/docente/relatorio` sem 404 (o `EstadoErro` já aponta para `/ajuda`);
   favicon próprio (ainda é o do Next); critérios de aceite da seção 11 do prompt.
 
-**Textos da especificação ainda desatualizados** (lista na entrada "Correções pós-etapa 2" do
-`DEV-LOG.md`): falam em "categoria", "horas solicitadas" ou "teto" nas telas 03, 05, 06, 07 e
-07b. A tela 02 já foi reescrita. Regra combinada: corrigir o texto de cada tela na etapa em
-que ela for construída, pela régua do crédito.
+**Textos da especificação ainda desatualizados** (lista atualizada em `PROXIMA-ETAPA.md`, item
+5): telas 05, 06, 07 e 07b ainda falam em "categoria" ou "horas solicitadas". As telas 02, 03
+e 04 já foram reescritas. Regra combinada: corrigir o texto de cada tela na etapa em que ela
+for construída, pela régua do crédito.
 
 ---
 
-## 6. Próxima ação concreta: etapas 6 e 7
+## 6. Próxima ação concreta: etapa 8 (Detalhe, tela 05)
 
-**Antes de tudo, leia `PROXIMA-ETAPA.md`.** Ele traz decisões da equipe que valem para
-estas duas etapas: colunas "Tipo" e "Créditos", a explicação da carga máxima e a hifenização
-do título do login. Traz também o escopo de corte, se faltar tempo.
+**Antes de tudo, leia `PROXIMA-ETAPA.md`.** O item 2 é desta etapa (explicação da carga máxima
+no detalhe) e o item 5 lista os textos ainda desatualizados.
 
-**Etapa 6 — Listagem (tela 03).** Especificação na tela 03 da seção 8 do `PROMPT-INICIAL.md`,
-lida pela régua do crédito e pelo `PROXIMA-ETAPA.md`. Primeiro, corrigir os textos da tela 03
-na especificação (colunas, busca, estado vazio). Depois, construir
-`app/(discente)/atividades/page.tsx` com `listarAtividades()`, com:
-- filtro por status com contagem;
-- busca;
-- ordenação;
-- estado vazio em `?demo=vazio`;
-- cards no mobile.
+Especificação na tela 05 da seção 8 do `PROMPT-INICIAL.md`. Construir
+`app/(discente)/atividades/[id]/page.tsx` com `obterAtividade(id)`, com:
+- link "Voltar para Minhas atividades" (`PageHeader` já tem a prop `voltar`);
+- pré-visualização do comprovante (só o nome/tamanho estão salvos — não há arquivo de verdade;
+  mostrar um placeholder coerente com isso, não uma imagem real);
+- linha do tempo a partir de `atividade.historico` (`EventoHistorico[]`, já com `tipo` e `em`);
+- dados da atividade pelo tipo declarado (`obterTipo`), sem "Categoria" nem "Carga
+  solicitada" — usar os mesmos nomes já estabelecidos (tipo, créditos, requisito);
+- o parecer mais recente (`atividade.pareceres.at(-1)`), com o texto literal do #5 no seed
+  ("O certificado não comprova a participação no evento completo…") quando for essa atividade;
+- ação para reenviar (liga a `enviarAtividade` de `lib/storage.ts`, já pronta desde a etapa 2).
 
-**Etapa 7 — Formulário (tela 04).** Em `app/(discente)/atividades/nova/page.tsx`:
-- quantidade na unidade do tipo (horas do comprovante nos tipos "N h/semestre"), com a
-  `pergunta` do catálogo;
-- as validações de `avisosDeCadastro` e `validarNovaAtividade`;
-- o comprovante exigido em texto literal;
-- a explicação da carga máxima em linguagem comum;
-- o rascunho automático (criar as funções de rascunho no `storage.ts`);
-- o componente `Campo`, com as duas exceções de validação ao sair do campo usadas no login.
-
-Cada etapa termina com build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e
-alto contraste), entrada no `DEV-LOG.md`, commit e push em `main`.
+Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
+`DEV-LOG.md`, commit e push em `main`.
 
 **Como verificar no navegador.** As verificações usam `playwright-core` dirigindo o Chrome
-instalado, com scripts fora do repositório. Para repetir: instalar `playwright-core` numa
-pasta temporária, subir `npm run build && npm run start` e, para cada tela:
-- capturas em 1280 e 375 px, com A−, A, A+ e alto contraste. As preferências e a sessão
-  podem ser gravadas no `localStorage` antes de carregar a página
+instalado, com scripts fora do repositório (ver `apoio.mjs`, com os helpers `nova`, `ok`,
+`variacoes`, `ativo`, `regiao`, `fechar` já prontos para reaproveitar). Para repetir: instalar
+`playwright-core` numa pasta temporária, subir `npm run build && npm run start` e:
+- capturas em 1280 e 375 px, com A−, A, A+ e alto contraste. As preferências e a sessão podem
+  ser gravadas no `localStorage` antes de carregar a página
   (`horas-complementares:preferencias`, `horas-complementares:sessao`);
 - teclado: link de pular, ordem do Tab, foco visível, Esc devolvendo o foco;
 - sem rolagem horizontal, um único h1, títulos sem salto, sem erro de console ou de hidratação.
 
-**Olhe as capturas, não só os testes.** Nas etapas 3 a 5, as capturas pegaram:
-- o botão sem borda num link;
-- o título vazando em A+;
-- os dois cartões aparentando seleção (era a transição);
-- o contador quebrando dentro da pílula;
-- a trilha do gráfico sumindo no alto contraste.
+**Olhe as capturas, não só os testes.** Elas já pegaram, em etapas anteriores: o botão sem
+borda num link (etapa 3), o título vazando em A+ (etapa 4), a trilha do gráfico sumindo no
+alto contraste (etapa 5), um `<th>` aninhado dentro de outro (etapa 6), e um aviso de "tipo
+não previsto" aparecendo no formulário em branco, antes de qualquer escolha (etapa 7) — nenhum
+desses apareceu nos testes automáticos, só nas imagens.
 
 Espere o fim das animações (160 ms) antes de capturar. Evite `waitUntil: "networkidle"`: os
 prefetches dos links para rotas ainda inexistentes impedem que a rede fique ociosa.
@@ -241,6 +244,11 @@ prefetches dos links para rotas ainda inexistentes impedem que a rede fique ocio
   inteira, que é saída de build, e rode o build de novo. Tipos antigos em `.next/dev/types`
   também quebram o build depois de remover uma rota; mesma solução.
 - **Trilha de gráfico usa `--trilha`, não `--border`**: o alto contraste escurece a borda.
+- **`react-hooks/refs` (regra nova do Next 16, ligada ao React Compiler)** pode reprovar um
+  `ref` passado por uma prop com nome próprio (ex.: `botaoRef`) ou usado fora do padrão de
+  render-prop de `Campo`, mesmo quando `.current` só é lido dentro de um handler — falso
+  positivo conhecido. Liberar com `// eslint-disable-next-line react-hooks/refs -- <motivo>`
+  na linha do `ref=`, não reescrever a lógica em torno disso.
 - **Modal aberto deixa o resto da página inerte** (Base UI). Em testes automatizados,
   `getByRole` não acha o botão que abriu o modal enquanto ele está aberto; use um seletor
   CSS, como `[data-slot="sheet-trigger"]`.

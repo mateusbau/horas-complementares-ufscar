@@ -294,3 +294,61 @@ reverificados no painel e no login.
 
 **Pendente.** `/atividades/nova` e `/atividades/[id]` (etapas 7 e 8) — os links da tabela para
 o detalhe e o botão "Nova atividade" caem na página de não encontrada até lá.
+
+---
+
+## 2026-09-15 · Etapa 7 — Formulário (tela 04)
+
+**Feito.** `/atividades/nova`: título, tipo de atividade (os 19 da Tabela 7 mais "Não encontrei
+um tipo correspondente"), quantidade só depois de escolher o tipo — rótulo e sufixo vêm do
+catálogo (`pergunta`, `UNIDADES`) —, as confirmações condicionais (*)/(**), período opcional,
+comprovante por arrastar-e-soltar ou seleção, observações, envio e rascunho automático.
+Também os componentes `Campo`, `CampoConfirmacao`, `CampoComprovante` e os primitivos `Select`
+e `Checkbox`. Verificado em 1280 e 375 px, A−/A/A+ e alto contraste, por teclado, e o caminho
+completo (preencher → enviar → aparecer em `/atividades` com o status e os créditos certos).
+
+**Decisões.**
+- **Quantidade nos tipos "N h/semestre" pede as horas do comprovante**, não semestres —
+  reaproveita a leitura da seção 3.5.4 do PPC fixada antes do painel (etapa 5): a carga é o
+  máximo por semestre, e horas acima dele não valem (aviso não bloqueante,
+  `mensagemAcimaDoMaximo`). A explicação (`formatarExplicacaoRequisito`) calcula o exemplo a
+  partir do próprio tipo — nenhum número de crédito ou hora foi escrito à mão na tela.
+- **"Não encontrei um tipo correspondente" é uma escolha, não um estado neutro:** a seleção
+  vazia inicial ("") e a escolha explícita de "nenhum" são estados distintos na tela, mesmo
+  os dois resultando em `tipoId: null` para o domínio — só a escolha explícita mostra o aviso
+  da regra 1 (tipo não previsto).
+- **Validação ao sair do campo com as mesmas duas exceções do login** (campo nunca editado;
+  foco indo para um botão do formulário), generalizada para seis campos por uma função
+  compartilhada (`aoSairCampo`), em vez de repetida seis vezes.
+- **Rascunho é um documento à parte** (`lib/storage.ts`, `salvarRascunho`/`obterRascunho`),
+  não uma `Atividade` incompleta: aceita dados parciais, sem validação, e nunca aparece em
+  `listarAtividades()`. Autosave 1,5 s depois da última mudança; "Salvar rascunho" força o
+  salvamento na hora. Ao carregar a tela, um rascunho existente prefila o formulário
+  silenciosamente — é uma recuperação, não uma decisão que peça confirmação.
+- **Comprovante exigido e tipo de arquivo/tamanho são checados no componente da tela**, não em
+  `lib/calculos.ts`: não são regra de crédito, são restrição de arquivo.
+- **O botão "Selecionar arquivo" é o único caminho garantido por teclado** para o comprovante;
+  o `<input type="file">` fica fora da ordem de tabulação (`tabIndex={-1}`) para não duplicar
+  o alvo, e arrastar é só conveniência de mouse.
+
+**Corrigido durante a verificação:**
+- Com a tela recém-aberta, sem nenhum tipo escolhido, o aviso "Esta atividade não corresponde
+  a nenhum tipo da Tabela 7…" já aparecia — a captura de tela pegou. `tipoId` derivado da
+  seleção vazia ("nada escolhido ainda") também dá `null`, igual à escolha explícita de
+  "nenhum", e o aviso só checava `tipoId === null`. Corrigido para só mostrar o aviso quando o
+  usuário de fato escolheu "Não encontrei um tipo correspondente".
+- Um `<th>` de cabeçalho ordenável, reaproveitado da etapa 6, não se aplica aqui, mas o mesmo
+  cuidado (reler a tela renderizada, não só os testes) valeu de novo: sem ele, o aviso
+  prematuro teria ido para produção.
+- Uma regra de lint nova do Next 16 (`react-hooks/refs`, ligada ao React Compiler) reprovou
+  passar `ref` por uma prop com nome próprio (`botaoRef`, e um `ref` usado fora do padrão de
+  render-prop de `Campo`) — falso positivo para o padrão de encaminhar um ref a um elemento
+  interno de um componente composto. Liberado com `eslint-disable-next-line` e o motivo, no
+  mesmo espírito do `tokens-ok:` do verificador de tokens.
+
+**Pendente.**
+- `formatarExplicacaoRequisito` ainda falta no detalhe da atividade (tela 05, etapa 8) e
+  `formatarPremissaCredito`/a citação de dois tipos ainda faltam no relatório (etapa 11) —
+  registrado em `PROXIMA-ETAPA.md`.
+- "Ver catálogo" leva a `/catalogo`, que ainda não existe (etapa 12); cai na página de não
+  encontrada.
