@@ -12,6 +12,7 @@ import { useRef, useState, type RefObject } from "react"
 
 import { Button } from "@/components/ui/button"
 import { formatarTamanhoArquivo } from "@/lib/formatacao"
+import { salvarComprovante } from "@/lib/storage"
 import type { Comprovante } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -48,12 +49,13 @@ export function CampoComprovante({
   const inputRef = useRef<HTMLInputElement>(null)
   const [arrastando, setArrastando] = useState(false)
   const [erroLocal, setErroLocal] = useState<string | null>(null)
+  const [processando, setProcessando] = useState(false)
   const idRotulo = `${id}-rotulo`
   const idApoio = `${id}-apoio`
   const idErro = `${id}-erro`
   const erroExibido = erro ?? erroLocal
 
-  function processar(arquivo: File) {
+  async function processar(arquivo: File) {
     if (!extensaoAceita(arquivo.name)) {
       setErroLocal("Arquivo em formato não aceito. Envie um PDF, JPG ou PNG.")
       return
@@ -63,7 +65,15 @@ export function CampoComprovante({
       return
     }
     setErroLocal(null)
-    onEscolher({ nome: arquivo.name, tamanhoBytes: arquivo.size, tipoMime: arquivo.type })
+    setProcessando(true)
+    try {
+      const comprovante = await salvarComprovante(arquivo)
+      onEscolher(comprovante)
+    } catch {
+      setErroLocal("Não foi possível processar o arquivo agora. Tente novamente.")
+    } finally {
+      setProcessando(false)
+    }
   }
 
   const rotuloCompleto = (
@@ -105,8 +115,9 @@ export function CampoComprovante({
         onDrop={(e) => {
           e.preventDefault()
           setArrastando(false)
+          if (processando) return
           const arquivo = e.dataTransfer.files[0]
-          if (arquivo) processar(arquivo)
+          if (arquivo) void processar(arquivo)
         }}
         className={cn(
           "flex flex-col items-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors",
@@ -118,8 +129,14 @@ export function CampoComprovante({
         <p id={idApoio} className="text-caption leading-secondary text-muted-foreground">
           {apoio}
         </p>
-        <Button ref={botaoRef} type="button" variant="outline" onClick={() => inputRef.current?.click()}>
-          Selecionar arquivo
+        <Button
+          ref={botaoRef}
+          type="button"
+          variant="outline"
+          disabled={processando}
+          onClick={() => inputRef.current?.click()}
+        >
+          {processando ? "Processando arquivo…" : "Selecionar arquivo"}
         </Button>
         <input
           ref={inputRef}
@@ -132,7 +149,7 @@ export function CampoComprovante({
           aria-describedby={erroExibido ? `${idApoio} ${idErro}` : idApoio}
           onChange={(e) => {
             const arquivo = e.target.files?.[0]
-            if (arquivo) processar(arquivo)
+            if (arquivo) void processar(arquivo)
             e.target.value = ""
           }}
         />

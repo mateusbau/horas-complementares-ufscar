@@ -11,6 +11,8 @@
 // componente "use client", e mostre skeleton até a resposta chegar.
 
 import { ehTipoAtividadeId } from "./catalogo"
+import { gravarBlob, lerBlob, removerBlob } from "./comprovantes-db"
+import { redimensionarImagem } from "./imagem"
 import {
   ATRIBUTO_TAMANHO_TEXTO,
   CLASSE_ALTO_CONTRASTE,
@@ -31,6 +33,7 @@ import {
 import { criarEstadoInicial } from "./mock-data"
 import type {
   Atividade,
+  Comprovante,
   Discente,
   Docente,
   EstadoDemo,
@@ -111,12 +114,12 @@ function copia<T>(valor: T): T {
   return structuredClone(valor)
 }
 
-function novoId(): string {
+function novoId(prefixo: string): string {
   const aleatorio =
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
-  return `atv-${aleatorio}`
+  return `${prefixo}-${aleatorio}`
 }
 
 function localizar(estado: EstadoDemo, id: string): number {
@@ -169,7 +172,7 @@ export async function criarAtividade(dados: NovaAtividade): Promise<Atividade> {
   const estado = ler()
   const atividade = montarAtividade(
     dados,
-    { id: novoId(), discenteId: estado.discenteAtualId },
+    { id: novoId("atv"), discenteId: estado.discenteAtualId },
     new Date()
   )
   estado.atividades.push(atividade)
@@ -226,6 +229,59 @@ export async function obterProgresso(discenteId?: string): Promise<Progresso> {
   const estado = ler()
   const alvo = discenteId ?? estado.discenteAtualId
   return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
+}
+
+// --- Comprovantes --------------------------------------------------------------------------
+// O blob nunca vai para o localStorage (a cota por origem é ~5 MB); vai para
+// o IndexedDB, por lib/comprovantes-db.ts, que só este arquivo importa. Sem
+// os 300 ms de esperar(): o processamento da imagem e a escrita no IndexedDB
+// já são trabalho assíncrono de verdade, a mesma exceção já aberta para as
+// preferências de acessibilidade.
+
+const LADO_MAIOR_COMPROVANTE = 1400
+const QUALIDADE_JPEG_COMPROVANTE = 0.7
+
+/**
+ * Processa (imagem: redimensiona e recomprime; PDF: mantém como está) e grava
+ * o arquivo no IndexedDB. Devolve só a referência — o componente nunca vê o
+ * blob nem o IndexedDB.
+ */
+export async function salvarComprovante(arquivo: File): Promise<Comprovante> {
+  const id = novoId("comp")
+  if (arquivo.type.startsWith("image/")) {
+    const imagemProcessada = await redimensionarImagem(arquivo, LADO_MAIOR_COMPROVANTE, QUALIDADE_JPEG_COMPROVANTE)
+    await gravarBlob(id, imagemProcessada)
+    return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: imagemProcessada.size, tipoMime: "image/jpeg" }
+  }
+  await gravarBlob(id, arquivo)
+  return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: arquivo.size, tipoMime: arquivo.type }
+}
+
+/**
+ * URL para exibir o comprovante — `<img src>` ou `<embed src>`. Uma
+ * referência começando com "/" já é um arquivo público da demonstração
+ * (lib/mock-data.ts) e volta direto, sem tocar no IndexedDB. `null` quando o
+ * blob não é encontrado (nunca lança: quem chama mostra o estado de erro,
+ * em vez de quebrar a tela).
+ */
+export async function obterUrlComprovante(comprovante: Comprovante): Promise<string | null> {
+  if (comprovante.comprovanteId.startsWith("/")) return comprovante.comprovanteId
+  try {
+    const blob = await lerBlob(comprovante.comprovanteId)
+    return blob ? URL.createObjectURL(blob) : null
+  } catch {
+    return null
+  }
+}
+
+/** Best-effort: usado ao trocar ou remover um comprovante já enviado, para não acumular blob órfão. */
+export async function removerComprovante(comprovanteId: string): Promise<void> {
+  if (comprovanteId.startsWith("/")) return
+  try {
+    await removerBlob(comprovanteId)
+  } catch {
+    // Falha ao limpar não deve impedir a ação principal (a troca ou remoção do campo).
+  }
 }
 
 // --- Rascunho da tela 04 ------------------------------------------------------------------

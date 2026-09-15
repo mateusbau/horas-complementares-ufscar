@@ -54,8 +54,16 @@ export type Periodo = {
   termino: string
 }
 
-/** Metadados do arquivo; o conteúdo não é guardado no navegador. */
+/**
+ * Metadados do arquivo. O conteúdo (blob) nunca vai para o armazenamento de
+ * chave e valor de `lib/storage.ts` — só cabe ~5 MB por origem, e uma imagem
+ * só já estoura a cota. `comprovanteId` referencia o blob: começando com "/" é um arquivo
+ * público da demonstração (lib/mock-data.ts, servido de /public/comprovantes);
+ * qualquer outro valor é a chave de um blob gravado no IndexedDB no envio
+ * (lib/comprovantes-db.ts, só acessado por lib/storage.ts).
+ */
 export type Comprovante = {
+  comprovanteId: string
   nome: string
   tamanhoBytes: number
   tipoMime: string

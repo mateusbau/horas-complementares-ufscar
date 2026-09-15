@@ -28,7 +28,7 @@ import { Select } from "@/components/ui/select"
 import { avisosDeCadastro, creditosDaAtividade, horasDeCreditos, validarNovaAtividade } from "@/lib/calculos"
 import { CATALOGO, UNIDADES, obterTipo, type TipoAtividadeId } from "@/lib/catalogo"
 import { formatarCreditos, formatarExplicacaoRequisito, formatarHoras, formatarRascunhoSalvo } from "@/lib/formatacao"
-import { criarAtividade, limparRascunho, obterRascunho, salvarRascunho } from "@/lib/storage"
+import { criarAtividade, limparRascunho, obterRascunho, removerComprovante, salvarRascunho } from "@/lib/storage"
 import type { Comprovante, Confirmacoes, NovaAtividade, Periodo } from "@/lib/types"
 
 /** "" = nada escolhido ainda (inválido); "nenhum" = tipoId null, de propósito. */
@@ -454,6 +454,7 @@ export function FormularioNovaAtividade() {
             marcarEditado("comprovante")
           }}
           onRemover={() => {
+            if (comprovante) void removerComprovante(comprovante.comprovanteId)
             setComprovante(null)
             marcarEditado("comprovante")
           }}

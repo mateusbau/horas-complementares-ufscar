@@ -4,9 +4,10 @@
 // são escritos aqui: saem do tipo e da quantidade, via lib/calculos.ts.
 //
 // As datas são relativas a `agora` (o momento em que o seed é criado), para a
-// demonstração parecer atual em qualquer dia em que for aberta: a fila começa
-// com esperas de 9, 9, 8, 3 e 1 dias — três acima de 7 dias, como diz o
-// indicador da tela 06 —, e "Reiniciar demonstração" recria tudo.
+// demonstração parecer atual em qualquer dia em que for aberta — "Reiniciar
+// demonstração" recria tudo. O indicador "N há mais de 7 dias" da tela 06 é
+// calculado de verdade (obterEstatisticasDocente, lib/storage.ts) sobre estas
+// datas; não é um número fixo escrito em outro lugar.
 //
 // A fila do docente é derivada do status: toda atividade em análise, de
 // qualquer discente, está na fila. As da Ana (#3 e #4) entram por isso.
@@ -52,9 +53,14 @@ const DISCENTES: Discente[] = [
   discente("disc-henrique", "Henrique Sato", "813021", "2º ano"),
   discente("disc-isabela", "Isabela Prado", "810945", "4º ano"),
   discente("disc-joao", "João Vitor Lima", "812871", "3º ano"),
-  discente("disc-larissa", "Larissa Campos", "811580", "3º ano"),
-  discente("disc-marcos", "Marcos Tavares", "813377", "2º ano"),
+  // Nome e RA batem com o comprovante real (public/comprovantes/02 e 05).
+  discente("disc-larissa", "Larissa Prado Nakamura", "813077", "3º ano"),
+  // Idem: comprovante público 04.
+  discente("disc-marcos", "Marcos Vinícius Rocha", "811264", "2º ano"),
   discente("disc-otavio", "Otávio Ribeiro", "812219", "4º ano"),
+  // Nova: só ela tem comprovante em PDF (public/comprovantes/06), para a
+  // validação mostrar o <embed>, não só a miniatura de imagem.
+  discente("disc-camila", "Camila Ferreira Antunes", "812901", "2º ano"),
 ]
 
 // --- Auxiliares de data --------------------------------------------------------
@@ -82,8 +88,19 @@ function periodo(agora: Date, inicioHaDias: number, terminoHaDias: number) {
   }
 }
 
+// Comprovante fictício, sem arquivo por trás (a maioria do seed): o
+// visualizador (VisualizadorComprovante) mostra "não foi possível carregar"
+// para eles, corretamente — nunca existiu blob nenhum, no IndexedDB ou fora
+// dele. O prefixo evita colidir com os ids reais gerados no upload (lib/storage.ts, novoId("comp")).
 function pdf(nome: string, kb: number): Comprovante {
-  return { nome, tamanhoBytes: kb * 1024, tipoMime: "application/pdf" }
+  return { comprovanteId: `demo-sem-arquivo-${nome}`, nome, tamanhoBytes: kb * 1024, tipoMime: "application/pdf" }
+}
+
+// Comprovante real, servido de /public/comprovantes — comprovanteId começando
+// com "/" é como lib/storage.ts (obterUrlComprovante) reconhece um arquivo
+// público da demonstração e não tenta buscar no IndexedDB.
+function arquivoPublico(nome: string, tipoMime: string, tamanhoBytes: number): Comprovante {
+  return { comprovanteId: `/comprovantes/${nome}`, nome, tamanhoBytes, tipoMime }
 }
 
 const SEM_CONFIRMACOES: Confirmacoes = { semDuplaContagem: false, semestreCompleto: false }
@@ -251,7 +268,12 @@ function atividadesDaAna(agora: Date): Atividade[] {
         tipoId: "congresso-simposio",
         quantidade: 1,
         periodo: periodo(agora, 30, 30),
-        comprovante: { nome: "certificado-git-secot.pdf", tamanhoBytes: 1258291, tipoMime: "application/pdf" },
+        comprovante: {
+          comprovanteId: "demo-sem-arquivo-certificado-git-secot.pdf",
+          nome: "certificado-git-secot.pdf",
+          tamanhoBytes: 1258291,
+          tipoMime: "application/pdf",
+        },
       },
       "pendente",
       gitEnviada,
@@ -322,9 +344,13 @@ function atividadesDaAna(agora: Date): Atividade[] {
 
 // --- Fila: atividades em análise dos demais discentes ----------------------------
 // Os cinco primeiros por tempo de espera mantêm nomes e RAs do protótipo
-// (remapeados para tipos da Tabela 7). Esperas: Bruno 9 dias, Carla 9 (duas
-// horas a menos, para o Bruno abrir a fila), Ana 8, Diego 3, Elisa 1. Os demais
-// completam 14 itens.
+// (remapeados para tipos da Tabela 7). Bruno, Larissa, Marcos e Camila têm
+// comprovante de verdade (public/comprovantes/, servido direto — não passa
+// pelo IndexedDB, ver arquivoPublico() acima): Bruno e Larissa em dois tipos
+// diferentes cada um (mostra a exigência de 2 tipos da PPC 3.5.4 sendo
+// cumprida); o de Marcos ("Grupo de estudos", sem tipo previsto e sem carga
+// horária no documento) é o caso pensado para recusa; o de Camila é o único
+// em PDF do seed, para exercitar o <embed> na validação.
 
 function filaDosDemais(agora: Date): Atividade[] {
   const item = (
@@ -354,8 +380,23 @@ function filaDosDemais(agora: Date): Atividade[] {
   return [
     item("atv-bruno-monitoria-calculo2", "disc-bruno", "Monitoria de Cálculo II", "monitoria", 180, 9 * 24 + 3, {
       confirmacoes: { semestreCompleto: true },
-      comprovante: pdf("declaracao-coordenacao-monitoria-calculo2.pdf", 640),
+      comprovante: arquivoPublico("01-declaracao-coordenacao-monitoria-calculo2.jpg", "image/jpeg", 86416),
     }),
+    // Segundo tipo do Bruno (Extensão e eventos, não Ensino e monitoria):
+    // mostra a exigência de 2 tipos diferentes (PPC 3.5.4) já cumprida assim
+    // que as duas forem validadas.
+    item(
+      "atv-bruno-organizacao-secot-xvii",
+      "disc-bruno",
+      "Organização de evento — SeCoT XVII",
+      "organizacao-evento",
+      2,
+      6 * 24, // tokens-ok: horas de espera (6 dias), não CREDITOS_EXIGIDOS
+      {
+        periodo: periodo(agora, 364, 361),
+        comprovante: arquivoPublico("03-certificado-organizacao-evento-secot.jpg", "image/jpeg", 67769),
+      }
+    ),
     item("atv-carla-meninas-digitais", "disc-carla", "Projeto Meninas Digitais", "extensao", 180, 9 * 24 + 1, {
       confirmacoes: { semDuplaContagem: true },
     }),
@@ -388,6 +429,17 @@ function filaDosDemais(agora: Date): Atividade[] {
     item("atv-larissa-aciepes", "disc-larissa", "ACIEPES Computação e Sociedade", "aciepes", 60, 9, {
       confirmacoes: { semDuplaContagem: true },
     }),
+    item("atv-larissa-extensao-girassol", "disc-larissa", "Extensão — Projeto Girassol", "extensao", 120, 8 * 24 + 2, {
+      periodo: periodo(agora, 189, 18),
+      confirmacoes: { semDuplaContagem: true },
+      comprovante: arquivoPublico("02-certificado-extensao-projeto-girassol.jpg", "image/jpeg", 68629),
+    }),
+    // Segundo tipo da Larissa: mesma exigência de 2 tipos (PPC 3.5.4) que o
+    // caso do Bruno, agora em Ensino e monitoria + Extensão e eventos.
+    item("atv-larissa-monitoria-algebra", "disc-larissa", "Monitoria — Álgebra Linear", "monitoria", 180, 2 * 24 + 10, {
+      confirmacoes: { semestreCompleto: true },
+      comprovante: arquivoPublico("05-foto-declaracao-monitoria-algebra.jpg", "image/jpeg", 76293),
+    }),
     // Validação fracionada (PPC, 3.5.4): 120 h de um máximo de 180 h/semestre
     // (3 créditos) valem 2 créditos. Mostra ao docente a diferença entre a
     // carga do comprovante e o que é contabilizado.
@@ -399,6 +451,15 @@ function filaDosDemais(agora: Date): Atividade[] {
       120,
       5
     ),
+    // Caso destinado a recusa: o comprovante não informa carga horária
+    // nenhuma (público 04), e "Grupo de estudos" não corresponde a nenhum
+    // tipo da Tabela 7 — a mesma regra 1 do caso da Ana (#7), aqui para o
+    // docente encontrar na fila, comprovante em mãos.
+    item("atv-marcos-grupo-estudos", "disc-marcos", "Grupo de estudos", null, null, 4 * 24 + 6, { // tokens-ok: horas de espera, não CREDITOS_EXIGIDOS
+      periodo: null,
+      observacoes: "Participação em grupo de estudos ao longo do semestre.",
+      comprovante: arquivoPublico("04-declaracao-sem-carga-horaria.jpg", "image/jpeg", 69421),
+    }),
     item(
       "atv-otavio-presidencia-ca",
       "disc-otavio",
@@ -407,6 +468,13 @@ function filaDosDemais(agora: Date): Atividade[] {
       1,
       3
     ),
+    // Único comprovante em PDF do seed: a validação mostra o <embed>, não a
+    // miniatura de imagem.
+    item("atv-camila-curso-python", "disc-camila", "Curso de extensão — Python", "extensao", 60, 1 * 24 + 15, { // tokens-ok: horas de espera, não HORAS_POR_CREDITO
+      periodo: periodo(agora, 164, 80),
+      confirmacoes: { semDuplaContagem: true },
+      comprovante: arquivoPublico("06-certificado-curso-python.pdf", "application/pdf", 42760),
+    }),
   ]
 }
 

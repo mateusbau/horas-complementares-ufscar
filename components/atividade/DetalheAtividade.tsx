@@ -3,8 +3,9 @@
 // components/atividade/DetalheAtividade.tsx — Tela 05 · Detalhe da atividade
 //
 // Versão magra (PROXIMA-ETAPA.md, item 2, e HANDOFF.md, etapa 8): dados,
-// situação e parecer, sem pré-visualização real do comprovante — só nome e
-// tamanho estão salvos. Régua do crédito (CLAUDE.md): nada de "Categoria" nem
+// situação e parecer. O comprovante em si é visualizado por
+// VisualizadorComprovante (miniatura + modal com zoom/giro/download),
+// compartilhado com a validação do docente. Régua do crédito (CLAUDE.md): nada de "Categoria" nem
 // "Carga solicitada"; o tipo e os créditos vêm do catálogo e de
 // creditosDaAtividade, o arredondamento é explicado por
 // formatarExplicacaoRequisito (mesma função do cadastro, PROXIMA-ETAPA item 2).
@@ -14,10 +15,11 @@
 // status finais não mostram ação. Id inexistente cai no EstadoErro (HC-404),
 // nunca em erro cru.
 
-import { CircleAlert, CircleCheck, CircleDashed, CircleX, Paperclip, type LucideIcon } from "lucide-react"
+import { CircleAlert, CircleCheck, CircleDashed, CircleX, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
+import { VisualizadorComprovante } from "@/components/atividade/VisualizadorComprovante"
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
@@ -32,10 +34,9 @@ import {
   formatarExplicacaoRequisito,
   formatarQuantidade,
   formatarRequisito,
-  formatarTamanhoArquivo,
 } from "@/lib/formatacao"
 import { enviarAtividade, obterAtividade, obterDocenteAtual } from "@/lib/storage"
-import type { Atividade, Comprovante, DecisaoParecer, Docente, EventoHistorico, TipoEvento } from "@/lib/types"
+import type { Atividade, DecisaoParecer, Docente, EventoHistorico, TipoEvento } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 type Estado =
@@ -174,7 +175,7 @@ export function DetalheAtividade({ id }: { id: string }) {
       )}
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
-        <PreviaComprovante comprovante={atividade.comprovante} />
+        <VisualizadorComprovante comprovante={atividade.comprovante} tipoAtividadeNome={nomeTipo} />
 
         <div className="flex flex-col gap-6">
           <Situacao historico={atividade.historico} nomeDocente={docente.nome} />
@@ -183,28 +184,6 @@ export function DetalheAtividade({ id }: { id: string }) {
         </div>
       </div>
     </>
-  )
-}
-
-function PreviaComprovante({ comprovante }: { comprovante: Comprovante | null }) {
-  return (
-    <section aria-labelledby="titulo-comprovante" className="flex flex-col gap-3 rounded-lg border bg-surface p-6">
-      <h2 id="titulo-comprovante">Comprovante</h2>
-      {comprovante ? (
-        <>
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input-border bg-muted p-8 text-center">
-            <Paperclip aria-hidden="true" className="size-8 text-muted-foreground" />
-            <p className="max-w-full truncate text-body">{comprovante.nome}</p>
-            <p className="tabular text-caption text-muted-foreground">{formatarTamanhoArquivo(comprovante.tamanhoBytes)}</p>
-          </div>
-          <p className="text-caption leading-secondary text-muted-foreground">
-            O sistema guarda só o nome e o tamanho do arquivo enviado; não há visualização do documento em si.
-          </p>
-        </>
-      ) : (
-        <p className="leading-secondary text-muted-foreground">Nenhum comprovante anexado ainda.</p>
-      )}
-    </section>
   )
 }
 

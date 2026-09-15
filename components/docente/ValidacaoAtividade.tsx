@@ -17,6 +17,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 
+import { VisualizadorComprovante } from "@/components/atividade/VisualizadorComprovante"
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
@@ -54,7 +55,7 @@ import {
   formatarRequisito,
 } from "@/lib/formatacao"
 import { listarFilaValidacao, obterAtividade, obterDiscente, obterProgresso, registrarParecer } from "@/lib/storage"
-import type { Atividade, Comprovante, DecisaoParecer, Discente, ItemFila, NovoParecer, Progresso } from "@/lib/types"
+import type { Atividade, DecisaoParecer, Discente, ItemFila, NovoParecer, Progresso } from "@/lib/types"
 
 type SelecaoTipo = TipoAtividadeId | "sem-tipo"
 
@@ -277,7 +278,11 @@ function ConteudoValidacao({ estadoInicial }: { estadoInicial: Estado & { status
       )}
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
-        <PreviaComprovante comprovante={atividade.comprovante} />
+        <VisualizadorComprovante
+          comprovante={atividade.comprovante}
+          tipoAtividadeNome={tipoOriginal ? tipoOriginal.nome : "Sem tipo previsto"}
+          nomeDiscente={discente.nome}
+        />
 
         <div className="flex flex-col gap-6">
           <DadosEnviados atividade={atividade} tipo={tipoOriginal} progressoDiscente={progressoDiscente} />
@@ -373,24 +378,6 @@ function ConteudoValidacao({ estadoInicial }: { estadoInicial: Estado & { status
         </DialogContent>
       </Dialog>
     </>
-  )
-}
-
-function PreviaComprovante({ comprovante }: { comprovante: Comprovante | null }) {
-  return (
-    <section aria-labelledby="titulo-comprovante" className="flex flex-col gap-3 rounded-lg border bg-surface p-6">
-      <h2 id="titulo-comprovante">Comprovante</h2>
-      {comprovante ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input-border bg-muted p-8 text-center">
-          <p className="max-w-full truncate text-body">{comprovante.nome}</p>
-          <p className="text-caption text-muted-foreground">
-            O sistema guarda só o nome do arquivo enviado; não há visualização do documento em si.
-          </p>
-        </div>
-      ) : (
-        <p className="leading-secondary text-muted-foreground">Nenhum comprovante anexado.</p>
-      )}
-    </section>
   )
 }
 
