@@ -9,6 +9,9 @@ export type { GrupoId, TipoAtividadeId } from "./catalogo"
 
 // --- Pessoas -------------------------------------------------------------------
 
+/** Perfil de acesso: define a navegação (sidebar) após a entrada. */
+export type Perfil = "discente" | "docente"
+
 export type Discente = {
   id: string
   nome: string

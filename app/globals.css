@@ -109,6 +109,31 @@ table, .tabular { font-variant-numeric: tabular-nums; }
 }
 
 /* ==========================================================================
+   Barra de acessibilidade (lib/preferencias.ts aplica classe e atributo)
+   ========================================================================== */
+
+/* Tamanho do texto: todo o layout usa rem e acompanha. */
+html[data-tamanho-texto="menor"] { font-size: 87.5%; }
+html[data-tamanho-texto="maior"] { font-size: 125%; }
+
+/*
+ * Alto contraste: bordas e texto secundário mais fortes, sem cor nova — só
+ * valores da paleta. Borda de separação passa à cor de campo; borda de campo
+ * e texto secundário passam à cor do texto. Valores literais, e não var(),
+ * porque --border apontando para --input-border herdaria a redefinição abaixo.
+ */
+html.alto-contraste {
+  --border: #78716C;
+  --input-border: #1C1917;
+  --muted-foreground: #1C1917;
+}
+
+/* Altura da barra: alvo de 44 px + 4 px acima e abaixo. A sidebar começa logo abaixo. */
+:root {
+  --altura-barra: calc(max(2.75rem, 44px) + 0.5rem);
+}
+
+/* ==========================================================================
    Exposição ao Tailwind v4 — as classes utilitárias usam os mesmos valores
    ========================================================================== */
 

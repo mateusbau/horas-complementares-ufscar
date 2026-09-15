@@ -12,6 +12,13 @@
 
 import { ehTipoAtividadeId } from "./catalogo"
 import {
+  ATRIBUTO_TAMANHO_TEXTO,
+  CLASSE_ALTO_CONTRASTE,
+  PREFERENCIAS_PADRAO,
+  ehPreferencias,
+  type Preferencias,
+} from "./preferencias"
+import {
   ErroDeRegra,
   aplicarParecer,
   calcularProgresso,
@@ -260,6 +267,47 @@ export async function registrarParecer(id: string, parecer: NovoParecer): Promis
   gravar(estado)
   return copia(resultado)
 }
+
+// --- Preferências de acessibilidade ------------------------------------------------------
+// Exceção deliberada à regra "tudo assíncrono com atraso": preferências de
+// exibição são locais por natureza (continuariam no navegador mesmo com uma API
+// real) e precisam valer antes da primeira pintura, senão a tela piscaria em
+// 100 % antes de ir para 125 %.
+
+const CHAVE_PREFERENCIAS = "horas-complementares:preferencias"
+
+/** Síncrona. Em caso de erro ou valor inválido, devolve o padrão. */
+export function lerPreferencias(): Preferencias {
+  try {
+    const bruto = armazenamento().getItem(CHAVE_PREFERENCIAS)
+    const valor: unknown = bruto ? JSON.parse(bruto) : null
+    return ehPreferencias(valor) ? valor : { ...PREFERENCIAS_PADRAO }
+  } catch {
+    return { ...PREFERENCIAS_PADRAO }
+  }
+}
+
+/** Síncrona. Falha silenciosamente (ex.: navegação privada): a preferência vale até recarregar. */
+export function salvarPreferencias(preferencias: Preferencias): void {
+  try {
+    armazenamento().setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferencias))
+  } catch {
+    // Sem armazenamento disponível.
+  }
+}
+
+/**
+ * Script inline para o <head> do layout raiz: aplica as preferências no <html>
+ * durante a leitura do HTML, antes da primeira pintura. Deve espelhar
+ * `aplicarPreferencias` de lib/preferencias.ts.
+ */
+export const SCRIPT_PREFERENCIAS = `(function(){try{var p=JSON.parse(localStorage.getItem(${JSON.stringify(
+  CHAVE_PREFERENCIAS
+)})||"null");if(!p)return;var h=document.documentElement;if(p.altoContraste===true)h.classList.add(${JSON.stringify(
+  CLASSE_ALTO_CONTRASTE
+)});if(p.tamanhoTexto==="menor"||p.tamanhoTexto==="maior")h.setAttribute(${JSON.stringify(
+  ATRIBUTO_TAMANHO_TEXTO
+)},p.tamanhoTexto)}catch(e){}})()`
 
 // --- Demonstração ------------------------------------------------------------------------
 

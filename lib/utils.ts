@@ -14,6 +14,7 @@ export const cn = createCn({
       shadow: ["overlay"],
       container: ["content", "form"],
       spacing: ["sidebar", "target", "row"],
+      ease: ["standard"],
     },
   },
 })

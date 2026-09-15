@@ -3,7 +3,9 @@
 // e o foco. É substituída pela tela 01 · Login na etapa 4.
 
 import { CircleCheck, CircleDashed, CircleX, Clock } from "lucide-react";
+import Link from "next/link";
 
+import { ID_CONTEUDO } from "@/components/layout/SkipLink";
 import { Button } from "@/components/ui/button";
 
 const cores = [
@@ -40,12 +42,22 @@ const escala = [
 
 export default function Fundacao() {
   return (
-    <main className="mx-auto w-full max-w-content px-4 py-8 md:px-8">
+    <main
+      id={ID_CONTEUDO}
+      tabIndex={-1}
+      className="mx-auto w-full max-w-content scroll-mt-(--altura-barra) px-4 py-8 md:px-8"
+    >
       <header>
         <h1>Fundação visual</h1>
         <p className="mt-2 leading-secondary text-muted-foreground">
           Tokens de cor, tipografia e foco que todas as telas vão usar.
         </p>
+        <Link
+          href="/casca"
+          className="mt-2 inline-flex min-h-target items-center text-accent-text underline underline-offset-4 hover:decoration-2"
+        >
+          Abrir a casca da interface
+        </Link>
       </header>
 
       <section aria-labelledby="titulo-cores" className="mt-8">
