@@ -272,4 +272,18 @@ html.alto-contraste {
   h3 {
     @apply text-h3;
   }
+
+  /*
+   * Em 375 px com texto a 125 %, uma palavra longa ("Complementares", 40 px)
+   * não cabe na linha e vazaria da tela. Títulos hifenizam só palavras longas
+   * (12+ letras, 6 de cada lado, pelo lang="pt-BR") e quebram à força como
+   * último recurso. Palavras comuns não são hifenizadas.
+   */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
+    hyphens: auto;
+    hyphenate-limit-chars: 12 6 6;
+  }
 }

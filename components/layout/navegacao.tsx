@@ -23,11 +23,13 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { Skeleton } from "@/components/feedback/Skeleton"
-import { obterDiscenteAtual, obterDocenteAtual } from "@/lib/storage"
+import { INICIO_DO_PERFIL } from "@/lib/rotas"
+import { encerrarSessao, obterDiscenteAtual, obterDocenteAtual, trocarPerfil } from "@/lib/storage"
 import type { Perfil } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -143,6 +145,28 @@ export function BlocoPerfil({ perfil, onNavegar }: { perfil: Perfil; onNavegar?:
   }, [perfil])
 
   const outro: Perfil = perfil === "discente" ? "docente" : "discente"
+  const router = useRouter()
+  const anunciar = useAnunciar()
+  const [emAndamento, setEmAndamento] = useState<"trocar" | "sair" | null>(null)
+
+  async function executar(acao: "trocar" | "sair") {
+    if (emAndamento) return
+    setEmAndamento(acao)
+    try {
+      if (acao === "trocar") {
+        await trocarPerfil(outro)
+        onNavegar?.()
+        router.push(INICIO_DO_PERFIL[outro])
+      } else {
+        await encerrarSessao()
+        onNavegar?.()
+        router.push("/")
+      }
+    } catch {
+      setEmAndamento(null)
+      anunciar("Não foi possível concluir a ação. Tente novamente.")
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2 border-t pt-4">
@@ -174,28 +198,26 @@ export function BlocoPerfil({ perfil, onNavegar }: { perfil: Perfil; onNavegar?:
           </>
         )}
       </div>
+      {/* Botões, não links: executam uma ação (mudar ou encerrar a sessão) antes de navegar. */}
       <ul className="flex flex-col gap-1">
         <li>
-          <Link
-            href={outro === "docente" ? "/docente" : "/painel"}
-            onClick={onNavegar}
-            className="flex min-h-row items-center gap-3 rounded-lg px-3 py-2 text-body text-foreground transition-colors hover:bg-muted"
-          >
+          <button type="button" onClick={() => void executar("trocar")} className={CLASSE_ACAO}>
             <ArrowLeftRight aria-hidden="true" className="size-5 shrink-0" />
-            Trocar para {outro === "docente" ? "perfil docente" : "perfil discente"}
-          </Link>
+            {emAndamento === "trocar"
+              ? "Trocando de perfil…"
+              : `Trocar para ${outro === "docente" ? "perfil docente" : "perfil discente"}`}
+          </button>
         </li>
         <li>
-          <Link
-            href="/"
-            onClick={onNavegar}
-            className="flex min-h-row items-center gap-3 rounded-lg px-3 py-2 text-body text-foreground transition-colors hover:bg-muted"
-          >
+          <button type="button" onClick={() => void executar("sair")} className={CLASSE_ACAO}>
             <LogOut aria-hidden="true" className="size-5 shrink-0" />
-            Sair
-          </Link>
+            {emAndamento === "sair" ? "Saindo…" : "Sair"}
+          </button>
         </li>
       </ul>
     </div>
   )
 }
+
+const CLASSE_ACAO =
+  "flex min-h-row w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-body text-foreground transition-colors hover:bg-muted"

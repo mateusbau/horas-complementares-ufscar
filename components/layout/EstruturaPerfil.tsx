@@ -6,6 +6,7 @@
 
 import type { ReactNode } from "react"
 
+import { GuardaSessao } from "@/components/layout/GuardaSessao"
 import { MobileNav } from "@/components/layout/MobileNav"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { ID_CONTEUDO } from "@/components/layout/SkipLink"
@@ -14,6 +15,7 @@ import type { Perfil } from "@/lib/types"
 export function EstruturaPerfil({ perfil, children }: { perfil: Perfil; children: ReactNode }) {
   return (
     <div className="flex flex-col md:flex-row">
+      <GuardaSessao perfil={perfil} />
       <Sidebar perfil={perfil} />
       <MobileNav perfil={perfil} />
       <main id={ID_CONTEUDO} tabIndex={-1} className="min-w-0 flex-1 scroll-mt-(--altura-barra)">

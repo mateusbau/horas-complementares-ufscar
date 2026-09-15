@@ -159,3 +159,45 @@ oficial publicado pela PROGRAD, e ela trouxe mais do que o fator. Domínio, seed
 
 **Pendente.** Confirmar o fator de 15 h com a coordenação. As telas 04 e 07 (etapas 7 e 10)
 precisam pedir horas nos tipos em horas e mostrar o aviso de teto, já pronto no domínio.
+
+---
+
+## 2026-09-15 · Etapa 4 — Login (tela 01)
+
+**Feito.** A vitrine de tokens em `/` virou a tela de login. Ela tem o perfil de acesso, os
+campos institucionais, "Esqueci minha senha" e os dois caminhos de entrada. A sessão simulada
+foi para o `storage.ts` (iniciar, obter, trocar de perfil, encerrar), e "Trocar de perfil" e
+"Sair" da sidebar passaram a usá-la. As telas com navegação agora exigem sessão. Os destinos
+de cada perfil ficam num só lugar, `lib/rotas.ts`. Também entrou o componente `Campo`
+(label, apoio e erro ligados ao controle), reutilizável na tela 04, e o `input` do shadcn,
+pelo procedimento obrigatório. Verificado no navegador em 1280 e 375 px, com A−/A/A+ e alto
+contraste, por teclado e nos fluxos de sessão.
+
+**Decisões.**
+- **Visitante discente cai em `/painel`**, criado na etapa 5 desta mesma execução.
+- **Visitante docente cai em `/docente/casca`**, temporariamente, até a tela 06 nascer na
+  etapa 9. Nunca em 404.
+- **"Entrar" com os campos é simulado:** valida os campos e abre os mesmos dados de
+  demonstração. O formulário diz isso por escrito, para quem testar com as próprias
+  credenciais não estranhar ver a Ana.
+- **Perfil com rádios nativos:** Tab e setas funcionam sem código extra. O foco é desenhado no
+  cartão inteiro, e o indicador visual (círculo marcado) não depende de cor.
+- **Validação ao sair do campo, com duas exceções:**
+  - campo nunca editado não mostra erro ao receber Tab (atravessar não é engano);
+  - se o foco sai para um botão do formulário, a validação é pulada, porque o envio valida
+    tudo.
+
+  A segunda exceção corrige um defeito achado na verificação: o erro aparecia no `mousedown`,
+  empurrava o "Entrar" para baixo, e o clique se perdia.
+- **A guarda de sessão não bloqueia a tela:** a verificação leva os mesmos 300 ms do skeleton.
+  Link direto para a área do outro perfil atualiza a sessão, e a rota vence.
+- **"Esqueci minha senha" abre uma explicação,** não uma página que não existe no protótipo.
+- **Títulos hifenizam só palavras longas** (regra global de `h1` a `h3`), e o título do login
+  tem hífen condicional. Em 375 px com A+, "Complementares" vazava da tela; o Chrome no
+  Windows não tem dicionário de português e quebrava em "Complementar-es".
+- **O push da etapa 4 foi junto com o da etapa 5,** para não publicar o caminho do visitante
+  discente em 404.
+
+**Pendente.**
+- `INICIO_DO_PERFIL.docente` aponta para `/docente/casca`; trocar para `/docente` na etapa 9.
+- Na tela 04, a validação ao sair deve seguir as mesmas duas exceções do login.

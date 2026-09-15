@@ -35,9 +35,12 @@ import type {
   Docente,
   EstadoDemo,
   ItemFila,
+  ModoEntrada,
   NovaAtividade,
   NovoParecer,
+  Perfil,
   Progresso,
+  Sessao,
   StatusAtividade,
 } from "./types"
 
@@ -266,6 +269,67 @@ export async function registrarParecer(id: string, parecer: NovoParecer): Promis
   estado.atividades[indice] = resultado
   gravar(estado)
   return copia(resultado)
+}
+
+// --- Sessão simulada ------------------------------------------------------------------------
+// Não há autenticação real: a sessão só guarda o perfil escolhido na entrada.
+// Com backend, estas funções passam a falar com o serviço de autenticação.
+
+const CHAVE_SESSAO = "horas-complementares:sessao"
+
+function ehSessao(valor: unknown): valor is Sessao {
+  if (typeof valor !== "object" || valor === null) return false
+  const s = valor as Partial<Sessao>
+  return (
+    (s.perfil === "discente" || s.perfil === "docente") &&
+    (s.modo === "institucional" || s.modo === "visitante") &&
+    typeof s.iniciadaEm === "string"
+  )
+}
+
+function lerSessao(): Sessao | null {
+  try {
+    const bruto = armazenamento().getItem(CHAVE_SESSAO)
+    const valor: unknown = bruto ? JSON.parse(bruto) : null
+    return ehSessao(valor) ? valor : null
+  } catch {
+    return null
+  }
+}
+
+function gravarSessao(sessao: Sessao): void {
+  armazenamento().setItem(CHAVE_SESSAO, JSON.stringify(sessao))
+}
+
+export async function iniciarSessao(perfil: Perfil, modo: ModoEntrada): Promise<Sessao> {
+  await esperar()
+  const sessao: Sessao = { perfil, modo, iniciadaEm: new Date().toISOString() }
+  gravarSessao(sessao)
+  return copia(sessao)
+}
+
+/** `null` quando ninguém entrou (ou depois de sair). */
+export async function obterSessao(): Promise<Sessao | null> {
+  await esperar()
+  return copia(lerSessao())
+}
+
+/** Troca o perfil mantendo o modo de entrada; sem sessão, entra como visitante. */
+export async function trocarPerfil(perfil: Perfil): Promise<Sessao> {
+  await esperar()
+  const atual = lerSessao()
+  const sessao: Sessao = {
+    perfil,
+    modo: atual?.modo ?? "visitante",
+    iniciadaEm: atual?.iniciadaEm ?? new Date().toISOString(),
+  }
+  gravarSessao(sessao)
+  return copia(sessao)
+}
+
+export async function encerrarSessao(): Promise<void> {
+  await esperar()
+  armazenamento().removeItem(CHAVE_SESSAO)
 }
 
 // --- Preferências de acessibilidade ------------------------------------------------------

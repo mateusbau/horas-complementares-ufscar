@@ -12,6 +12,17 @@ export type { GrupoId, TipoAtividadeId } from "./catalogo"
 /** Perfil de acesso: define a navegação (sidebar) após a entrada. */
 export type Perfil = "discente" | "docente"
 
+/** Como a pessoa entrou: pelos campos institucionais (simulados) ou como visitante. */
+export type ModoEntrada = "institucional" | "visitante"
+
+/** Sessão simulada: não há autenticação real no protótipo. */
+export type Sessao = {
+  perfil: Perfil
+  modo: ModoEntrada
+  /** Data e hora ISO. */
+  iniciadaEm: string
+}
+
 export type Discente = {
   id: string
   nome: string
