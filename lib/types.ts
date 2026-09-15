@@ -214,6 +214,8 @@ export type OpcaoFechamento = {
   excede: boolean
   /** Com esta opção, o aluno passa a ter os dois tipos diferentes exigidos. */
   atendeTiposDistintos: boolean
+  /** 1 = mais simples de obter (NIVEIS_ESFORCO, classificação nossa). */
+  nivelEsforco: number
 }
 
 // --- Fila do docente -------------------------------------------------------------

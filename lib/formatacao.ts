@@ -40,6 +40,22 @@ export function formatarQuantidade(tipoId: TipoAtividadeId, quantidade: number):
   return `${numero.format(quantidade)} ${quantidade === 1 ? rotulo.singular : rotulo.plural}`
 }
 
+/**
+ * Requisito do tipo como citação da Tabela 7: "180 h/semestre valem 3 créditos",
+ * "1 trabalho vale 2 créditos". É o único lugar em que a hora aparece como
+ * requisito (régua do crédito, CLAUDE.md); a abreviação "h" é da tabela.
+ */
+export function formatarRequisito(tipoId: TipoAtividadeId): string {
+  const tipo = obterTipo(tipoId)
+  const verbo = tipo.requisito.startsWith("1 ") ? "vale" : "valem"
+  return `${tipo.requisito} ${verbo} ${formatarCreditos(tipo.creditos)}`
+}
+
+/** Total secundário, sempre rotulado sem ambiguidade: "N de M horas contabilizadas". */
+export function formatarHorasContabilizadas(obtidas: number, exigidas: number): string {
+  return `${numero.format(obtidas)} de ${numero.format(exigidas)} horas contabilizadas`
+}
+
 /** Aceita data (AAAA-MM-DD, lida como data local) ou data e hora ISO. */
 function paraData(valor: string): Date {
   const soData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor)

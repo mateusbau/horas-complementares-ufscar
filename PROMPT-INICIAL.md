@@ -296,20 +296,30 @@ Sem barra lateral. Card centralizado, coluna de 640 px máximo.
 ### 02 · Painel do Discente — `/painel`
 h1 "Painel", subtítulo "Acompanhe o andamento das suas horas complementares no curso.", ação
 primária **Nova atividade**.
-- **Nível 1 — Progresso total**: anel SVG com o laranja decorativo `#EA580C` sobre trilha
-  `#E7E5E4`. Ao centro, "87 de 200 h"; abaixo, "43,5% concluído"; e "Faltam 113 h para a
-  integralização". O anel tem `role="img"` e `aria-label` com o mesmo texto.
-- **Nível 2 — Por categoria**: uma barra horizontal por categoria, com legenda
-  "marcador = carga mínima exigida" e, em cada barra, um **marcador vertical** na posição do
-  mínimo. Este marcador é o diferencial do projeto — ele responde "ainda falta alguma
-  categoria obrigatória?", e não apenas "quanto já fiz".
-  - Ensino · 42 / 60 h · "Carga mínima: 30 h" · badge "mínimo cumprido" + `check-circle`
-  - Pesquisa · 25 / 70 h · "Carga mínima: 40 h · faltam 15 h"
-  - Extensão · 20 / 70 h · "Carga mínima: 40 h · faltam 20 h"
-- **Acesso rápido**: quatro cards — Simulador de horas ("Teste combinações antes de
-  registrar."), Catálogo de atividades ("O que é aceito e o teto de horas."), Relatório ("Gere
-  o comprovante consolidado."), Central de avisos ("Prazos e retornos dos docentes.") com
-  contador "3 novos".
+> Reescrito em 2026-09-15 pelo modelo de créditos (`ADENDO-DOMINIO.md`, seções 5 e 10) e pela
+> régua do crédito (`CLAUDE.md`): o crédito é a medida principal; a hora aparece só como
+> requisito do tipo ou como "horas contabilizadas". Não há categoria, teto nem mínimo.
+
+- **Seu progresso** (nível 1): anel SVG com o laranja decorativo `#EA580C` sobre trilha
+  `#E7E5E4`. Ao centro, "4 de 6" e "créditos"; ao lado, "66,7% concluído", "60 de 90 horas
+  contabilizadas" e "Faltam 2 créditos (30 horas contabilizadas) para a integralização." O
+  anel tem `role="img"` e `aria-label` com o mesmo texto. Abaixo, com ícone e texto, a
+  exigência da seção 3.5.4 do PPC: "Tipos de atividade diferentes: 2 de 2 — exigência cumprida."
+- **O que fecha o que falta** (nível 2): "Faltam 2 créditos. Isso equivale a, por exemplo:" e
+  uma opção por nível de esforço, do mais simples ao mais difícil de conseguir (classificação
+  `NIVEIS_ESFORCO`): "4 palestras não associadas a eventos · 2 créditos", "40 horas de
+  disciplina eletiva · 2 créditos", "120 horas de participação em projeto · 2 créditos", "1
+  publicação de resumo ou pôster · 2 créditos". Cada opção cita o requisito da Tabela 7 (ex.:
+  "180 h/semestre valem 3 créditos").
+- **De onde vieram seus créditos**: uma barra por grupo visual (Ensino e monitoria, Pesquisa e
+  publicações, Extensão e eventos, Representação estudantil), em relação aos 6 créditos
+  exigidos, com os tipos que contribuíram. **Sem marcador de mínimo**, sempre com o texto de
+  `AVISO_AGRUPAMENTO`.
+- **Acesso rápido**: quatro cards — Simulador de créditos ("Teste combinações antes de
+  registrar."), Catálogo de atividades ("O que é aceito e quanto vale cada tipo."), Relatório
+  ("Gere o comprovante consolidado."), Central de avisos ("Prazos e retornos dos docentes.")
+  com contador real das atividades que aguardam ação do aluno ("2 atividades aguardam sua
+  ação"), no lugar do "3 novos" fixo, que não correspondia a nenhum dado.
 
 ### 03 · Minhas atividades — `/atividades`
 h1 "Minhas atividades", subtítulo "7 registros · 87 h contabilizadas de 200 h.", ação

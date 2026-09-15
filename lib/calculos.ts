@@ -19,6 +19,7 @@ import {
   NOTA_DUPLA_CONTAGEM,
   NOTA_SEMESTRE_COMPLETO,
   UNIDADES,
+  esforcoDe,
   medidoEmHoras,
   obterTipo,
   type TipoAtividade,
@@ -162,8 +163,8 @@ export function calcularProgresso(atividades: readonly Atividade[]): Progresso {
  * - Por unidade: considera o que o aluno já tem do tipo (uma palestra validada
  *   faz faltarem só 3 para 2 créditos) e pode exceder o que falta.
  * Se os créditos já bastam mas falta o segundo tipo diferente, só tipos novos
- * entram, com a meta de 1 crédito. Ordem: exatas primeiro, depois as que
- * excedem; empate pela ordem da Tabela 7.
+ * entram, com a meta de 1 crédito. Ordem: esforço de obtenção, do mais simples
+ * ao mais difícil (NIVEIS_ESFORCO, classificação nossa em lib/catalogo.ts).
  */
 export function opcoesParaFechar(progresso: Progresso): OpcaoFechamento[] {
   const faltaTipo = progresso.tiposDistintos < TIPOS_DISTINTOS_EXIGIDOS
@@ -206,10 +207,29 @@ export function opcoesParaFechar(progresso: Progresso): OpcaoFechamento[] {
       excede: creditos > meta,
       atendeTiposDistintos:
         progresso.tiposDistintos + (tipoNovo ? 1 : 0) >= TIPOS_DISTINTOS_EXIGIDOS,
+      nivelEsforco: esforcoDe(tipo.id).nivel,
     })
   }
 
-  return opcoes.sort((a, b) => Number(a.excede) - Number(b.excede))
+  return opcoes.sort((a, b) => {
+    const ea = esforcoDe(a.tipoId)
+    const eb = esforcoDe(b.tipoId)
+    return ea.nivel - eb.nivel || ea.posicao - eb.posicao
+  })
+}
+
+/**
+ * O que o painel mostra: a opção mais simples de cada nível de esforço, até o
+ * nível indicado (por padrão, os quatro primeiros — cargo eletivo não é uma
+ * sugestão prática). Uma por nível dá variedade real ao "por exemplo".
+ */
+export function sugestoesParaFechar(progresso: Progresso, ateNivel = 4): OpcaoFechamento[] {
+  const vistas = new Set<number>()
+  return opcoesParaFechar(progresso).filter((opcao) => {
+    if (opcao.nivelEsforco > ateNivel || vistas.has(opcao.nivelEsforco)) return false
+    vistas.add(opcao.nivelEsforco)
+    return true
+  })
 }
 
 // --- Cadastro (tela 04): as três validações do PPC antes do envio ----------------

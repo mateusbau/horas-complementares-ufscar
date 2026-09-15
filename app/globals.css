@@ -84,6 +84,14 @@ table, .tabular { font-variant-numeric: tabular-nums; }
   --muted: #F5F5F4;
 
   /*
+   * Trilha de gráfico (anel e barras de progresso): #E7E5E4, como a borda, mas
+   * token próprio porque o alto contraste escurece --border. Com a trilha
+   * escura, o laranja do progresso ficaria a ~1,4:1 dela e sumiria em escala
+   * de cinza; a trilha fica clara nos dois modos.
+   */
+  --trilha: #E7E5E4;
+
+  /*
    * Escurecimento de fundo atrás de modal e menu deslizante: --foreground a 50 %.
    * É o menor valor redondo em que a superfície branca do modal atinge 3:1 contra
    * o que fica atrás dela (WCAG 1.4.11): 3,47:1 sobre a página e 3,35:1 sobre um
@@ -156,6 +164,7 @@ html.alto-contraste {
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-overlay: var(--overlay);
+  --color-trilha: var(--trilha);
 
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);

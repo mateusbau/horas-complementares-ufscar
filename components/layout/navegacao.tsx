@@ -41,8 +41,8 @@ type ItemNavegacao = {
   exato?: boolean
 }
 
-// TEMPORÁRIO (etapa 3): "Casca da interface" é a rota de teste da casca.
-// Sai quando as telas reais existirem (etapas 5 e 9).
+// TEMPORÁRIO: "Casca da interface" do docente é a rota de teste da casca e o
+// destino provisório do docente (lib/rotas.ts). Sai na etapa 9, com a tela 06.
 const ITENS: Record<Perfil, ItemNavegacao[]> = {
   discente: [
     { href: "/painel", rotulo: "Painel", icone: LayoutDashboard },
@@ -52,7 +52,6 @@ const ITENS: Record<Perfil, ItemNavegacao[]> = {
     { href: "/relatorio", rotulo: "Relatório", icone: FileText },
     { href: "/avisos", rotulo: "Central de avisos", icone: Bell },
     { href: "/ajuda", rotulo: "Ajuda", icone: CircleQuestionMark },
-    { href: "/casca", rotulo: "Casca da interface", icone: Shapes },
   ],
   docente: [
     { href: "/docente", rotulo: "Painel do docente", icone: LayoutDashboard, exato: true },

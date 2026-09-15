@@ -2,10 +2,9 @@
 
 // components/demonstracao/VitrineCasca.tsx
 //
-// TEMPORÁRIO (etapa 3): rota de teste da casca, em /casca e /docente/casca.
-// Exercita a navegação, o PageHeader, a leitura real do storage (com o atraso
-// de 300 ms e o skeleton) e os estados vazio e de erro. Sai quando as telas
-// reais existirem (etapas 5 e 9).
+// TEMPORÁRIO: rota de teste da casca, hoje só em /docente/casca (a do discente
+// saiu na etapa 5, com o painel). Também é o destino provisório do docente ao
+// entrar (lib/rotas.ts). Sai na etapa 9, com a tela 06.
 
 import { RotateCw, SearchX } from "lucide-react"
 import Link from "next/link"
@@ -17,6 +16,7 @@ import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
+import { INICIO_DO_PERFIL } from "@/lib/rotas"
 import { listarAtividades, listarFilaValidacao } from "@/lib/storage"
 import type { Perfil } from "@/lib/types"
 
@@ -115,10 +115,10 @@ export function VitrineCasca({ perfil }: { perfil: Perfil }) {
               Anunciar mensagem de teste
             </Button>
             <Link
-              href={outro === "docente" ? "/docente/casca" : "/casca"}
+              href={INICIO_DO_PERFIL[outro]}
               className="inline-flex min-h-target items-center text-accent-text underline underline-offset-4 hover:decoration-2"
             >
-              Ver a casca do perfil {outro}
+              {outro === "discente" ? "Ir para o painel do discente" : "Ver a casca do perfil docente"}
             </Link>
           </div>
         </Secao>

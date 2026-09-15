@@ -164,6 +164,7 @@ todo `npm run build` e reprova o build se encontrar alguma classe ou padrão for
 | Fundo suave / item ativo | `bg-accent-soft` |
 | Neutros | `bg-background`, `bg-surface`, `bg-muted`, `border-border`, `border-input-border`, `text-foreground`, `text-muted-foreground` |
 | Escurecimento de fundo (modal, menu deslizante) | somente `bg-overlay`, sem modificador de opacidade (ver "Decisão: overlay") |
+| Trilha de gráfico (anel, barras de progresso) | `stroke-trilha`, `bg-trilha` — não use `border` como trilha: o alto contraste escurece a borda e o progresso em laranja some contra ela |
 | Status | `text-success` + `bg-success-bg`, `text-review` + `bg-review-bg`, `text-pending` + `bg-pending-bg`, `text-danger` + `bg-danger-bg` |
 | Tipografia | `text-h1`, `text-h2`, `text-h3`, `text-body`, `text-label`, `text-caption` (tamanho, altura de linha e peso juntos) |
 | Altura de linha | `leading-heading` (1,2), `leading-body` (1,5), `leading-secondary` (1,45) |

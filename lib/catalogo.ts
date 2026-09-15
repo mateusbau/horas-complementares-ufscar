@@ -429,6 +429,53 @@ export function medidoEmHoras(tipo: TipoAtividade): tipo is TipoAtividade & { ca
   return tipo.cargaMaxima !== null
 }
 
+// --- Esforço de obtenção -------------------------------------------------------
+// Classificação NOSSA, não do PPC: serve só para ordenar as sugestões do bloco
+// "o que fecha o que falta", do mais simples ao mais difícil de conseguir. O
+// critério é o que a atividade exige do aluno para existir: participar de algo
+// aberto; ser aprovado numa disciplina; ser selecionado ou ter vínculo com um
+// projeto ou setor; produzir e publicar; ser eleito. Dentro de cada nível, a
+// ordem é a da dedicação típica, da menor para a maior.
+
+export const NIVEIS_ESFORCO: readonly {
+  nivel: number
+  nome: string
+  tipos: readonly TipoAtividadeId[]
+}[] = [
+  {
+    nivel: 1,
+    nome: "Participação aberta",
+    tipos: ["palestra", "congresso-simposio", "feira", "competicao", "organizacao-evento"],
+  },
+  { nivel: 2, nome: "Disciplina com aprovação", tipos: ["disciplina-eletiva", "aciepes"] },
+  {
+    nivel: 3,
+    nome: "Vínculo ou seleção",
+    tipos: [
+      "participacao-projeto",
+      "extensao",
+      "iniciacao-cientifica",
+      "suporte-ti",
+      "apoio-tecnico",
+      "monitoria",
+      "bolsista-atividade",
+      "bolsista-treinamento",
+      "estagio-empresa-junior",
+    ],
+  },
+  { nivel: 4, nome: "Produção científica", tipos: ["resumo-poster", "artigo-completo"] },
+  { nivel: 5, nome: "Cargo eletivo", tipos: ["presidencia-ca-atletica"] },
+]
+
+/** Nível (1 = mais simples) e posição dentro do nível, para ordenar sugestões. */
+export function esforcoDe(tipoId: TipoAtividadeId): { nivel: number; posicao: number } {
+  for (const n of NIVEIS_ESFORCO) {
+    const posicao = n.tipos.indexOf(tipoId)
+    if (posicao !== -1) return { nivel: n.nivel, posicao }
+  }
+  throw new Error(`Tipo sem nível de esforço: ${tipoId}`)
+}
+
 // --- Grupos --------------------------------------------------------------------
 
 export const GRUPOS: readonly { id: GrupoId; nome: string }[] = [

@@ -201,3 +201,56 @@ contraste, por teclado e nos fluxos de sessão.
 **Pendente.**
 - `INICIO_DO_PERFIL.docente` aponta para `/docente/casca`; trocar para `/docente` na etapa 9.
 - Na tela 04, a validação ao sair deve seguir as mesmas duas exceções do login.
+
+---
+
+## 2026-09-15 · Etapa 5 — Painel do discente (tela 02)
+
+**Feito.** Painel em `/painel` com quatro blocos: "Seu progresso" (anel), "O que fecha o que
+falta", "De onde vieram seus créditos" (barras por grupo) e "Acesso rápido". A rota de teste
+`/casca` e o item dela na navegação do discente saíram; a do docente fica até a etapa 9. O
+texto da tela 02 foi reescrito na especificação. Entrou também uma página própria de endereço
+inexistente, em português. Verificado em 1280 e 375 px, com A−/A/A+ e alto contraste, por
+teclado e no caminho da banca: um clique em "Entrar como visitante" leva ao painel carregado.
+
+**Decisões.**
+- **Régua do crédito** (decisão da equipe, vale para todas as telas): o crédito é a medida
+  principal ("4 de 6 créditos"); a hora só aparece como requisito do tipo ("180 h/semestre
+  valem 3 créditos") ou como total secundário, "60 de 90 horas contabilizadas", nunca
+  "cumpridas".
+
+  Motivo: a carga do certificado não é a carga contabilizada. Um curso de 40 h pode valer 2
+  créditos, ou seja, 30 horas contabilizadas. Se a interface disser só "horas", o aluno soma
+  os certificados, chega a outro número e conclui que o sistema errou. O sistema existe
+  justamente para mostrar essa diferença.
+- **Sugestões ordenadas por esforço de obtenção**, em cinco níveis pelo que a atividade exige
+  do aluno:
+  1. participação aberta;
+  2. disciplina com aprovação;
+  3. vínculo ou seleção;
+  4. produção científica;
+  5. cargo eletivo.
+
+  O painel mostra a opção mais simples de cada um dos quatro primeiros níveis, para dar
+  variedade real. A classificação é nossa, não do PPC, e está declarada assim no código
+  (`NIVEIS_ESFORCO`). A ordenação neutra punha "bolsista atividade", a menos acessível, em
+  primeiro.
+- **A exigência de dois tipos diferentes** aparece no próprio bloco de progresso, com ícone e
+  texto.
+- **Barras por grupo sem marcador de mínimo**, com `AVISO_AGRUPAMENTO`, em relação ao total
+  exigido, listando os tipos que contribuíram.
+- **Contador da central de avisos real** (atividades que aguardam ação do aluno), no lugar do
+  "3 novos" fixo da especificação, que não correspondia a nenhum dado.
+- **Cartões de atalho inteiros como link:** um só Tab e um só contorno de foco. O nome
+  acessível é o título, e a descrição vai por `aria-describedby`.
+
+**Corrigido durante a verificação** (só as capturas mostraram):
+- No alto contraste, a trilha do anel e das barras usava a cor de borda, que escurece. O
+  laranja do progresso ficava a ~1,4:1 dela e sumia em escala de cinza. Criado o token
+  `--trilha`, que não muda.
+- O contador "2 atividades aguardam sua ação" quebrava dentro da pílula; virou linha de texto.
+
+**Pendente.**
+- "Nova atividade" e os atalhos levam a telas das etapas 6 a 12; até lá, caem na página de
+  não encontrada.
+- O docente continua caindo em `/docente/casca` até a etapa 9.

@@ -1,7 +1,7 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 3 concluídas; próxima é a etapa 4 (Login).
+Estado em **2026-09-15**: etapas 1 a 5 concluídas e publicadas; próxima é a etapa 6 (Listagem).
 
 ---
 
@@ -37,7 +37,15 @@ verificador de tokens (ver seção 4).
 | 2 · Domínio | Concluída e aprovada (refeita pelo adendo) | `6fbd57a` |
 | Correções pós-etapa 2 (textos das telas 06 e 07b, seed) | Concluídas | `6dfd4c9` |
 | 3 · Casca | Concluída e verificada no navegador (teclado, 375 px, A−/A/A+, hidratação) | `23a0845` + commit de fechamento |
-| 4 a 12 | Não iniciadas | — |
+| Correção do domínio pela seção 3.5.4 do PPC | Concluída | `711d4ea` |
+| 4 · Login (tela 01) | Concluída e verificada | `8eb51fa` |
+| 5 · Painel do discente (tela 02) | Concluída e verificada | commit da etapa 5 |
+| 6 a 12 | Não iniciadas | — |
+
+**Pendência explícita:** o visitante docente cai em `/docente/casca`
+(`INICIO_DO_PERFIL.docente`, em `lib/rotas.ts`) até a tela 06 nascer em `/docente`, na etapa
+9. Nessa etapa, trocar o destino, remover `/docente/casca`, `components/demonstracao/` e o
+item "Casca da interface" da navegação docente.
 
 Arquivos da etapa 3:
 
@@ -49,10 +57,19 @@ Arquivos da etapa 3:
 - `components/ui/dialog.tsx` e `sheet.tsx` — do shadcn, já ajustados pelo procedimento.
 - `app/(discente)/layout.tsx` e `app/(docente)/layout.tsx` — sidebar de cada perfil.
 - `app/layout.tsx` — script de preferências no `<head>`, região ao vivo, link de pular, barra.
-- **Temporários** (remover quando as telas reais existirem): rotas `/casca` e
-  `/docente/casca`, `components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface"
-  nas duas navegações (`components/layout/navegacao.tsx`). A página `/` ainda é a vitrine de
-  tokens da etapa 1; vira o login na etapa 4.
+- **Temporários** (remover na etapa 9): a rota `/docente/casca`,
+  `components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" na navegação
+  docente. A `/casca` do discente já saiu na etapa 5.
+
+Arquivos das etapas 4 e 5:
+
+- `app/page.tsx` e `components/entrada/` — tela de login (01).
+- `components/formulario/Campo.tsx` — campo acessível reutilizável (label, apoio, erro).
+- `components/layout/GuardaSessao.tsx` e `lib/rotas.ts` — sessão exigida nas telas com
+  navegação; destinos de cada perfil.
+- `app/(discente)/painel/page.tsx`, `components/painel/` e `components/progresso/` — painel
+  do discente (02): anel, "o que fecha o que falta", barras por grupo, acesso rápido.
+- `app/not-found.tsx` — página própria para endereço inexistente, em português.
 
 ---
 
@@ -123,18 +140,15 @@ Arquivos da etapa 3:
 
 ## 5. O que falta, por etapa
 
-- **4 · Login (01):** substituir a vitrine em `/`. "Entrar como visitante" em um clique, caindo
-  no painel do perfil escolhido. Criar a sessão simulada no `storage.ts` e ligar a ela o
-  "Trocar de perfil" e o "Sair" da sidebar (hoje são links simples para `/docente`, `/painel`
-  e `/`). O `<main>` precisa de `id="conteudo"`.
-- **5 · Painel do discente (02):** conforme a seção 5 do adendo (anel com horas e créditos,
-  bloco "o que fecha o que falta" via `opcoesParaFechar`, barras por grupo **sem** marcador
-  de mínimo). Escolher quais opções destacar: a ordenação neutra põe "bolsista atividade"
-  primeiro. Remover `/casca` e o item temporário da navegação discente.
 - **6 · Listagem (03):** filtro, busca, ordenação, estado vazio (`?demo=vazio`), cards no mobile.
-- **7 · Formulário (04):** quantidade na unidade do tipo (`pergunta` do catálogo), as três
-  validações (`avisosDeCadastro`, `validarNovaAtividade`), comprovante exigido em texto
-  literal, validação no blur, rascunho automático (criar funções de rascunho no storage).
+  Pela régua do crédito: coluna de tipo da Tabela 7 (não "categoria") e créditos como número
+  principal; atualizar os textos da tela 03 no `PROMPT-INICIAL.md`.
+- **7 · Formulário (04):** quantidade na unidade do tipo (`pergunta` do catálogo; **horas do
+  comprovante** nos tipos "N h/semestre"), as validações (`avisosDeCadastro`, inclusive o
+  aviso de horas acima do máximo, e `validarNovaAtividade`), comprovante exigido em texto
+  literal, rascunho automático (criar funções de rascunho no storage). Validação ao sair do
+  campo com as duas exceções do login (campo não editado; foco indo a botão do formulário) e
+  o componente `components/formulario/Campo`.
 - **8 · Detalhe (05):** linha do tempo a partir de `historico`; parecer do adendo no #5.
 - **9 · Painel do docente (06) + fila completa:** remover `/docente/casca` e o item temporário.
   Decidir como o docente chega ao catálogo: `/catalogo` está no grupo `(discente)` e mostraria
@@ -147,37 +161,38 @@ Arquivos da etapa 3:
   `/docente/orientandos`, `/docente/relatorio` sem 404 (o `EstadoErro` já aponta para `/ajuda`);
   favicon próprio (ainda é o do Next); critérios de aceite da seção 11 do prompt.
 
-**Textos da especificação ainda desatualizados**, à espera de decisão da equipe (lista completa
-na última entrada do `DEV-LOG.md`): falam em "categoria", "horas solicitadas" ou "teto" nas
-telas 02, 03, 05, 06, 07 e 07b.
+**Textos da especificação ainda desatualizados** (lista na entrada "Correções pós-etapa 2" do
+`DEV-LOG.md`): falam em "categoria", "horas solicitadas" ou "teto" nas telas 03, 05, 06, 07 e
+07b. A tela 02 já foi reescrita. Regra combinada: corrigir o texto de cada tela na etapa em
+que ela for construída, pela régua do crédito.
 
 ---
 
-## 6. Próxima ação concreta: etapa 4 (Login)
+## 6. Próxima ação concreta: etapa 6 (Listagem, tela 03)
 
-Especificação na tela 01 da seção 8 do `PROMPT-INICIAL.md`. Em resumo:
+Especificação na tela 03 da seção 8 do `PROMPT-INICIAL.md`, lida pela régua do crédito:
+primeiro corrigir os textos da tela 03 na especificação (colunas, busca, estado vazio),
+depois construir `app/(discente)/atividades/page.tsx` com `listarAtividades()`, filtro por
+status com contagem, busca, ordenação, estado vazio em `?demo=vazio` e cards no mobile.
 
-1. Substituir a vitrine de tokens em `app/page.tsx` pela tela de login: sem sidebar, card
-   centralizado de até 640 px, perfil de acesso como `radiogroup` navegável por Tab e setas,
-   os dois campos, "Esqueci minha senha", e os botões **Entrar** e **Entrar como visitante
-   (dados de demonstração)**. O `<main>` mantém `id="conteudo"` e `tabIndex={-1}`.
-2. Criar a sessão simulada no `storage.ts` (perfil escolhido) e ligar a ela o "Trocar de
-   perfil" e o "Sair" do `BlocoPerfil` (`components/layout/navegacao.tsx`).
-3. "Entrar como visitante" precisa funcionar em um clique e cair no painel do perfil. Como
-   `/painel` e `/docente` só surgem nas etapas 5 e 9, decidir com a equipe para onde o
-   visitante vai até lá.
+**Como verificar no navegador.** As verificações usam `playwright-core` dirigindo o Chrome
+instalado, com scripts fora do repositório. Para repetir: instalar `playwright-core` numa
+pasta temporária, subir `npm run build && npm run start` e, para cada tela:
+- capturas em 1280 e 375 px, com A−, A, A+ e alto contraste. As preferências e a sessão
+  podem ser gravadas no `localStorage` antes de carregar a página
+  (`horas-complementares:preferencias`, `horas-complementares:sessao`);
+- teclado: link de pular, ordem do Tab, foco visível, Esc devolvendo o foco;
+- sem rolagem horizontal, um único h1, títulos sem salto, sem erro de console ou de hidratação.
 
-**Como verificar no navegador.** A verificação da etapa 3 usou `playwright-core` dirigindo
-o Chrome instalado, com scripts fora do repositório. Para repetir: instalar `playwright-core`
-numa pasta temporária, subir `npm run build && npm run start`, e conferir:
-- teclado (primeiro Tab no link de pular, foco visível, Esc devolvendo o foco);
-- 375 px com A−, A e A+ sem rolagem horizontal;
-- recarga sem piscar e sem erro de hidratação no console.
+**Olhe as capturas, não só os testes.** Nas etapas 3 a 5, as capturas pegaram:
+- o botão sem borda num link;
+- o título vazando em A+;
+- os dois cartões aparentando seleção (era a transição);
+- o contador quebrando dentro da pílula;
+- a trilha do gráfico sumindo no alto contraste.
 
-**Olhe também as capturas de tela**: na etapa 3, os três defeitos encontrados só apareceram
-nelas. Espere o fim das animações (160 ms) antes de capturar. Evite `waitUntil:
-"networkidle"`: os prefetches dos links da navegação para rotas ainda inexistentes impedem
-que a rede fique ociosa.
+Espere o fim das animações (160 ms) antes de capturar. Evite `waitUntil: "networkidle"`: os
+prefetches dos links para rotas ainda inexistentes impedem que a rede fique ociosa.
 
 ---
 
@@ -197,6 +212,10 @@ que a rede fique ociosa.
 - **Link com aparência de botão:** use `buttonVariants(...)` de `components/ui/button.tsx`,
   que já resolve as classes pelo `cn`. Concatenar classes de variante à mão faz a borda do
   "outline" sumir.
+- **Build com `EPERM` ao apagar arquivo em `.next`** (OneDrive/Windows): apague a pasta `.next`
+  inteira, que é saída de build, e rode o build de novo. Tipos antigos em `.next/dev/types`
+  também quebram o build depois de remover uma rota; mesma solução.
+- **Trilha de gráfico usa `--trilha`, não `--border`**: o alto contraste escurece a borda.
 - **Modal aberto deixa o resto da página inerte** (Base UI). Em testes automatizados,
   `getByRole` não acha o botão que abriu o modal enquanto ele está aberto; use um seletor
   CSS, como `[data-slot="sheet-trigger"]`.
