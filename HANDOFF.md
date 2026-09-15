@@ -1,9 +1,14 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 7 concluídas e publicadas na Vercel (push em `main`).
-Próxima: etapa 8 (Detalhe da atividade). **Antes de começar, leia `PROXIMA-ETAPA.md`** — o que
-sobrou das decisões da equipe (parte já foi aplicada nas etapas 6 e 7) e o escopo de corte.
+Estado em **2026-09-15**: etapas 1 a 11 **implementadas e com build limpo**, no commit `af23db5`
+(push em `main`). **Atenção — leia antes de tudo:** esse commit está marcado como `WIP` de
+propósito. As etapas 9 e 10 foram codificadas, buildadas e verificadas nesta sessão (capturas em
+1280/375 px, alto contraste, A+, teclado e foco — ver seção 6), mas a sessão foi interrompida
+**antes** de escrever a entrada correspondente no `DEV-LOG.md`, o que o `CLAUDE.md` exige no
+mesmo commit de cada etapa. **A próxima sessão deve começar escrevendo essa entrada** (o que foi
+feito, as decisões e os porquês — rascunho de decisões está na seção 6 abaixo) antes de seguir
+para a etapa 12, para o `DEV-LOG.md` não pular direto da etapa 11 para a 12.
 
 ---
 
@@ -47,13 +52,13 @@ verificador de tokens (ver seção 4).
 | 6 · Listagem (tela 03) | Concluída e verificada | `b6c5ee2` |
 | 7 · Formulário (tela 04) | Concluída e verificada | `40cca88` |
 | 8 · Detalhe (tela 05) | Concluída e verificada | `ad5082d` |
-| 11 · Relatório | Concluída e verificada (fora de ordem, ver `PROXIMA-ETAPA.md` seção 0) | commit desta etapa |
-| 9, 10, 12 | Não iniciadas | — |
+| 11 · Relatório | Concluída e verificada (fora de ordem, ver `PROXIMA-ETAPA.md` seção 0) | `53e65b1` |
+| 9 · Painel do docente (06) + fila completa | **Código completo e verificado; falta a entrada no `DEV-LOG.md`** | `af23db5` (WIP) |
+| 10 · Validação (07) + lote (07b) | **Código completo e verificado; falta a entrada no `DEV-LOG.md`** | `af23db5` (WIP) |
+| 12 · Páginas de apoio e varredura final | **Não iniciada** — nada deste escopo foi tocado | — |
 
-**Pendência explícita:** o visitante docente cai em `/docente/casca`
-(`INICIO_DO_PERFIL.docente`, em `lib/rotas.ts`) até a tela 06 nascer em `/docente`, na etapa
-9. Nessa etapa, trocar o destino, remover `/docente/casca`, `components/demonstracao/` e o
-item "Casca da interface" da navegação docente.
+`/docente/casca`, `components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" já
+saíram (etapa 9). `INICIO_DO_PERFIL.docente` (`lib/rotas.ts`) já aponta para `/docente`.
 
 Arquivos da etapa 3:
 
@@ -106,6 +111,35 @@ Arquivos das etapas 8 e 11 (2026-09-15, fora de ordem — ver `PROXIMA-ETAPA.md`
   sidebar, no menu mobile e nas ações/voltar do cabeçalho; `@page { size: A4 portrait; margin:
   ... }` — suporte de impressão usado pelo relatório, mas já vale para qualquer tela.
 
+Arquivos das etapas 9 e 10 (2026-09-15, commit `af23db5` — **WIP, sem entrada no `DEV-LOG.md`
+ainda**; código completo e buildado, ver seção 6 para o rascunho do que a entrada precisa
+cobrir):
+
+- `app/(docente)/docente/page.tsx` e `components/painel/PainelDocente.tsx` — painel do docente
+  (06): `components/docente/IndicadoresDocente.tsx` (4 indicadores em crédito, via nova
+  `obterEstatisticasDocente()` em `lib/storage.ts`), `components/docente/FilaValidacao.tsx`
+  (tabela da fila, reaproveitada em preview e na fila completa) e
+  `components/painel/AcessoRapidoDocente.tsx` (cards de acesso; "Trocar de perfil" é botão, não
+  link).
+- `app/(docente)/docente/fila/page.tsx` e `components/docente/FilaCompleta.tsx` — fila completa
+  ("Ver fila completa" do painel e item de navegação "Fila de validação").
+- `components/catalogo/CatalogoConteudo.tsx` — conteúdo do catálogo (Tabela 7) extraído para um
+  componente compartilhado; `app/(discente)/catalogo/page.tsx` (resolve a pendência antiga de
+  "Ver catálogo" 404) e `app/(docente)/docente/catalogo/page.tsx` o expõem, cada um com a
+  sidebar do próprio perfil.
+- `app/(docente)/docente/validacao/[id]/page.tsx` e `components/docente/ValidacaoAtividade.tsx`
+  — validação individual (07): dados enviados, reclassificação com antes/depois
+  (`compararReclassificacao`), confirmação da regra `**` (monitoria) própria da tela, nota `*`
+  informativa, parecer (aprovar/devolver/recusar) e modal de confirmação para recusar (foco
+  inicial em "Cancelar" via `initialFocus`).
+- `app/(docente)/docente/validacao/lote/page.tsx` e `components/docente/ValidacaoLote.tsx` —
+  validação em lote (07b): abas ARIA manuais pelos quatro grupos (sem componente shadcn de
+  tabs), checkboxes reais com "selecionar todos" indeterminado, contagem em `aria-live`,
+  confirmação antes de aplicar e aplicação **sequencial** no storage (ver seção 7, armadilha
+  nova) com foco devolvido à aba ativa depois.
+- Removidos: `app/(docente)/docente/casca/page.tsx` e `components/demonstracao/VitrineCasca.tsx`
+  (temporários da etapa 3); `lib/rotas.ts` e `components/layout/navegacao.tsx` atualizados.
+
 ---
 
 ## 3. O que cada arquivo de `lib/` faz
@@ -116,7 +150,7 @@ Arquivos das etapas 8 e 11 (2026-09-15, fora de ordem — ver `PROXIMA-ETAPA.md`
 | `calculos.ts` | **Regras, em funções puras.** As únicas constantes `HORAS_POR_CREDITO` (15), `HORAS_EXIGIDAS` (90) e `CREDITOS_EXIGIDOS` (6); `TETOS_POR_TIPO` (vazio, preparado). Conversão quantidade → créditos → horas, progresso, "o que fecha o que falta", as três validações do cadastro, transições de status (envio, reenvio, parecer com reclassificação) e dias de espera. Erros de regra são `ErroDeRegra`, com mensagens prontas para a tela. |
 | `types.ts` | Tipos do domínio: `Atividade`, `Parecer`/`NovoParecer`, `Progresso`, `ItemFila`, `AvisoCadastro`, `OpcaoFechamento`, `Perfil`, `EstadoDemo`. |
 | `mock-data.ts` | Seed da demonstração: a discente Ana Liz Souza (7 atividades), a docente Prof.ª Renata Marques e mais 12 discentes, que formam a fila de 14 itens. Datas relativas ao momento em que o seed é criado. |
-| `storage.ts` | **Única porta de dados.** Funções assíncronas com atraso de 300 ms (listar, obter, criar, atualizar e enviar atividade; progresso; fila; parecer; exportar, importar e reiniciar a demo; pessoas). Exceção síncrona: as preferências de acessibilidade (`lerPreferencias`, `salvarPreferencias`, `SCRIPT_PREFERENCIAS`). Só funciona no navegador. |
+| `storage.ts` | **Única porta de dados.** Funções assíncronas com atraso de 300 ms (listar, obter, criar, atualizar e enviar atividade; progresso; fila; parecer; `obterEstatisticasDocente()` — etapa 9; exportar, importar e reiniciar a demo; pessoas). Exceção síncrona: as preferências de acessibilidade (`lerPreferencias`, `salvarPreferencias`, `SCRIPT_PREFERENCIAS`). Só funciona no navegador. Chamadas em lote (validação em lote) precisam ser sequenciais — ver seção 7. |
 | `formatacao.ts` | Números e datas em pt-BR: "66,7%", "4 créditos", "1 semestre de monitoria", "27/08/2025, 14h32", "9 dias". |
 | `preferencias.ts` | Tipos e aplicação das preferências da barra de acessibilidade no `<html>` (classe `alto-contraste`, atributo `data-tamanho-texto`) e o texto dos anúncios. |
 | `utils.ts` | `cn()` para juntar classes, configurado para reconhecer os tokens próprios. |
@@ -176,42 +210,67 @@ Arquivos das etapas 8 e 11 (2026-09-15, fora de ordem — ver `PROXIMA-ETAPA.md`
 ## 5. O que falta, por etapa
 
 - **8 · Detalhe (05):** concluída (2026-09-15, ver `DEV-LOG.md`).
-- **9 · Painel do docente (06) + fila completa:** remover `/docente/casca` e o item temporário.
-  Decidir como o docente chega ao catálogo: `/catalogo` está no grupo `(discente)` e mostraria
-  a sidebar do discente.
-- **10 · Validação (07) + lote (07b):** reclassificação com antes e depois
-  (`compararReclassificacao`), confirmação do (**) na monitoria, abas pelos quatro grupos.
+- **9 · Painel do docente (06) + fila completa:** **código concluído** (`af23db5`) — falta só a
+  entrada no `DEV-LOG.md`. `/docente/casca` e o item temporário já saíram.
+- **10 · Validação (07) + lote (07b):** **código concluído** (`af23db5`) — falta só a entrada no
+  `DEV-LOG.md`. Reclassificação com antes e depois (`compararReclassificacao`), confirmação do
+  (**) na monitoria, abas pelos quatro grupos, tudo implementado e verificado.
 - **11 · Relatório:** concluída (2026-09-15, ver `DEV-LOG.md`).
-- **12 · Páginas de apoio e varredura final:** `/catalogo`, `/simulador`, `/avisos`, `/ajuda`,
-  `/docente/orientandos`, `/docente/relatorio` sem 404 (o `EstadoErro` já aponta para `/ajuda`);
-  favicon próprio (ainda é o do Next); critérios de aceite da seção 11 do prompt.
+- **12 · Páginas de apoio e varredura final:** **não iniciada.** `/catalogo` do discente já
+  passou a existir de verdade na etapa 9 (não é mais pendência desta etapa); ainda faltam
+  `/simulador`, `/avisos`, `/ajuda`, `/docente/orientandos`, `/docente/relatorio` sem 404 (o
+  `EstadoErro` já aponta para `/ajuda`); favicon próprio (ainda é o do Next); critérios de
+  aceite da seção 11 do prompt; conferência de anonimato. Ver `PROXIMA-ETAPA.md` para o roteiro
+  completo desta etapa.
 
-**Textos da especificação ainda desatualizados** (lista atualizada em `PROXIMA-ETAPA.md`, item
-5): telas 06, 07 e 07b ainda falam em "categoria" ou "horas solicitadas". As telas 02, 03, 04 e
-05 já foram reescritas. Regra combinada: corrigir o texto de cada tela na etapa em que ela for
-construída, pela régua do crédito.
+**Textos da especificação ainda desatualizados:** já corrigidos nas telas 06, 07 e 07b pela
+implementação das etapas 9 e 10 (régua do crédito: "Tipo"/"Créditos" no lugar de
+"Categoria"/"Horas solicitadas", em toda parte). As telas 02 a 07b estão todas atualizadas.
 
 ---
 
-## 6. Próxima ação concreta: etapa 9 (Painel do docente + fila completa)
+## 6. Próxima ação concreta: escrever a entrada do `DEV-LOG.md` das etapas 9 e 10, depois seguir para a 12
 
-Etapas 8 e 11 concluídas em 2026-09-15 (ver `DEV-LOG.md`), fora da ordem original do prompt, por
-instrução explícita da equipe registrada em `PROXIMA-ETAPA.md`, seção 0. Retomando o roteiro do
-`PROMPT-INICIAL.md`: agora etapa 9 (`/docente`, painel e fila), depois a 10 (validação e lote),
-por último a 12.
+**Não recomece as etapas 9 e 10 — o código já existe, já builda limpo e já foi verificado no
+navegador** (capturas em 1280/375 px, alto contraste, A+, teclado e foco — ver lista abaixo).
+O único débito é documental: escreva a entrada no `DEV-LOG.md` (uma para a etapa 9, uma para a
+10, ou uma cobrindo as duas — como as etapas 8+11 fizeram uma entrada cada, mantenha uma por
+etapa) e comite só isso, referenciando ou incorporando o commit `af23db5` (WIP). Depois disso,
+o roteiro segue para a etapa 12 (páginas de apoio e varredura final).
 
-**Pendência que a etapa 9 precisa resolver** (registrada desde a etapa 3): `/docente/casca`,
-`components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" na navegação docente
-são temporários e saem assim que `/docente` (tela 06) nascer — hoje `INICIO_DO_PERFIL.docente`
-(`lib/rotas.ts`) ainda aponta para a casca.
+O que a entrada precisa registrar (decisões já tomadas nesta sessão, não reabrir):
+
+- **Etapa 9.** `/docente` (painel), `/docente/fila` (fila completa — o item de navegação já
+  existia e apontava para lugar nenhum), catálogo extraído para
+  `components/catalogo/CatalogoConteudo.tsx` e exposto em `/catalogo` (discente — resolve a
+  pendência antiga de "Ver catálogo" 404 das etapas 6 a 8) e `/docente/catalogo` (mesma rota não
+  pode existir em dois grupos de rotas do Next). `obterEstatisticasDocente()` nova em
+  `lib/storage.ts`: "Devolvidas com pendência" conta só quem já foi enviada ao menos uma vez
+  (`enviadaEm !== null` e `status === "pendente"`), para não confundir com atividades cadastradas
+  e nunca enviadas. "Orientandos ativos" é a contagem real de discentes do seed (13), não o "38"
+  fictício do prompt original (já superado pelo adendo); o subtítulo virou "Curso BCDIA" (sem
+  inventar uma "turma", que o domínio não modela). Remoção de `/docente/casca` e
+  `VitrineCasca.tsx` (temporários da etapa 3).
+- **Etapa 10.** Na tela 07, `paraTipoId`/`paraQuantidade` são **sempre** enviados ao parecer
+  (mesmo sem reclassificar) — `compararReclassificacao` já resolve `mudou: false` quando nada
+  muda, o que simplifica a lógica em vez de só enviar esses campos condicionalmente. A
+  confirmação da regra `**` é um checkbox próprio da tela (o docente confirma de novo,
+  independente do que o discente já confirmou no cadastro). Recusar abre modal de confirmação
+  **controlado** (sem `DialogTrigger`, porque a validação do comentário precisa rodar antes de
+  abrir o modal); foco inicial em "Cancelar" via `initialFocus`. No lote (07b), abas são
+  `role="tablist"`/`tab`/`tabpanel` manuais (roving tabindex, sem componente de tabs do
+  shadcn — evita o procedimento de `shadcn add` sem necessidade real). Monitoria fica sempre
+  inapta ao lote (a confirmação `**` só existe na tela individual). Aplicação do lote é
+  **sequencial** (`for...of` com `await`), nunca `Promise.all` — ver armadilha nova na seção 7.
 
 Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
-`DEV-LOG.md`, commit e push em `main`.
+`DEV-LOG.md`, commit e push em `main` — para cada etapa daqui em diante.
 
-**Como verificar no navegador.** As verificações usam `playwright-core` dirigindo o Chrome
-instalado, com scripts fora do repositório (ver `apoio.mjs`, com os helpers `nova`, `ok`,
-`variacoes`, `ativo`, `regiao`, `fechar` já prontos para reaproveitar). Para repetir: instalar
-`playwright-core` numa pasta temporária, subir `npm run build && npm run start` e:
+**Como verificar no navegador.** Nesta sessão, `playwright-core` foi instalado numa pasta
+temporária fora do repositório (`npm install playwright-core --no-save`) e dirigido contra o
+Chrome já instalado (`executablePath`, sem baixar navegador). Para repetir:
+- `npm run build && npm run start` (se o build falhar com `EPERM` ao apagar algo em `.next`, veja
+  a armadilha correspondente na seção 7 antes de tentar de novo);
 - capturas em 1280 e 375 px, com A−, A, A+ e alto contraste. As preferências e a sessão podem
   ser gravadas no `localStorage` antes de carregar a página
   (`horas-complementares:preferencias`, `horas-complementares:sessao`);
@@ -257,3 +316,18 @@ prefetches dos links para rotas ainda inexistentes impedem que a rede fique ocio
 - **Modal aberto deixa o resto da página inerte** (Base UI). Em testes automatizados,
   `getByRole` não acha o botão que abriu o modal enquanto ele está aberto; use um seletor
   CSS, como `[data-slot="sheet-trigger"]`.
+- **`finalFocus` do `Dialog` (Base UI) não é confiável num modal controlado sem
+  `DialogTrigger`** (ex.: confirmação antes de aplicar um lote, aberta por lógica própria, não
+  por um trigger do próprio Dialog): o foco pode voltar para `<body>` em vez do elemento
+  indicado. Descoberto e confirmado por captura + polling na etapa 10 (`ValidacaoLote.tsx`). Use
+  `finalFocus` mesmo assim (é a API certa), mas reforce com um `window.setTimeout(..., 200)` —
+  200 ms é maior que a transição de fechamento do modal (`--duration`, 160 ms) — chamando
+  `.focus()` no elemento estável explicitamente. Sem esse reforço, "devolver o foco a um ponto
+  estável" (CLAUDE.md, acessibilidade) falha silenciosamente.
+- **Chamadas em lote a `lib/storage.ts` precisam ser sequenciais, nunca `Promise.all`.** Cada
+  função (`registrarParecer`, etc.) lê o `localStorage` inteiro, aplica a mudança e grava de
+  volta; chamadas em paralelo leem o mesmo estado antigo e a última a gravar apaga o que as
+  outras escreveram. Descoberto ao implementar a validação em lote (etapa 10): `for (const id of
+  ids) await registrarParecer(...)`, nunca `ids.map(...)` com `Promise.all`. Ao testar isso via
+  Playwright, contabilize `300 ms × quantidade de itens` na espera antes de checar o resultado —
+  não é lento de verdade, só parece nos testes automatizados.
