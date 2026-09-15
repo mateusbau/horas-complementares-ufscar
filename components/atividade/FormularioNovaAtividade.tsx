@@ -25,9 +25,9 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { avisosDeCadastro, validarNovaAtividade } from "@/lib/calculos"
+import { avisosDeCadastro, creditosDaAtividade, horasDeCreditos, validarNovaAtividade } from "@/lib/calculos"
 import { CATALOGO, UNIDADES, obterTipo, type TipoAtividadeId } from "@/lib/catalogo"
-import { formatarExplicacaoRequisito, formatarRascunhoSalvo } from "@/lib/formatacao"
+import { formatarCreditos, formatarExplicacaoRequisito, formatarHoras, formatarRascunhoSalvo } from "@/lib/formatacao"
 import { criarAtividade, limparRascunho, obterRascunho, salvarRascunho } from "@/lib/storage"
 import type { Comprovante, Confirmacoes, NovaAtividade, Periodo } from "@/lib/types"
 
@@ -84,6 +84,13 @@ export function FormularioNovaAtividade() {
   const tipo = selecaoTipo !== "" && selecaoTipo !== "nenhum" ? obterTipo(selecaoTipo) : null
   const tipoId: TipoAtividadeId | null = selecaoTipo === "" || selecaoTipo === "nenhum" ? null : selecaoTipo
   const quantidade = quantidadeTexto.trim() === "" ? null : Number(quantidadeTexto)
+  // Prévia do cálculo (régua do crédito, CLAUDE.md): o crédito é o que importa,
+  // não a carga do certificado — por isso aparece assim que há tipo e
+  // quantidade válidos, antes do envio, e não só depois, no detalhe (tela 05).
+  const creditosPrevistos =
+    tipoId !== null && quantidade !== null && Number.isInteger(quantidade) && quantidade > 0
+      ? creditosDaAtividade({ tipoId, quantidade })
+      : null
   const periodo: Periodo | null = inicio && termino ? { inicio, termino } : null
   const dadosAtuais: NovaAtividade = { titulo, tipoId, quantidade, periodo, observacoes, comprovante, confirmacoes }
   const avisos = avisosDeCadastro(dadosAtuais)
@@ -347,6 +354,26 @@ export function FormularioNovaAtividade() {
               </div>
             )}
           </Campo>
+        )}
+
+        {/*
+          Texto visível comum, não aria-live: a região ao vivo única do
+          sistema é para anúncios de ação, e recalcular a cada tecla digitada
+          na quantidade anunciaria o valor a cada dígito. Quem usa leitor de
+          tela encontra este parágrafo na ordem natural, depois do campo.
+        */}
+        {creditosPrevistos !== null && (
+          <p className="rounded-lg border border-input-border bg-accent-soft p-4 leading-secondary text-foreground">
+            {creditosPrevistos > 0 ? (
+              <>
+                Pelo que você informou, isto vale{" "}
+                <strong className="font-medium">{formatarCreditos(creditosPrevistos)}</strong> (
+                {formatarHoras(horasDeCreditos(creditosPrevistos))} contabilizadas).
+              </>
+            ) : (
+              "Essa quantidade ainda não completa 1 crédito neste tipo."
+            )}
+          </p>
         )}
 
         {avisoAcimaDoMaximo && <AvisoInline texto={avisoAcimaDoMaximo.mensagem} />}
