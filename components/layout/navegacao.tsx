@@ -18,7 +18,6 @@ import {
   Layers,
   ListChecks,
   LogOut,
-  Shapes,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -41,8 +40,6 @@ type ItemNavegacao = {
   exato?: boolean
 }
 
-// TEMPORÁRIO: "Casca da interface" do docente é a rota de teste da casca e o
-// destino provisório do docente (lib/rotas.ts). Sai na etapa 9, com a tela 06.
 const ITENS: Record<Perfil, ItemNavegacao[]> = {
   discente: [
     { href: "/painel", rotulo: "Painel", icone: LayoutDashboard },
@@ -59,7 +56,6 @@ const ITENS: Record<Perfil, ItemNavegacao[]> = {
     { href: "/docente/validacao/lote", rotulo: "Validação em lote", icone: Layers },
     { href: "/docente/orientandos", rotulo: "Meus orientandos", icone: Users },
     { href: "/docente/relatorio", rotulo: "Relatório da turma", icone: FileChartColumn },
-    { href: "/docente/casca", rotulo: "Casca da interface", icone: Shapes },
   ],
 }
 

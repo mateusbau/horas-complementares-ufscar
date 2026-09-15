@@ -308,6 +308,43 @@ export async function registrarParecer(id: string, parecer: NovoParecer): Promis
   return copia(resultado)
 }
 
+export type EstatisticasDocente = {
+  /** Atividades em análise, de qualquer discente. */
+  aguardando: number
+  /** Dentre as aguardando, quantas esperam há mais de 7 dias. */
+  esperandoMaisDe7Dias: number
+  /** Total de atividades já validadas, de qualquer discente. */
+  validadas: number
+  /** Créditos homologados nas atividades validadas. */
+  creditosHomologados: number
+  /** Pendentes que já foram enviadas ao menos uma vez (devolvidas, aguardando o discente). */
+  devolvidas: number
+  /** Discentes da demonstração. */
+  orientandosAtivos: number
+}
+
+/** Indicadores do painel do docente (tela 06): sempre sobre todas as atividades do sistema. */
+export async function obterEstatisticasDocente(): Promise<EstatisticasDocente> {
+  await esperar()
+  const estado = ler()
+  const agora = new Date()
+
+  const emAnalise = estado.atividades.filter(
+    (a): a is Atividade & { enviadaEm: string } => a.status === "analise" && a.enviadaEm !== null
+  )
+  const validadas = estado.atividades.filter((a) => a.status === "validada")
+  const devolvidas = estado.atividades.filter((a) => a.status === "pendente" && a.enviadaEm !== null)
+
+  return {
+    aguardando: emAnalise.length,
+    esperandoMaisDe7Dias: emAnalise.filter((a) => diasDeEspera(a.enviadaEm, agora) > 7).length,
+    validadas: validadas.length,
+    creditosHomologados: validadas.reduce((soma, a) => soma + creditosDaAtividade(a), 0),
+    devolvidas: devolvidas.length,
+    orientandosAtivos: estado.discentes.length,
+  }
+}
+
 // --- Sessão simulada ------------------------------------------------------------------------
 // Não há autenticação real: a sessão só guarda o perfil escolhido na entrada.
 // Com backend, estas funções passam a falar com o serviço de autenticação.
