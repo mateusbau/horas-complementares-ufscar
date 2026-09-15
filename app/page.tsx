@@ -10,6 +10,7 @@
 
 import { GraduationCap } from "lucide-react"
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { FormularioEntrada } from "@/components/entrada/FormularioEntrada"
 import { ReiniciarDemonstracao } from "@/components/entrada/ReiniciarDemonstracao"
@@ -56,6 +57,9 @@ export default function PaginaEntrada() {
           SeCoT XVIII
         </p>
         <ReiniciarDemonstracao />
+        <Link href="/sobre" className="text-caption text-accent-text underline underline-offset-4 hover:decoration-2">
+          Sobre este protótipo
+        </Link>
       </footer>
     </div>
   )
