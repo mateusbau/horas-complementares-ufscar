@@ -3,8 +3,15 @@
 // Regras de atividades complementares do BCDIA (ADENDO-DOMINIO.md). Funções
 // puras: recebem dados e, quando precisam do relógio, recebem `agora`.
 //
-// Princípio central: a carga horária do certificado não é a que conta. Cada
-// tipo da Tabela 7 vale créditos fixos; horas = créditos × HORAS_POR_CREDITO.
+// Princípio central: a carga horária do certificado não é a que conta. O que
+// conta são os créditos que o tipo da Tabela 7 reconhece; horas contabilizadas
+// = créditos × HORAS_POR_CREDITO. Ex.: uma eletiva de 40 h vale 2 créditos, ou
+// seja, 30 horas contabilizadas.
+//
+// Regras da seção 3.5.4 do PPC aplicadas aqui:
+// - a carga da Tabela 7 é a MÁXIMA reconhecida; créditos excedentes não valem;
+// - a validação pode ser fracionada, com arredondamento para baixo;
+// - as 90 h exigem pelo menos dois tipos de atividade diferentes.
 
 import {
   CATALOGO,
@@ -12,6 +19,7 @@ import {
   NOTA_DUPLA_CONTAGEM,
   NOTA_SEMESTRE_COMPLETO,
   UNIDADES,
+  medidoEmHoras,
   obterTipo,
   type TipoAtividade,
   type TipoAtividadeId,
@@ -30,9 +38,14 @@ import type {
 } from "./types"
 
 // Únicas fontes destes números no projeto. Nenhum outro arquivo os escreve.
+// 15 h por crédito: definição de crédito da matriz curricular (PPC, Tabela 4,
+// H = 15 × C em todas as linhas). A seção 3.5.4 não converte as horas
+// complementares em créditos; confirmação com a coordenação segue pendente.
 export const HORAS_POR_CREDITO = 15
 export const HORAS_EXIGIDAS = 90        // Tabela 2 do PPC do BCDIA
 export const CREDITOS_EXIGIDOS = HORAS_EXIGIDAS / HORAS_POR_CREDITO  // 6
+// PPC, seção 3.5.4: "em pelo menos dois tipos de atividades diferentes".
+export const TIPOS_DISTINTOS_EXIGIDOS = 2
 
 // Sem teto conhecido no PPC. Se a coordenação confirmar limites,
 // preencher aqui — nenhuma outra parte do código muda.
@@ -50,11 +63,16 @@ export class ErroDeRegra extends Error {
 // --- Conversões ------------------------------------------------------------------
 
 /**
- * Créditos de uma quantidade na unidade do tipo. Só blocos completos contam:
- * em Palestra (2 palestras = 1 crédito), 3 palestras valem 1 crédito.
+ * Créditos de uma quantidade na unidade do tipo, sempre arredondados para baixo.
+ * - Em horas (um registro por semestre): proporcionais à carga máxima e
+ *   limitados a ela. IC de 90 h (máx. 180 h = 3 créditos) vale 1 crédito.
+ * - Por unidade: só blocos completos. 3 palestras (2 = 1 crédito) valem 1.
  */
 export function creditosPorQuantidade(tipo: TipoAtividade, quantidade: number): number {
   if (!Number.isInteger(quantidade) || quantidade <= 0) return 0
+  if (medidoEmHoras(tipo)) {
+    return Math.min(tipo.creditos, Math.floor((quantidade * tipo.creditos) / tipo.cargaMaxima))
+  }
   return Math.floor(quantidade / tipo.quantidadePorBloco) * tipo.creditos
 }
 
@@ -77,24 +95,37 @@ export function aplicarTeto(tipoId: TipoAtividadeId, creditos: number): number {
 // --- Progresso -------------------------------------------------------------------
 
 /**
- * Só atividades validadas contam. As quantidades são somadas por tipo antes da
- * conversão, para que blocos se completem entre registros: duas palestras
- * validadas em registros separados somam 1 crédito.
+ * Só atividades validadas contam.
+ * - Tipos em horas: cada registro é um semestre, com seu próprio teto; os
+ *   créditos de cada registro são somados.
+ * - Tipos por unidade: as quantidades são somadas antes da conversão, para que
+ *   blocos se completem entre registros (duas palestras em registros separados
+ *   somam 1 crédito).
+ * Integralizar exige os créditos E pelo menos dois tipos diferentes com crédito.
  */
 export function calcularProgresso(atividades: readonly Atividade[]): Progresso {
   const quantidadePorTipo = new Map<TipoAtividadeId, number>()
+  const creditosEmHoras = new Map<TipoAtividadeId, number>()
   for (const a of atividades) {
     if (a.status !== "validada" || a.tipoId === null || a.quantidade === null) continue
     quantidadePorTipo.set(a.tipoId, (quantidadePorTipo.get(a.tipoId) ?? 0) + a.quantidade)
+    const tipo = obterTipo(a.tipoId)
+    if (medidoEmHoras(tipo)) {
+      creditosEmHoras.set(tipo.id, (creditosEmHoras.get(tipo.id) ?? 0) + creditosPorQuantidade(tipo, a.quantidade))
+    }
   }
 
   const porTipo: CreditosPorTipo[] = CATALOGO.filter((tipo) => quantidadePorTipo.has(tipo.id)).map(
     (tipo) => {
       const quantidade = quantidadePorTipo.get(tipo.id) ?? 0
-      const creditos = aplicarTeto(tipo.id, creditosPorQuantidade(tipo, quantidade))
+      const bruto = medidoEmHoras(tipo)
+        ? (creditosEmHoras.get(tipo.id) ?? 0)
+        : creditosPorQuantidade(tipo, quantidade)
+      const creditos = aplicarTeto(tipo.id, bruto)
       return { tipoId: tipo.id, quantidade, creditos, horas: horasDeCreditos(creditos) }
     }
   )
+  const tiposDistintos = porTipo.filter((item) => item.creditos > 0).length
 
   const porGrupo = GRUPOS.map((grupo) => {
     const creditos = porTipo
@@ -114,7 +145,10 @@ export function calcularProgresso(atividades: readonly Atividade[]): Progresso {
     creditosFaltantes,
     horasFaltantes: horasDeCreditos(creditosFaltantes),
     percentual: Math.min(100, (creditosObtidos / CREDITOS_EXIGIDOS) * 100),
-    integralizado: creditosObtidos >= CREDITOS_EXIGIDOS,
+    tiposDistintos,
+    tiposExigidos: TIPOS_DISTINTOS_EXIGIDOS,
+    integralizado:
+      creditosObtidos >= CREDITOS_EXIGIDOS && tiposDistintos >= TIPOS_DISTINTOS_EXIGIDOS,
     porTipo,
     porGrupo,
   }
@@ -122,51 +156,78 @@ export function calcularProgresso(atividades: readonly Atividade[]): Progresso {
 
 /**
  * "O que fecha o que falta": para cada tipo, a menor quantidade que cobre os
- * créditos faltantes, considerando o que o aluno já tem daquele tipo (uma
- * palestra validada faz faltarem só 3 para 2 créditos). Ordena primeiro as
- * opções exatas, depois as que excedem; empate pela ordem da Tabela 7. A tela
- * escolhe quais exibir.
+ * créditos faltantes.
+ * - Em horas: a validação fracionada permite fechar exatamente; acima do teto
+ *   de um semestre, a opção indica quantos semestres (registros) são precisos.
+ * - Por unidade: considera o que o aluno já tem do tipo (uma palestra validada
+ *   faz faltarem só 3 para 2 créditos) e pode exceder o que falta.
+ * Se os créditos já bastam mas falta o segundo tipo diferente, só tipos novos
+ * entram, com a meta de 1 crédito. Ordem: exatas primeiro, depois as que
+ * excedem; empate pela ordem da Tabela 7.
  */
 export function opcoesParaFechar(progresso: Progresso): OpcaoFechamento[] {
+  const faltaTipo = progresso.tiposDistintos < TIPOS_DISTINTOS_EXIGIDOS
   const faltantes = progresso.creditosFaltantes
-  if (faltantes <= 0) return []
+  if (faltantes <= 0 && !faltaTipo) return []
+
+  const meta = Math.max(faltantes, 1)
+  const comCredito = new Set(progresso.porTipo.filter((item) => item.creditos > 0).map((item) => item.tipoId))
 
   const opcoes: OpcaoFechamento[] = []
   for (const tipo of CATALOGO) {
     const atual = progresso.porTipo.find((item) => item.tipoId === tipo.id)
     const teto = TETOS_POR_TIPO[tipo.id]
     if (teto !== undefined && (atual?.creditos ?? 0) >= teto) continue
+    const tipoNovo = !comCredito.has(tipo.id)
+    if (faltantes <= 0 && !tipoNovo) continue
 
-    const quantidadeAtual = atual?.quantidade ?? 0
-    const blocos = Math.ceil(faltantes / tipo.creditos)
-    const blocosCompletos = Math.floor(quantidadeAtual / tipo.quantidadePorBloco)
-    const quantidade = (blocosCompletos + blocos) * tipo.quantidadePorBloco - quantidadeAtual
-    const creditos = blocos * tipo.creditos
+    let quantidade: number
+    let creditos: number
+    let semestres: number | null = null
+    if (medidoEmHoras(tipo)) {
+      semestres = Math.ceil(meta / tipo.creditos)
+      const noUltimo = meta - (semestres - 1) * tipo.creditos
+      quantidade = (semestres - 1) * tipo.cargaMaxima + Math.ceil((noUltimo * tipo.cargaMaxima) / tipo.creditos)
+      creditos = meta
+    } else {
+      const quantidadeAtual = atual?.quantidade ?? 0
+      const blocos = Math.ceil(meta / tipo.creditos)
+      const blocosCompletos = Math.floor(quantidadeAtual / tipo.quantidadePorBloco)
+      quantidade = (blocosCompletos + blocos) * tipo.quantidadePorBloco - quantidadeAtual
+      creditos = blocos * tipo.creditos
+    }
+
     opcoes.push({
       tipoId: tipo.id,
       quantidade,
+      semestres,
       creditos,
       horas: horasDeCreditos(creditos),
-      excede: creditos > faltantes,
+      excede: creditos > meta,
+      atendeTiposDistintos:
+        progresso.tiposDistintos + (tipoNovo ? 1 : 0) >= TIPOS_DISTINTOS_EXIGIDOS,
     })
   }
 
-  return opcoes.sort(
-    (a, b) => Number(a.excede) - Number(b.excede) || a.quantidade - b.quantidade
-  )
+  return opcoes.sort((a, b) => Number(a.excede) - Number(b.excede))
 }
 
 // --- Cadastro (tela 04): as três validações do PPC antes do envio ----------------
 
 export const MENSAGEM_TIPO_NAO_PREVISTO =
-  "Esta atividade não corresponde a nenhum tipo da Tabela 7 do Projeto Pedagógico e, por isso, tende a ser recusada. Consulte o catálogo: se houver um tipo equivalente, escolha-o antes de enviar."
+  "Esta atividade não corresponde a nenhum tipo da Tabela 7 do Projeto Pedagógico. Pelo Projeto Pedagógico, atividades fora da tabela só são validadas com aprovação do conselho do curso. Consulte o catálogo: se houver um tipo equivalente, escolha-o antes de enviar."
+
+/** Aviso para horas acima do máximo reconhecido por semestre (PPC, 3.5.4). */
+export function mensagemAcimaDoMaximo(tipo: TipoAtividade & { cargaMaxima: number }): string {
+  return `Este tipo reconhece no máximo ${tipo.cargaMaxima} horas por semestre, que valem ${tipo.creditos} créditos. Horas acima disso não são validadas. Se a atividade durou mais de um semestre, registre cada semestre separadamente.`
+}
 
 /**
- * Regra 1 (tipo não previsto) só avisa. Regras (*) e (**) exigem confirmação
- * explícita antes do envio.
+ * Regra 1 (tipo não previsto) e horas acima do máximo só avisam. Regras (*) e
+ * (**) exigem confirmação explícita antes do envio.
  */
 export function avisosDeCadastro(
-  dados: Pick<NovaAtividade, "tipoId" | "confirmacoes">
+  dados: Pick<NovaAtividade, "tipoId" | "quantidade" | "confirmacoes">
 ): AvisoCadastro[] {
   if (dados.tipoId === null) {
     return [
@@ -181,6 +242,14 @@ export function avisosDeCadastro(
 
   const tipo = obterTipo(dados.tipoId)
   const avisos: AvisoCadastro[] = []
+  if (medidoEmHoras(tipo) && dados.quantidade !== null && dados.quantidade > tipo.cargaMaxima) {
+    avisos.push({
+      regra: "carga-acima-do-maximo",
+      mensagem: mensagemAcimaDoMaximo(tipo),
+      exigeConfirmacao: false,
+      confirmado: false,
+    })
+  }
   if (tipo.vedadaDuplaContagem) {
     avisos.push({
       regra: "dupla-contagem",
@@ -216,10 +285,12 @@ export function validarNovaAtividade(dados: NovaAtividade): ErroDeCampo[] {
   if (dados.tipoId !== null) {
     const q = dados.quantidade
     if (q === null || !Number.isInteger(q) || q < 1) {
-      const unidade = UNIDADES[obterTipo(dados.tipoId).unidade].plural
+      const tipo = obterTipo(dados.tipoId)
       erros.push({
         campo: "quantidade",
-        mensagem: `Informe a quantidade em ${unidade}, com um número inteiro a partir de 1.`,
+        mensagem: medidoEmHoras(tipo)
+          ? "Informe as horas que constam no comprovante, com um número inteiro a partir de 1."
+          : `Informe a quantidade em ${UNIDADES[tipo.unidade].plural}, com um número inteiro a partir de 1.`,
       })
     }
   }
@@ -311,7 +382,7 @@ function classificar(tipoId: TipoAtividadeId | null, quantidade: number | null):
 
 /**
  * Antes e depois de uma reclassificação, para o docente conferir. A quantidade
- * pode ser ajustada porque a unidade muda com o tipo (semestres, eventos...).
+ * pode ser ajustada porque a unidade muda com o tipo (horas, eventos...).
  */
 export function compararReclassificacao(
   atividade: Pick<Atividade, "tipoId" | "quantidade">,

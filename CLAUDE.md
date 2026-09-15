@@ -228,8 +228,13 @@ Cada tipo da Tabela 7 vale créditos fixos; horas = créditos × `HORAS_POR_CRED
 
 - **90, 15 e 6 só existem em `lib/calculos.ts`** (`HORAS_EXIGIDAS`, `HORAS_POR_CREDITO`,
   `CREDITOS_EXIGIDOS`). O verificador reprova esses números em qualquer outro arquivo; toda
-  tela os obtém do `Progresso` ou das constantes. O fator de 15 h por crédito ainda precisa
-  ser confirmado na seção 3.5.4 do PPC; se mudar, muda só a constante.
+  tela os obtém do `Progresso` ou das constantes. O fator de 15 h por crédito vem da
+  definição de crédito da matriz curricular (PPC, Tabela 4); a confirmação com a coordenação
+  segue pendente. Se mudar, muda só a constante.
+- **Seção 3.5.4 do PPC** (ver `ADENDO-DOMINIO.md`, seção 10): nos tipos "N h/semestre" o aluno
+  informa as horas do comprovante; créditos = arredondar para baixo(horas × créditos ÷ carga
+  máxima), com teto por registro (um registro = um semestre). Integralizar exige os créditos
+  **e** pelo menos dois tipos diferentes (`TIPOS_DISTINTOS_EXIGIDOS`).
 - **Sem teto e sem mínimo.** `TETOS_POR_TIPO` fica vazio até a coordenação confirmar limites.
   Os grupos são só organização visual e, onde aparecerem, levam o texto `AVISO_AGRUPAMENTO`.
 - **`tipoId: null`** = o aluno declarou algo fora da Tabela 7 (regra 1). Vale 0 crédito e não
@@ -238,14 +243,31 @@ Cada tipo da Tabela 7 vale créditos fixos; horas = créditos × `HORAS_POR_CRED
 - **Fila derivada do status:** toda atividade `analise`, de qualquer discente, está na fila do
   docente, da mais antiga para a mais recente. O que a Ana envia entra na fila; o parecer
   atualiza o registro dela.
-- **Palestras acumulam entre registros:** a soma validada de cada tipo é convertida de uma
-  vez, então duas palestras em registros separados valem 1 crédito.
+- **Palestras acumulam entre registros:** nos tipos por unidade, a soma validada é convertida
+  de uma vez, então duas palestras em registros separados valem 1 crédito. Nos tipos em horas,
+  cada registro é convertido com o próprio teto, e os créditos se somam.
 - **Reclassificação** (tela 07) pode ajustar a quantidade, porque a unidade muda com o tipo, e
   exige justificativa quando algo muda.
 - **Datas do seed são relativas** ao momento em que ele é criado (primeira visita ou
   "Reiniciar demonstração"): a fila começa com esperas de 9, 9, 8, 3 e 1 dias (Bruno, Carla,
   Ana, Diego, Elisa) — três acima de 7 dias, como diz o indicador da tela 06.
 - Violação de regra lança `ErroDeRegra`, com mensagens em `erros` prontas para a tela.
+
+### Régua do crédito (vale para todas as telas)
+
+**O crédito é a medida principal; a hora é consequência, nunca protagonista.**
+
+- Todo indicador primário mostra créditos: "4 de 6 créditos".
+- A hora aparece em dois lugares apenas: como requisito dentro do tipo de atividade (texto da
+  Tabela 7, ex.: "180 h/semestre valem 3 créditos") e como total secundário, sempre rotulado
+  sem ambiguidade — "60 de 90 horas contabilizadas", nunca "60 horas cumpridas".
+- Motivo: a carga do certificado não é a carga contabilizada. Uma eletiva de 40 h vale 2
+  créditos, ou seja, 30 horas contabilizadas. Se a interface disser só "horas", o aluno soma os
+  certificados, chega a outro número e conclui que o sistema errou.
+- "Categoria" não existe: use o tipo da Tabela 7 e os quatro grupos visuais, sempre com
+  `AVISO_AGRUPAMENTO`. Nenhuma barra ou indicador sugere mínimo por grupo.
+- Números por extenso, sem abreviação: "4 créditos", "30 horas" (`lib/formatacao.ts`). Os
+  textos literais da Tabela 7 ("180 h/semestre") são a exceção, porque são citação.
 
 ### Procedimento obrigatório após `shadcn add`
 

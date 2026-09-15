@@ -18,9 +18,9 @@ export function formatarPercentual(valor: number): string {
   return percentual.format(valor / 100)
 }
 
-/** 60 → "60 h". */
+/** 1 → "1 hora"; 60 → "60 horas". Por extenso, sem abreviação. */
 export function formatarHoras(horas: number): string {
-  return `${numero.format(horas)} h`
+  return `${numero.format(horas)} ${horas === 1 ? "hora" : "horas"}`
 }
 
 /** 1 → "1 crédito"; 4 → "4 créditos". */

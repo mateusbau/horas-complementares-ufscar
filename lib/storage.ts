@@ -64,7 +64,7 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   if (typeof valor !== "object" || valor === null) return false
   const e = valor as Partial<EstadoDemo>
   return (
-    e.versao === 1 &&
+    e.versao === 2 && // estado de versão anterior é descartado e o seed é recriado
     typeof e.discenteAtualId === "string" &&
     typeof e.docenteAtualId === "string" &&
     Array.isArray(e.discentes) &&

@@ -113,7 +113,7 @@ export type Atividade = {
   titulo: string
   /** `null` = o aluno declarou algo que não corresponde a nenhum tipo da Tabela 7. */
   tipoId: TipoAtividadeId | null
-  /** Quantidade na unidade do tipo (semestres, eventos, palestras...); `null` sem tipo. */
+  /** Na unidade do tipo: horas do comprovante (tipos em horas, um registro por semestre), eventos, palestras...; `null` sem tipo. */
   quantidade: number | null
   /** Opcional na tela 04. */
   periodo: Periodo | null
@@ -138,7 +138,11 @@ export type NovaAtividade = Pick<
 
 // --- Validações do cadastro ------------------------------------------------------
 
-export type RegraCadastro = "tipo-nao-previsto" | "dupla-contagem" | "semestre-completo"
+export type RegraCadastro =
+  | "tipo-nao-previsto"
+  | "dupla-contagem"
+  | "semestre-completo"
+  | "carga-acima-do-maximo"
 
 export type AvisoCadastro = {
   regra: RegraCadastro
@@ -175,6 +179,11 @@ export type Progresso = {
   horasFaltantes: number
   /** 0 a 100, sem arredondamento; limitado a 100. */
   percentual: number
+  /** Tipos da Tabela 7 com crédito validado. */
+  tiposDistintos: number
+  /** PPC, 3.5.4: pelo menos dois tipos diferentes. */
+  tiposExigidos: number
+  /** Créditos exigidos E tipos distintos exigidos. */
   integralizado: boolean
   porTipo: CreditosPorTipo[]
   /** Organização visual: não há mínimo nem teto por grupo. */
@@ -184,12 +193,16 @@ export type Progresso = {
 /** Uma linha do bloco "o que fecha o que falta" (painel e simulador). */
 export type OpcaoFechamento = {
   tipoId: TipoAtividadeId
-  /** Quantidade a registrar, na unidade do tipo. */
+  /** Quantidade a registrar, na unidade do tipo (horas, eventos, palestras...). */
   quantidade: number
+  /** Tipos em horas: em quantos semestres (registros) as horas se distribuem. Demais: null. */
+  semestres: number | null
   creditos: number
   horas: number
   /** Gera mais créditos do que faltam. */
   excede: boolean
+  /** Com esta opção, o aluno passa a ter os dois tipos diferentes exigidos. */
+  atendeTiposDistintos: boolean
 }
 
 // --- Fila do docente -------------------------------------------------------------
@@ -212,7 +225,8 @@ export type ItemFila = {
 // --- Estado da demonstração -------------------------------------------------------
 
 export type EstadoDemo = {
-  versao: 1
+  /** 2: quantidade em horas nos tipos "h/semestre" (leitura da seção 3.5.4 do PPC). */
+  versao: 2
   /** Quem está usando o sistema na demonstração. */
   discenteAtualId: string
   docenteAtualId: string

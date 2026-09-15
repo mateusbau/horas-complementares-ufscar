@@ -188,7 +188,7 @@ function atividadesDaAna(agora: Date): Atividade[] {
         discenteId: ana,
         titulo: "Monitoria de Algoritmos e Estruturas de Dados I",
         tipoId: "monitoria",
-        quantidade: 1,
+        quantidade: 180,
         periodo: periodo(agora, 330, 200),
         comprovante: pdf("declaracao-monitoria-aed1.pdf", 412),
         confirmacoes: { semestreCompleto: true },
@@ -220,7 +220,7 @@ function atividadesDaAna(agora: Date): Atividade[] {
         discenteId: ana,
         titulo: "Iniciação científica PIBIC · visão computacional",
         tipoId: "iniciacao-cientifica",
-        quantidade: 1,
+        quantidade: 180,
         periodo: periodo(agora, 400, 40),
         comprovante: pdf("relatorio-pibic-comissao-ic.pdf", 1840),
         confirmacoes: { semDuplaContagem: true },
@@ -235,7 +235,7 @@ function atividadesDaAna(agora: Date): Atividade[] {
         discenteId: ana,
         titulo: "Projeto de extensão Meninas Digitais",
         tipoId: "extensao",
-        quantidade: 1,
+        quantidade: 180,
         periodo: periodo(agora, 250, 70),
         comprovante: pdf("certificado-proex-meninas-digitais.pdf", 520),
         confirmacoes: { semDuplaContagem: true },
@@ -352,20 +352,20 @@ function filaDosDemais(agora: Date): Atividade[] {
     )
 
   return [
-    item("atv-bruno-monitoria-calculo2", "disc-bruno", "Monitoria de Cálculo II", "monitoria", 1, 9 * 24 + 3, {
+    item("atv-bruno-monitoria-calculo2", "disc-bruno", "Monitoria de Cálculo II", "monitoria", 180, 9 * 24 + 3, {
       confirmacoes: { semestreCompleto: true },
       comprovante: pdf("declaracao-coordenacao-monitoria-calculo2.pdf", 640),
     }),
-    item("atv-carla-meninas-digitais", "disc-carla", "Projeto Meninas Digitais", "extensao", 1, 9 * 24 + 1, {
+    item("atv-carla-meninas-digitais", "disc-carla", "Projeto Meninas Digitais", "extensao", 180, 9 * 24 + 1, {
       confirmacoes: { semDuplaContagem: true },
     }),
-    item("atv-diego-pibic", "disc-diego", "Iniciação científica PIBIC", "iniciacao-cientifica", 1, 3 * 24 + 1, {
+    item("atv-diego-pibic", "disc-diego", "Iniciação científica PIBIC", "iniciacao-cientifica", 180, 3 * 24 + 1, {
       confirmacoes: { semDuplaContagem: true },
     }),
     item("atv-elisa-organizacao-secot", "disc-elisa", "Organização da SeCoT XVIII", "organizacao-evento", 2, 32, {
       periodo: periodo(agora, 40, 38),
     }),
-    item("atv-felipe-monitoria-alg1", "disc-felipe", "Monitoria de Algoritmos I", "monitoria", 1, 26, {
+    item("atv-felipe-monitoria-alg1", "disc-felipe", "Monitoria de Algoritmos I", "monitoria", 180, 26, {
       confirmacoes: { semestreCompleto: true },
     }),
     item("atv-gabriela-python", "disc-gabriela", "Minicurso de Python para dados", null, null, 22, {
@@ -385,15 +385,18 @@ function filaDosDemais(agora: Date): Atividade[] {
     item("atv-joao-artigo-bracis", "disc-joao", "Artigo completo publicado no BRACIS", "artigo-completo", 1, 12, {
       confirmacoes: { semDuplaContagem: true },
     }),
-    item("atv-larissa-aciepes", "disc-larissa", "ACIEPES Computação e Sociedade", "aciepes", 1, 9, {
+    item("atv-larissa-aciepes", "disc-larissa", "ACIEPES Computação e Sociedade", "aciepes", 60, 9, {
       confirmacoes: { semDuplaContagem: true },
     }),
+    // Validação fracionada (PPC, 3.5.4): 120 h de um máximo de 180 h/semestre
+    // (3 créditos) valem 2 créditos. Mostra ao docente a diferença entre a
+    // carga do comprovante e o que é contabilizado.
     item(
       "atv-marcos-suporte-lab",
       "disc-marcos",
       "Suporte em TI ao Laboratório de Ensino de Computação",
       "suporte-ti",
-      1,
+      120,
       5
     ),
     item(
@@ -436,9 +439,9 @@ function historicoDosDemais(agora: Date): Atividade[] {
   return [
     item("atv-bruno-sbbd", "disc-bruno", "Participação no Simpósio Brasileiro de Banco de Dados", "congresso-simposio", 1, 160),
     item("atv-bruno-ciclo-ia", "disc-bruno", "Palestras do Ciclo de Inteligência Artificial", "palestra", 2, 120),
-    item("atv-carla-eletiva-visualizacao", "disc-carla", "Disciplina eletiva de Visualização de Dados", "disciplina-eletiva", 1, 200),
+    item("atv-carla-eletiva-visualizacao", "disc-carla", "Disciplina eletiva de Visualização de Dados", "disciplina-eletiva", 60, 200),
     item("atv-diego-feira-profissoes", "disc-diego", "Feira de Profissões UFSCar", "feira", 1, 140),
-    item("atv-elisa-bolsa-biblioteca", "disc-elisa", "Bolsa atividade na Biblioteca Comunitária", "bolsista-atividade", 1, 230),
+    item("atv-elisa-bolsa-biblioteca", "disc-elisa", "Bolsa atividade na Biblioteca Comunitária", "bolsista-atividade", 120, 230),
     item("atv-elisa-congic", "disc-elisa", "Congresso de Iniciação Científica da UFSCar", "congresso-simposio", 1, 170),
   ]
 }
@@ -447,7 +450,7 @@ function historicoDosDemais(agora: Date): Atividade[] {
 
 export function criarEstadoInicial(agora: Date): EstadoDemo {
   return {
-    versao: 1,
+    versao: 2,
     discenteAtualId: ID_DISCENTE_DEMO,
     docenteAtualId: ID_DOCENTE_DEMO,
     discentes: DISCENTES.map((d) => ({ ...d })),

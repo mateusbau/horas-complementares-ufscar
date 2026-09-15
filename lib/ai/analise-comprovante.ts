@@ -13,12 +13,15 @@ import type { TipoAtividadeId } from "../catalogo"
 
 export type AnaliseComprovante = {
   disponivel: boolean
-  /** Carga lida no certificado; evidência do requisito, não soma ao progresso. */
+  /**
+   * Carga lida no certificado. Nos tipos em horas, é a quantidade a informar;
+   * os créditos continuam saindo da Tabela 7 (proporcionais, com teto).
+   */
   cargaHorariaDetectada?: number
   tituloDetectado?: string
   /** Tipo da Tabela 7 sugerido; `null` = não corresponde a nenhum tipo previsto. */
   tipoSugerido?: TipoAtividadeId | null
-  /** Quantidade na unidade do tipo sugerido (semestres, eventos, palestras...). */
+  /** Quantidade na unidade do tipo sugerido (horas, eventos, palestras...). */
   quantidadeSugerida?: number
   /** De 0 a 1. */
   confianca?: number

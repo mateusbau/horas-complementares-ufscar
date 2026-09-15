@@ -5,11 +5,17 @@
 // `comprovante` reproduzem literalmente as colunas da tabela; `vedadaDuplaContagem`
 // é o asterisco (*) e `exigeSemestreCompleto` o duplo asterisco (**).
 //
-// Campos acrescentados para a interface, sem regra nova:
-// - `quantidadePorBloco`: quantas unidades formam um bloco de `creditos`
-//   (1 em todos os tipos, 2 em Palestra: "2 palestras = 1 crédito");
-// - `nomeCurto`, `pergunta` e `rotuloQuantidade`: textos de apoio para listas,
-//   formulário e o bloco "o que fecha o que falta".
+// Leitura da coluna "Carga Horária" (PPC, seção 3.5.4): é a carga MÁXIMA que pode
+// ser reconhecida, e a coluna "Créditos" diz quantos créditos ela vale. Créditos
+// excedentes não são validados, e a validação pode ser fracionada, com
+// arredondamento para baixo. Por isso há dois jeitos de medir:
+// - tipos em horas (`unidade: "hora"`, requisito "N h/semestre"): o aluno informa
+//   as horas do comprovante; `cargaMaxima` é o teto por semestre;
+// - tipos por unidade (evento, palestra, trabalho, dia, semestre completo): o
+//   aluno informa a quantidade; cada `quantidadePorBloco` unidades valem `creditos`.
+//
+// Campos acrescentados para a interface, sem regra nova: `nomeCurto`,
+// `pergunta` e `rotuloQuantidade`.
 
 export type GrupoId =
   | "ensino-monitoria"
@@ -18,7 +24,7 @@ export type GrupoId =
   | "representacao"
 
 export type Unidade =
-  | "semestre"
+  | "hora"
   | "evento"
   | "dia"
   | "palestra"
@@ -31,10 +37,13 @@ type TipoAtividadeBase = {
   nomeCurto: string
   grupo: GrupoId
   unidade: Unidade
-  /** Texto literal da coluna "Carga Horária": requisito para obter os créditos. */
+  /** Texto literal da coluna "Carga Horária". */
   requisito: string
-  /** Créditos obtidos a cada `quantidadePorBloco` unidades. */
+  /** Texto literal da coluna "Créditos": o máximo validado por semestre (tipos em horas) ou por bloco. */
   creditos: number
+  /** Tipos em horas: carga máxima reconhecida por semestre, que vale `creditos`. Demais: null. */
+  cargaMaxima: number | null
+  /** Tipos por unidade: quantas unidades formam um bloco de `creditos` (2 em Palestra). Em horas: 1. */
   quantidadePorBloco: number
   /** Texto literal da coluna "Tipo de comprovante". */
   comprovante: string
@@ -44,7 +53,7 @@ type TipoAtividadeBase = {
   exigeSemestreCompleto: boolean
   /** Rótulo do campo de quantidade no formulário. */
   pergunta: string
-  /** "1 semestre de monitoria", "2 semestres de monitoria". */
+  /** "120 horas de iniciação científica", "2 participações em congressos ou simpósios". */
   rotuloQuantidade: { singular: string; plural: string }
 }
 
@@ -54,32 +63,34 @@ const TABELA_7 = [
     nome: "Monitoria (com ou sem bolsa)",
     nomeCurto: "Monitoria",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Relatório ou documento da PROGRAD ou declaração do docente",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: true,
-    pergunta: "Quantos semestres de monitoria?",
-    rotuloQuantidade: { singular: "semestre de monitoria", plural: "semestres de monitoria" },
+    pergunta: "Quantas horas de monitoria constam no comprovante?",
+    rotuloQuantidade: { singular: "hora de monitoria", plural: "horas de monitoria" },
   },
   {
     id: "bolsista-atividade",
     nome: "Bolsista Atividade",
     nomeCurto: "Bolsista Atividade",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "120 h/semestre",
     creditos: 2,
+    cargaMaxima: 120,
     quantidadePorBloco: 1,
     comprovante: "Relatório ou documento da PROGRAD",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres como bolsista atividade?",
+    pergunta: "Quantas horas como bolsista atividade constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre como bolsista atividade",
-      plural: "semestres como bolsista atividade",
+      singular: "hora como bolsista atividade",
+      plural: "horas como bolsista atividade",
     },
   },
   {
@@ -87,17 +98,18 @@ const TABELA_7 = [
     nome: "Bolsista Treinamento",
     nomeCurto: "Bolsista Treinamento",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Relatório ou documento da PROGRAD",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres como bolsista treinamento?",
+    pergunta: "Quantas horas como bolsista treinamento constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre como bolsista treinamento",
-      plural: "semestres como bolsista treinamento",
+      singular: "hora como bolsista treinamento",
+      plural: "horas como bolsista treinamento",
     },
   },
   {
@@ -105,17 +117,18 @@ const TABELA_7 = [
     nome: "Atividades de Extensão (com ou sem bolsa)",
     nomeCurto: "Extensão",
     grupo: "extensao-eventos",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Relatório ou documento da PROEX/certificado",
     vedadaDuplaContagem: true,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de atividade de extensão?",
+    pergunta: "Quantas horas de atividade de extensão constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre em atividade de extensão",
-      plural: "semestres em atividades de extensão",
+      singular: "hora de atividade de extensão",
+      plural: "horas de atividade de extensão",
     },
   },
   {
@@ -123,17 +136,18 @@ const TABELA_7 = [
     nome: "Iniciação Científica (com ou sem bolsa)",
     nomeCurto: "Iniciação Científica",
     grupo: "pesquisa-publicacoes",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Relatório e/ou documento da Comissão de IC ou declaração do docente",
     vedadaDuplaContagem: true,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de iniciação científica?",
+    pergunta: "Quantas horas de iniciação científica constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre de iniciação científica",
-      plural: "semestres de iniciação científica",
+      singular: "hora de iniciação científica",
+      plural: "horas de iniciação científica",
     },
   },
   {
@@ -141,17 +155,18 @@ const TABELA_7 = [
     nome: "Participação em projeto (com ou sem bolsa)",
     nomeCurto: "Participação em projeto",
     grupo: "pesquisa-publicacoes",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Relatório e/ou declaração do docente responsável",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de participação no projeto?",
+    pergunta: "Quantas horas de participação no projeto constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre de participação em projeto",
-      plural: "semestres de participação em projeto",
+      singular: "hora de participação em projeto",
+      plural: "horas de participação em projeto",
     },
   },
   {
@@ -162,6 +177,7 @@ const TABELA_7 = [
     unidade: "palestra",
     requisito: "2 palestras",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 2,
     comprovante: "Declaração do organizador",
     vedadaDuplaContagem: false,
@@ -180,6 +196,7 @@ const TABELA_7 = [
     unidade: "evento",
     requisito: "1 evento",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Certificado de participação",
     vedadaDuplaContagem: false,
@@ -198,6 +215,7 @@ const TABELA_7 = [
     unidade: "evento",
     requisito: "1 evento",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Certificado de participação",
     vedadaDuplaContagem: false,
@@ -213,6 +231,7 @@ const TABELA_7 = [
     unidade: "dia",
     requisito: "1 dia de evento",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Declaração emitida por órgão superior ou coordenador do evento",
     vedadaDuplaContagem: false,
@@ -231,6 +250,7 @@ const TABELA_7 = [
     unidade: "trabalho",
     requisito: "1 trabalho",
     creditos: 3,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Cópia do trabalho com comprovação de publicação",
     vedadaDuplaContagem: true,
@@ -249,6 +269,7 @@ const TABELA_7 = [
     unidade: "trabalho",
     requisito: "1 trabalho",
     creditos: 2,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Cópia do trabalho com comprovação de publicação",
     vedadaDuplaContagem: false,
@@ -267,6 +288,7 @@ const TABELA_7 = [
     unidade: "dia",
     requisito: "1 dia",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Certificado de Participação",
     vedadaDuplaContagem: false,
@@ -279,18 +301,19 @@ const TABELA_7 = [
     nome: "Estágios em empresa júnior/incubadora, entre outras (não obrigatório)",
     nomeCurto: "Estágio em empresa júnior",
     grupo: "extensao-eventos",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante:
       "Declaração emitida por órgão superior. Contrato da empresa que recebeu o serviço",
     vedadaDuplaContagem: true,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de estágio?",
+    pergunta: "Quantas horas de estágio constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre de estágio em empresa júnior ou incubadora",
-      plural: "semestres de estágio em empresa júnior ou incubadora",
+      singular: "hora de estágio em empresa júnior ou incubadora",
+      plural: "horas de estágio em empresa júnior ou incubadora",
     },
   },
   {
@@ -298,17 +321,18 @@ const TABELA_7 = [
     nome: "Suporte em TI a Departamentos (ex.: Cursos da Universidade, Laboratórios de Ensino ou Pesquisa)",
     nomeCurto: "Suporte em TI",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante: "Declaração emitida pela chefia de departamento ou coordenação do curso",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de suporte em TI?",
+    pergunta: "Quantas horas de suporte em TI constam no comprovante?",
     rotuloQuantidade: {
-      singular: "semestre de suporte em TI a departamentos",
-      plural: "semestres de suporte em TI a departamentos",
+      singular: "hora de suporte em TI a departamentos",
+      plural: "horas de suporte em TI a departamentos",
     },
   },
   {
@@ -316,16 +340,17 @@ const TABELA_7 = [
     nome: "Apoio Técnico: desenvolvimento de software, material didático ou sites",
     nomeCurto: "Apoio técnico",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "180 h/semestre",
     creditos: 3,
+    cargaMaxima: 180,
     quantidadePorBloco: 1,
     comprovante:
       "Declaração emitida por um docente responsável do departamento de computação ou contrato da empresa que recebeu o serviço",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantos semestres de apoio técnico?",
-    rotuloQuantidade: { singular: "semestre de apoio técnico", plural: "semestres de apoio técnico" },
+    pergunta: "Quantas horas de apoio técnico constam no comprovante?",
+    rotuloQuantidade: { singular: "hora de apoio técnico", plural: "horas de apoio técnico" },
   },
   {
     id: "presidencia-ca-atletica",
@@ -335,6 +360,7 @@ const TABELA_7 = [
     unidade: "semestre-completo",
     requisito: "1 semestre completo",
     creditos: 1,
+    cargaMaxima: null,
     quantidadePorBloco: 1,
     comprovante: "Registro de nomeação em Ata oficial",
     vedadaDuplaContagem: false,
@@ -350,36 +376,32 @@ const TABELA_7 = [
     nome: "ACIEPES",
     nomeCurto: "ACIEPES",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "60 h/semestre",
     creditos: 3,
+    cargaMaxima: 60,
     quantidadePorBloco: 1,
     comprovante: "Ser aprovado na disciplina",
     vedadaDuplaContagem: true,
     exigeSemestreCompleto: false,
-    pergunta: "Quantas ACIEPES concluídas com aprovação?",
-    rotuloQuantidade: {
-      singular: "ACIEPES concluída com aprovação",
-      plural: "ACIEPES concluídas com aprovação",
-    },
+    pergunta: "Quantas horas de ACIEPES constam no comprovante de aprovação?",
+    rotuloQuantidade: { singular: "hora de ACIEPES", plural: "horas de ACIEPES" },
   },
   {
     id: "disciplina-eletiva",
     nome: "Disciplina Eletiva",
     nomeCurto: "Disciplina eletiva",
     grupo: "ensino-monitoria",
-    unidade: "semestre",
+    unidade: "hora",
     requisito: "60 h/semestre",
     creditos: 3,
+    cargaMaxima: 60,
     quantidadePorBloco: 1,
     comprovante: "Ser aprovado na disciplina",
     vedadaDuplaContagem: false,
     exigeSemestreCompleto: false,
-    pergunta: "Quantas disciplinas eletivas concluídas com aprovação?",
-    rotuloQuantidade: {
-      singular: "disciplina eletiva concluída com aprovação",
-      plural: "disciplinas eletivas concluídas com aprovação",
-    },
+    pergunta: "Quantas horas de disciplina eletiva constam no comprovante de aprovação?",
+    rotuloQuantidade: { singular: "hora de disciplina eletiva", plural: "horas de disciplina eletiva" },
   },
 ] as const satisfies readonly TipoAtividadeBase[]
 
@@ -400,6 +422,11 @@ export function obterTipo(id: TipoAtividadeId): TipoAtividade {
 
 export function ehTipoAtividadeId(valor: unknown): valor is TipoAtividadeId {
   return typeof valor === "string" && POR_ID.has(valor as TipoAtividadeId)
+}
+
+/** Tipo medido em horas do comprovante (requisito "N h/semestre"). */
+export function medidoEmHoras(tipo: TipoAtividade): tipo is TipoAtividade & { cargaMaxima: number } {
+  return tipo.cargaMaxima !== null
 }
 
 // --- Grupos --------------------------------------------------------------------
@@ -425,7 +452,7 @@ export function tiposDoGrupo(grupo: GrupoId): TipoAtividade[] {
 // --- Unidades ------------------------------------------------------------------
 
 export const UNIDADES: Record<Unidade, { singular: string; plural: string }> = {
-  semestre: { singular: "semestre", plural: "semestres" },
+  hora: { singular: "hora", plural: "horas" },
   evento: { singular: "evento", plural: "eventos" },
   dia: { singular: "dia", plural: "dias" },
   palestra: { singular: "palestra", plural: "palestras" },

@@ -131,3 +131,31 @@ mostraram os problemas):
 - Rotas temporárias `/casca` e `/docente/casca` e o item "Casca da interface" na navegação:
   remover nas etapas 5 e 9.
 - Decidir na etapa 9 como o docente chega ao catálogo (`/catalogo` está no grupo do discente).
+
+---
+
+## 2026-09-15 · Correção do domínio pela seção 3.5.4 do PPC
+
+**Feito.** Antes de desenhar o painel, a equipe pediu para confirmar o fator de 15 h por
+crédito. O adendo não o confirmava (dizia "leitura mais provável"). Lemos a seção 3.5.4 no PPC
+oficial publicado pela PROGRAD, e ela trouxe mais do que o fator. Domínio, seed, adendo e
+`CLAUDE.md` foram corrigidos; 31 checagens do domínio passam.
+
+**Decisões (tomadas pela equipe, com a citação da fonte na mão).**
+- **Fator de 15 h:** mantido. A 3.5.4 não converte as horas complementares em créditos, mas a
+  matriz curricular (Tabela 4) define crédito com H = 15 × C em todas as linhas. A fonte ficou
+  citada no código; a confirmação com a coordenação segue pendente.
+- **Carga horária é máxima, com fração arredondada para baixo** (texto literal do PPC). O
+  adendo a lia como requisito e pedia semestres inteiros, o que superestimava atividades
+  parciais: uma IC de 90 h viraria 3 créditos, e o PPC dá 1. Nos 11 tipos "N h/semestre" o
+  aluno agora informa as horas do comprovante; cada registro é um semestre, com teto. É também
+  a leitura que dá sentido à régua do crédito: uma eletiva de 40 h vale 30 horas contabilizadas.
+- **Dois tipos diferentes:** regra do PPC que o adendo não tinha. Sem ela, o painel diria
+  "integralizado" para quem tem 6 créditos de um tipo só.
+- **Atividade fora da tabela:** o aviso passou a citar que só o conselho do curso a valida.
+- A versão do estado salvo subiu para 2: navegadores com o seed antigo (quantidade em
+  semestres) teriam os créditos zerados, então o estado antigo é descartado e recriado.
+- Horas passam a ser escritas por extenso ("30 horas"), pela regra de não abreviar.
+
+**Pendente.** Confirmar o fator de 15 h com a coordenação. As telas 04 e 07 (etapas 7 e 10)
+precisam pedir horas nos tipos em horas e mostrar o aviso de teto, já pronto no domínio.

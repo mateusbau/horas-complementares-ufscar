@@ -79,10 +79,17 @@ Arquivos da etapa 3:
 - A carga horária do certificado não conta. Cada tipo da Tabela 7 vale créditos fixos; horas =
   créditos × 15; exigência de 90 h (6 créditos). Não há teto nem mínimo por tipo ou grupo.
 - 90, 15 e 6 só existem em `lib/calculos.ts`; o verificador reprova esses números em outro
-  arquivo. O fator de 15 h por crédito ainda precisa ser confirmado na seção 3.5.4 do PPC.
+  arquivo. O fator de 15 h vem da definição de crédito da matriz curricular (PPC, Tabela 4);
+  confirmação com a coordenação pendente.
+- PPC, seção 3.5.4 (adendo, seção 10): nos tipos "N h/semestre" o aluno informa horas;
+  créditos proporcionais, arredondados para baixo, com teto por registro (um registro = um
+  semestre). Integralizar exige também dois tipos diferentes.
+- Régua do crédito: o crédito é a medida principal em toda tela; a hora só aparece como
+  requisito do tipo ou como "N de 90 horas contabilizadas" (ver `CLAUDE.md`).
 - Grupos (Ensino e monitoria, Pesquisa e publicações, Extensão e eventos, Representação
   estudantil) são só organização visual e aparecem sempre com o texto `AVISO_AGRUPAMENTO`.
-- Palestras acumulam entre registros; só blocos completos contam (3 palestras = 1 crédito).
+- Palestras acumulam entre registros; só blocos completos contam (3 palestras = 1 crédito). O
+  arredondamento para baixo da 3.5.4 confirma essa regra.
 - Tipo não previsto é escolha explícita (`tipoId: null`): avisa e não bloqueia. Sem detecção
   por palavras no título, nem no futuro.
 - O docente não aprova atividade sem tipo: reclassifica (com justificativa) ou recusa.

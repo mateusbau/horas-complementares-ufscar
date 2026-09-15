@@ -268,3 +268,40 @@ Todo o restante do `PROMPT-INICIAL.md` — identidade visual, acessibilidade, ar
 - **Textos das telas 06 e 07b** foram corrigidos diretamente na seção 8 do `PROMPT-INICIAL.md`:
   "165 créditos homologados", "Turma 2022 · BCDIA", abas pelos quatro grupos e "O lote valida
   as atividades e libera os créditos correspondentes".
+
+---
+
+## 10. Leitura da seção 3.5.4 do PPC (2026-09-15)
+
+Conferido no PPC oficial (versão final de janeiro de 2026, publicado pela PROGRAD). Onde esta
+seção conflita com as seções 1, 3 e 6 deste adendo, **vale esta seção**.
+
+**Carga horária é máxima, com validação fracionada.** A 3.5.4 diz: "Para cada atividade, a
+tabela indica a uma carga horária máxima que pode ser reconhecida, o número de créditos que
+serão validados para essa carga (…) Ainda que seja cumprido um número de créditos maior que o
+limite em uma determinada atividade, os créditos excedentes não serão validados. As atividades
+podem ter validação fracionada com arredondamento para baixo."
+
+- Nos 11 tipos com carga "N h/semestre", o aluno informa **as horas do comprovante** (não
+  semestres). Créditos = arredondar para baixo(horas × créditos ÷ carga máxima), limitados aos
+  créditos do tipo. Cada registro vale um semestre; atividade de mais de um semestre é
+  registrada semestre a semestre. Ex.: IC de 90 h vale 1 crédito; eletiva de 40 h vale 2
+  créditos (30 horas contabilizadas).
+- Nos tipos por unidade (evento, palestra, trabalho, dia, semestre completo) nada muda; o
+  arredondamento para baixo confirma a regra das palestras (3 palestras = 1 crédito).
+- Isto substitui "Monitoria → quantos semestres?" da seção 3 e a coluna "Qtd." da seção 6
+  para esses tipos. O seed passou a usar horas; os créditos da Ana não mudam (4 de 6).
+
+**Dois tipos diferentes.** A 3.5.4 diz: "o discente deverá cumprir no mínimo 90 horas de
+atividades complementares, em pelo menos dois tipos de atividades diferentes." Integralizar
+exige os créditos **e** pelo menos dois tipos da Tabela 7 com crédito validado.
+
+**Atividades fora da tabela.** A 3.5.4 diz: "Outras atividades não contempladas na tabela
+poderão ser validadas somente com a aprovação do conselho." O aviso da regra 1 passou a citar
+isso. O docente continua sem aprovar atividade sem tipo: quem decide é o conselho.
+
+**Fator de 15 h por crédito.** A 3.5.4 não converte as 90 h em créditos, e a linha
+"Atividades Complementares" da matriz curricular (Tabela 4) deixa os créditos em branco. O
+fator foi adotado pela definição de crédito da própria matriz: "C é o número total de créditos
+(…) e H é a carga horária da atividade", com H = 15 × C em todas as linhas (4 créditos = 60 h;
+140 créditos = 2.100 h). A confirmação com a coordenação segue pendente.
