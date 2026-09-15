@@ -2,11 +2,17 @@
 //
 // Sem barra lateral: card centralizado de até 640 px. A barra de
 // acessibilidade (layout raiz) continua no topo, também aqui.
+//
+// Etapa 12 (primeiro minuto do avaliador): o rótulo "Protótipo de demonstração"
+// aparece já no cabeçalho, antes dos campos de usuário/senha — sem isso, quem
+// abre o link frio lê "Número UFSCar ou e-mail institucional" e pode achar que
+// precisa de credencial real antes de notar o botão de visitante mais abaixo.
 
 import { GraduationCap } from "lucide-react"
 import type { Metadata } from "next"
 
 import { FormularioEntrada } from "@/components/entrada/FormularioEntrada"
+import { ReiniciarDemonstracao } from "@/components/entrada/ReiniciarDemonstracao"
 import { ID_CONTEUDO } from "@/components/layout/SkipLink"
 
 export const metadata: Metadata = { title: "Entrar · Horas Complementares" }
@@ -37,11 +43,19 @@ export default function PaginaEntrada() {
           */}
           <h1 className="text-h2 sm:text-h1">Horas Complementares</h1>
           <p className="leading-secondary text-muted-foreground">Sistema de gestão · UFSCar Sorocaba</p>
+          <p className="text-label text-accent-text">
+            Protótipo de demonstração — escolha um perfil abaixo e entre como visitante, sem
+            credencial real.
+          </p>
         </header>
         <FormularioEntrada />
       </main>
-      <footer className="mt-6 w-full max-w-form text-center text-caption leading-secondary text-muted-foreground">
-        Acesso institucional. Em caso de dúvida procure a Secretaria de Coordenação de Curso · SeCoT XVIII
+      <footer className="mt-6 flex w-full max-w-form flex-col items-center gap-3 text-center">
+        <p className="text-caption leading-secondary text-muted-foreground">
+          Acesso institucional. Em caso de dúvida procure a Secretaria de Coordenação de Curso ·
+          SeCoT XVIII
+        </p>
+        <ReiniciarDemonstracao />
       </footer>
     </div>
   )
