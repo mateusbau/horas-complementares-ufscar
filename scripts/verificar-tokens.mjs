@@ -132,6 +132,18 @@ const REGRAS = [
     sugestao: () => "nunca escreva hex no código: use a classe do token correspondente",
   },
   {
+    // ADENDO-DOMINIO.md: 90, 15 e 6 só existem como constantes em lib/calculos.ts.
+    // Não pega classes (p-6), textos como "60 h/semestre" nem horários (14:15).
+    id: "constante-de-dominio",
+    arquivos: /\.(?:tsx?|jsx?|mjs)$/,
+    exceto: /(?:^|\/)lib\/calculos\.ts$/,
+    padrao: /(?<![\w.\-/[#:%])(?:90|15|6)(?![\w.%\]])/g,
+    sugestao: (m) =>
+      `${m[0]} é constante do domínio: use ${
+        { 90: "HORAS_EXIGIDAS", 15: "HORAS_POR_CREDITO", 6: "CREDITOS_EXIGIDOS" }[m[0]]
+      } de lib/calculos.ts. Se for outro número que coincide, reescreva-o ou libere com tokens-ok: <motivo>`,
+  },
+  {
     id: "localstorage",
     exceto: /(?:^|\/)lib\/storage\.ts$/,
     padrao: /\b(?:localStorage|sessionStorage)\b/g,

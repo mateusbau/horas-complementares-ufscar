@@ -1,0 +1,289 @@
+// lib/storage.ts
+//
+// ÚNICA porta de acesso a dados do sistema. Nenhum componente usa localStorage
+// diretamente. Todas as funções são assíncronas e esperam ~300 ms, simulando
+// uma API: isso obriga as telas a terem estado de carregando de verdade.
+// Quando existir backend, basta trocar o corpo destas funções.
+//
+// As regras de negócio vivem em lib/calculos.ts; aqui só se lê, aplica e grava.
+//
+// Só funciona no navegador: chame dentro de useEffect ou de um evento, em
+// componente "use client", e mostre skeleton até a resposta chegar.
+
+import { ehTipoAtividadeId } from "./catalogo"
+import {
+  ErroDeRegra,
+  aplicarParecer,
+  calcularProgresso,
+  creditosDaAtividade,
+  diasDeEspera,
+  enviarParaValidacao,
+  horasDeCreditos,
+  montarAtividade,
+} from "./calculos"
+import { criarEstadoInicial } from "./mock-data"
+import type {
+  Atividade,
+  Discente,
+  Docente,
+  EstadoDemo,
+  ItemFila,
+  NovaAtividade,
+  NovoParecer,
+  Progresso,
+  StatusAtividade,
+} from "./types"
+
+const CHAVE = "horas-complementares:estado"
+const ATRASO_MS = 300
+const STATUS: readonly StatusAtividade[] = ["validada", "analise", "pendente", "recusada"]
+
+// --- Infraestrutura -----------------------------------------------------------------
+
+function esperar(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ATRASO_MS))
+}
+
+function armazenamento(): Storage {
+  if (typeof window === "undefined") {
+    throw new Error(
+      "lib/storage.ts só funciona no navegador. Chame-o dentro de useEffect ou de um evento."
+    )
+  }
+  return window.localStorage
+}
+
+function ehEstadoValido(valor: unknown): valor is EstadoDemo {
+  if (typeof valor !== "object" || valor === null) return false
+  const e = valor as Partial<EstadoDemo>
+  return (
+    e.versao === 1 &&
+    typeof e.discenteAtualId === "string" &&
+    typeof e.docenteAtualId === "string" &&
+    Array.isArray(e.discentes) &&
+    Array.isArray(e.docentes) &&
+    Array.isArray(e.atividades) &&
+    e.atividades.every(
+      (a) =>
+        typeof a?.id === "string" &&
+        typeof a.discenteId === "string" &&
+        typeof a.titulo === "string" &&
+        STATUS.includes(a.status) &&
+        (a.tipoId === null || ehTipoAtividadeId(a.tipoId)) &&
+        Array.isArray(a.historico) &&
+        Array.isArray(a.pareceres)
+    )
+  )
+}
+
+/** Lê o estado; na primeira visita (ou se estiver corrompido), cria o seed. */
+function ler(): EstadoDemo {
+  const bruto = armazenamento().getItem(CHAVE)
+  if (bruto) {
+    try {
+      const estado: unknown = JSON.parse(bruto)
+      if (ehEstadoValido(estado)) return estado
+    } catch {
+      // JSON inválido: recomeça do seed abaixo.
+    }
+  }
+  const inicial = criarEstadoInicial(new Date())
+  gravar(inicial)
+  return inicial
+}
+
+function gravar(estado: EstadoDemo): void {
+  armazenamento().setItem(CHAVE, JSON.stringify(estado))
+}
+
+/** Cópia profunda: quem chama nunca altera o estado guardado por referência. */
+function copia<T>(valor: T): T {
+  return structuredClone(valor)
+}
+
+function novoId(): string {
+  const aleatorio =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  return `atv-${aleatorio}`
+}
+
+function localizar(estado: EstadoDemo, id: string): number {
+  const indice = estado.atividades.findIndex((a) => a.id === id)
+  if (indice === -1) throw new ErroDeRegra(["Atividade não encontrada."])
+  return indice
+}
+
+// --- Pessoas ---------------------------------------------------------------------------
+
+export async function obterDiscenteAtual(): Promise<Discente> {
+  await esperar()
+  const estado = ler()
+  const discente = estado.discentes.find((d) => d.id === estado.discenteAtualId)
+  if (!discente) throw new ErroDeRegra(["Discente da demonstração não encontrado."])
+  return copia(discente)
+}
+
+export async function obterDocenteAtual(): Promise<Docente> {
+  await esperar()
+  const estado = ler()
+  const docente = estado.docentes.find((d) => d.id === estado.docenteAtualId)
+  if (!docente) throw new ErroDeRegra(["Docente da demonstração não encontrado."])
+  return copia(docente)
+}
+
+export async function obterDiscente(id: string): Promise<Discente | null> {
+  await esperar()
+  return copia(ler().discentes.find((d) => d.id === id) ?? null)
+}
+
+// --- Atividades do discente ------------------------------------------------------------
+
+/** Atividades do discente da demonstração, na ordem em que foram registradas. */
+export async function listarAtividades(): Promise<Atividade[]> {
+  await esperar()
+  const estado = ler()
+  return copia(estado.atividades.filter((a) => a.discenteId === estado.discenteAtualId))
+}
+
+/** Qualquer atividade, de qualquer discente (a tela 07 do docente também usa). */
+export async function obterAtividade(id: string): Promise<Atividade | null> {
+  await esperar()
+  return copia(ler().atividades.find((a) => a.id === id) ?? null)
+}
+
+/** Envia uma nova atividade para validação; ela entra na fila do docente. */
+export async function criarAtividade(dados: NovaAtividade): Promise<Atividade> {
+  await esperar()
+  const estado = ler()
+  const atividade = montarAtividade(
+    dados,
+    { id: novoId(), discenteId: estado.discenteAtualId },
+    new Date()
+  )
+  estado.atividades.push(atividade)
+  gravar(estado)
+  return copia(atividade)
+}
+
+/**
+ * Edita os dados de uma atividade pendente (ex.: trocar o comprovante antes do
+ * reenvio). Status, histórico e pareceres só mudam pelas regras de calculos.ts.
+ */
+export async function atualizarAtividade(
+  id: string,
+  patch: Partial<NovaAtividade>
+): Promise<Atividade> {
+  await esperar()
+  const estado = ler()
+  const indice = localizar(estado, id)
+  const atual = estado.atividades[indice]
+  if (atual.discenteId !== estado.discenteAtualId) {
+    throw new ErroDeRegra(["Só é possível editar as próprias atividades."])
+  }
+  if (atual.status !== "pendente") {
+    throw new ErroDeRegra(["Só atividades pendentes podem ser editadas."])
+  }
+  // `null` em tipoId é uma escolha (não previsto), diferente de não informar.
+  const tipoId = patch.tipoId !== undefined ? patch.tipoId : atual.tipoId
+  const quantidade = patch.quantidade !== undefined ? patch.quantidade : atual.quantidade
+  const atualizada: Atividade = {
+    ...atual,
+    ...patch,
+    tipoId,
+    quantidade: tipoId === null ? null : quantidade,
+  }
+  estado.atividades[indice] = atualizada
+  gravar(estado)
+  return copia(atualizada)
+}
+
+/** Envia (ou reenvia, após devolução) uma atividade pendente. */
+export async function enviarAtividade(id: string): Promise<Atividade> {
+  await esperar()
+  const estado = ler()
+  const indice = localizar(estado, id)
+  const enviada = enviarParaValidacao(estado.atividades[indice], new Date())
+  estado.atividades[indice] = enviada
+  gravar(estado)
+  return copia(enviada)
+}
+
+/** Progresso do discente da demonstração ou, se informado, de outro discente. */
+export async function obterProgresso(discenteId?: string): Promise<Progresso> {
+  await esperar()
+  const estado = ler()
+  const alvo = discenteId ?? estado.discenteAtualId
+  return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
+}
+
+// --- Docente ------------------------------------------------------------------------------
+
+/**
+ * Fila derivada do status: toda atividade em análise, de qualquer discente,
+ * da que espera há mais tempo para a mais recente.
+ */
+export async function listarFilaValidacao(): Promise<ItemFila[]> {
+  await esperar()
+  const estado = ler()
+  const agora = new Date()
+  const discentes = new Map(estado.discentes.map((d) => [d.id, d]))
+
+  return estado.atividades
+    .filter((a): a is Atividade & { enviadaEm: string } => a.status === "analise" && a.enviadaEm !== null)
+    .sort((a, b) => a.enviadaEm.localeCompare(b.enviadaEm))
+    .map((a) => {
+      const d = discentes.get(a.discenteId)
+      const creditos = creditosDaAtividade(a)
+      return {
+        atividadeId: a.id,
+        discente: { id: a.discenteId, nome: d?.nome ?? "Discente", ra: d?.ra ?? "" },
+        titulo: a.titulo,
+        tipoId: a.tipoId,
+        quantidade: a.quantidade,
+        creditos,
+        horas: horasDeCreditos(creditos),
+        enviadaEm: a.enviadaEm,
+        esperaDias: diasDeEspera(a.enviadaEm, agora),
+      }
+    })
+}
+
+/** Aprova, devolve com pendência ou recusa; pode reclassificar o tipo. */
+export async function registrarParecer(id: string, parecer: NovoParecer): Promise<Atividade> {
+  await esperar()
+  const estado = ler()
+  const indice = localizar(estado, id)
+  const resultado = aplicarParecer(estado.atividades[indice], parecer, estado.docenteAtualId, new Date())
+  estado.atividades[indice] = resultado
+  gravar(estado)
+  return copia(resultado)
+}
+
+// --- Demonstração ------------------------------------------------------------------------
+
+export async function exportarEstado(): Promise<string> {
+  await esperar()
+  return JSON.stringify(ler(), null, 2)
+}
+
+export async function importarEstado(json: string): Promise<void> {
+  await esperar()
+  let estado: unknown
+  try {
+    estado = JSON.parse(json)
+  } catch {
+    throw new ErroDeRegra(["O arquivo não contém um JSON válido."])
+  }
+  if (!ehEstadoValido(estado)) {
+    throw new ErroDeRegra(["O arquivo não é um estado exportado por este sistema."])
+  }
+  gravar(estado)
+}
+
+/** Volta ao seed, com datas recalculadas a partir de agora. */
+export async function reiniciarDemo(): Promise<void> {
+  await esperar()
+  gravar(criarEstadoInicial(new Date()))
+}

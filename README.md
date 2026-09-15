@@ -25,7 +25,7 @@ Outros scripts:
 | `npm run build` | Roda o verificador de tokens e gera o build de produção. Precisa passar sem erro nem warning de tipo antes de cada commit. |
 | `npm run start` | Serve o build de produção em <http://localhost:3000>. |
 | `npm run lint` | Roda o ESLint. |
-| `npm run verificar:tokens` | Acusa classes fora da identidade visual (paleta padrão do Tailwind, sombras, pesos, supressão de foco, `dark:`, hex no código, `localStorage` fora de `lib/storage.ts`). Obrigatório depois de cada `npx shadcn add`; veja `CLAUDE.md`. |
+| `npm run verificar:tokens` | Acusa classes fora da identidade visual (paleta padrão do Tailwind, sombras, pesos, supressão de foco, `dark:`, hex no código, `localStorage` fora de `lib/storage.ts`, e os números 90, 15 e 6 fora de `lib/calculos.ts`). Obrigatório depois de cada `npx shadcn add`; veja `CLAUDE.md`. |
 
 ## Deploy na Vercel
 
@@ -61,12 +61,20 @@ vercel --prod   # publica em produção
 ```
 app/            rotas (App Router) e globals.css com os tokens
 components/ui/  componentes shadcn/ui ajustados à identidade visual
-lib/            utilitários; nas próximas etapas, domínio e acesso a dados
+lib/            domínio e acesso a dados
+  catalogo.ts     Tabela 7 do Projeto Pedagógico, como dado
+  calculos.ts     regras de créditos e horas (funções puras)
+  storage.ts      única porta de acesso a dados
+  mock-data.ts    dados de demonstração
 ```
 
-Toda leitura e escrita de dados passará por `lib/storage.ts`, com funções assíncronas que
+Toda leitura e escrita de dados passa por `lib/storage.ts`, com funções assíncronas que
 simulam uma API. Para ligar o sistema a um backend real, basta trocar o corpo dessas funções;
 os componentes não acessam o `localStorage` diretamente.
+
+As regras de atividades complementares seguem o Projeto Pedagógico do BCDIA: cada tipo da
+Tabela 7 vale créditos fixos, e a exigência para integralizar é de 90 horas. Detalhes em
+`ADENDO-DOMINIO.md`.
 
 As regras de identidade visual, acessibilidade e código estão em `CLAUDE.md`. A especificação
 completa está em `PROMPT-INICIAL.md`.

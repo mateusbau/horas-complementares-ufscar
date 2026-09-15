@@ -3,10 +3,11 @@
 # Horas Complementares · SeCoT XVIII
 
 Sistema web de gestão pessoal de horas complementares para a UFSCar Sorocaba. Frontend
-apenas, persistência local. A especificação completa (arquitetura, regras de domínio, telas,
-dados de demonstração e ordem de execução) está em `PROMPT-INICIAL.md` — leia antes de
-qualquer mudança. As seções abaixo são reproduzidas na íntegra daquele documento e valem para
-todo prompt deste projeto.
+apenas, persistência local. A especificação completa (arquitetura, telas e ordem de execução)
+está em `PROMPT-INICIAL.md`. **O modelo de domínio está em `ADENDO-DOMINIO.md`, que substitui
+as seções 6 e 9 do prompt inicial** — onde houver conflito, vale o adendo. Leia os dois antes
+de qualquer mudança. As seções 2, 3 e 4 abaixo são reproduzidas na íntegra do prompt inicial e
+valem para todo prompt deste projeto.
 
 A avaliação é anônima: nenhum nome de equipe ou de integrante pode aparecer na interface.
 
@@ -205,6 +206,41 @@ reprova `bg-black/NN`, fundos neutros escuros translúcidos, `bg-foreground/NN` 
   `circle-dashed` → `CircleDashed`, `x-circle` → `CircleX`.
 - Textos da interface em português, reproduzidos literalmente da especificação.
 - Um commit por etapa, mensagem em português, com `npm run build` limpo.
+
+### Modelo de domínio (etapa 2)
+
+Regra do BCDIA (`ADENDO-DOMINIO.md`): **a carga horária do certificado não é a que conta.**
+Cada tipo da Tabela 7 vale créditos fixos; horas = créditos × `HORAS_POR_CREDITO`.
+
+| Arquivo | Papel |
+|---|---|
+| `lib/catalogo.ts` | Tabela 7 como dado: 19 tipos, textos literais de requisito e comprovante, notas (*) e (**), grupos |
+| `lib/calculos.ts` | Constantes e regras puras: progresso, "o que fecha o que falta", validações do cadastro, parecer |
+| `lib/types.ts` | Tipos do domínio |
+| `lib/mock-data.ts` | Seed da demonstração |
+| `lib/storage.ts` | **Única** porta de dados; assíncrona, com atraso de 300 ms; só no navegador |
+| `lib/formatacao.ts` | Números e datas em pt-BR ("66,7%", "4 créditos", "27/08/2025, 14h32") |
+| `lib/ai/analise-comprovante.ts` | Encaixe da IA; devolve `{ disponivel: false }`, **não chamar** |
+
+- **90, 15 e 6 só existem em `lib/calculos.ts`** (`HORAS_EXIGIDAS`, `HORAS_POR_CREDITO`,
+  `CREDITOS_EXIGIDOS`). O verificador reprova esses números em qualquer outro arquivo; toda
+  tela os obtém do `Progresso` ou das constantes. O fator de 15 h por crédito ainda precisa
+  ser confirmado na seção 3.5.4 do PPC; se mudar, muda só a constante.
+- **Sem teto e sem mínimo.** `TETOS_POR_TIPO` fica vazio até a coordenação confirmar limites.
+  Os grupos são só organização visual e, onde aparecerem, levam o texto `AVISO_AGRUPAMENTO`.
+- **`tipoId: null`** = o aluno declarou algo fora da Tabela 7 (regra 1). Vale 0 crédito e não
+  pode ser aprovado sem reclassificação.
+- **`pendente`** = "a bola está com o aluno": tanto a atividade não enviada quanto a devolvida.
+- **Fila derivada do status:** toda atividade `analise`, de qualquer discente, está na fila do
+  docente, da mais antiga para a mais recente. O que a Ana envia entra na fila; o parecer
+  atualiza o registro dela.
+- **Palestras acumulam entre registros:** a soma validada de cada tipo é convertida de uma
+  vez, então duas palestras em registros separados valem 1 crédito.
+- **Reclassificação** (tela 07) pode ajustar a quantidade, porque a unidade muda com o tipo, e
+  exige justificativa quando algo muda.
+- **Datas do seed são relativas** ao momento em que ele é criado (primeira visita ou
+  "Reiniciar demonstração"): a fila começa com esperas de 9, 7, 5, 3 e 1 dias.
+- Violação de regra lança `ErroDeRegra`, com mensagens em `erros` prontas para a tela.
 
 ### Procedimento obrigatório após `shadcn add`
 
