@@ -1,7 +1,9 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 5 concluídas e publicadas; próxima é a etapa 6 (Listagem).
+Estado em **2026-09-15**: etapas 1 a 5 concluídas e publicadas na Vercel (push em `main`,
+commit `71ffee8`). Próximas: etapas 6 (Listagem) e 7 (Formulário). **Antes de começar, leia
+`PROXIMA-ETAPA.md`**, com as decisões da equipe ainda não aplicadas no código.
 
 ---
 
@@ -23,6 +25,8 @@ Leia nesta ordem:
    etapas (seção 10), critérios de aceite (seção 11). **As seções 6 e 9 estão superadas.**
 3. `ADENDO-DOMINIO.md` — o modelo de domínio real, que substitui as seções 6 e 9 do prompt.
 4. `DEV-LOG.md` — o que foi feito em cada etapa e por quê.
+5. `PROXIMA-ETAPA.md` — decisões já tomadas pela equipe que ainda precisam entrar no código,
+   e o escopo de corte se faltar tempo.
 
 Rodar: `npm install` e `npm run dev` (http://localhost:3000). `npm run build` roda antes o
 verificador de tokens (ver seção 4).
@@ -39,7 +43,7 @@ verificador de tokens (ver seção 4).
 | 3 · Casca | Concluída e verificada no navegador (teclado, 375 px, A−/A/A+, hidratação) | `23a0845` + commit de fechamento |
 | Correção do domínio pela seção 3.5.4 do PPC | Concluída | `711d4ea` |
 | 4 · Login (tela 01) | Concluída e verificada | `8eb51fa` |
-| 5 · Painel do discente (tela 02) | Concluída e verificada | commit da etapa 5 |
+| 5 · Painel do discente (tela 02) | Concluída e verificada | `71ffee8` |
 | 6 a 12 | Não iniciadas | — |
 
 **Pendência explícita:** o visitante docente cai em `/docente/casca`
@@ -168,12 +172,33 @@ que ela for construída, pela régua do crédito.
 
 ---
 
-## 6. Próxima ação concreta: etapa 6 (Listagem, tela 03)
+## 6. Próxima ação concreta: etapas 6 e 7
 
-Especificação na tela 03 da seção 8 do `PROMPT-INICIAL.md`, lida pela régua do crédito:
-primeiro corrigir os textos da tela 03 na especificação (colunas, busca, estado vazio),
-depois construir `app/(discente)/atividades/page.tsx` com `listarAtividades()`, filtro por
-status com contagem, busca, ordenação, estado vazio em `?demo=vazio` e cards no mobile.
+**Antes de tudo, leia `PROXIMA-ETAPA.md`.** Ele traz decisões da equipe que valem para
+estas duas etapas: colunas "Tipo" e "Créditos", a explicação da carga máxima e a hifenização
+do título do login. Traz também o escopo de corte, se faltar tempo.
+
+**Etapa 6 — Listagem (tela 03).** Especificação na tela 03 da seção 8 do `PROMPT-INICIAL.md`,
+lida pela régua do crédito e pelo `PROXIMA-ETAPA.md`. Primeiro, corrigir os textos da tela 03
+na especificação (colunas, busca, estado vazio). Depois, construir
+`app/(discente)/atividades/page.tsx` com `listarAtividades()`, com:
+- filtro por status com contagem;
+- busca;
+- ordenação;
+- estado vazio em `?demo=vazio`;
+- cards no mobile.
+
+**Etapa 7 — Formulário (tela 04).** Em `app/(discente)/atividades/nova/page.tsx`:
+- quantidade na unidade do tipo (horas do comprovante nos tipos "N h/semestre"), com a
+  `pergunta` do catálogo;
+- as validações de `avisosDeCadastro` e `validarNovaAtividade`;
+- o comprovante exigido em texto literal;
+- a explicação da carga máxima em linguagem comum;
+- o rascunho automático (criar as funções de rascunho no `storage.ts`);
+- o componente `Campo`, com as duas exceções de validação ao sair do campo usadas no login.
+
+Cada etapa termina com build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e
+alto contraste), entrada no `DEV-LOG.md`, commit e push em `main`.
 
 **Como verificar no navegador.** As verificações usam `playwright-core` dirigindo o Chrome
 instalado, com scripts fora do repositório. Para repetir: instalar `playwright-core` numa
