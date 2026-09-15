@@ -369,8 +369,8 @@ Link "Voltar para Minhas atividades". h1 com o título da atividade, subtítulo
 h1 "Painel do docente", subtítulo "14 atividades aguardam validação · a mais antiga espera há
 9 dias.", ação **Abrir fila de validação**.
 - Quatro indicadores: Aguardando validação · **14** · "3 há mais de 7 dias"; Validadas no
-  semestre · **132** · "2.480 h homologadas"; Devolvidas com pendência · **7** · "Aguardando o
-  discente"; Orientandos ativos · **38** · "Turma 2022 · BCC".
+  semestre · **132** · "165 créditos homologados"; Devolvidas com pendência · **7** · "Aguardando
+  o discente"; Orientandos ativos · **38** · "Turma 2022 · BCDIA".
 - **Fila de validação**, "Ordenada por tempo de espera", colunas Discente, Atividade,
   Categoria, Horas, Espera, Status. Rodapé "Mostrando 5 de 14 na fila" e link "Ver fila
   completa".
@@ -397,13 +397,16 @@ e **Próxima da fila**.
 ### 07b · Validação em lote — `/docente/validacao/lote`
 h1 "Validação em lote", subtítulo "Atividades da mesma categoria e do mesmo tipo de
 comprovante, revisadas em conjunto.", ação **Revisar uma a uma**.
-- Abas por categoria: Ensino · 6 / Pesquisa · 4 / Extensão · 4.
+- Abas pelos quatro grupos da Tabela 7: Ensino e monitoria · 4 / Pesquisa e publicações · 3 /
+  Extensão e eventos · 5 / Representação estudantil · 1 (contagens do seed). A atividade sem tipo
+  previsto na Tabela 7 não entra em nenhuma aba: ela só pode ser reclassificada ou recusada
+  individualmente.
 - Barra de seleção: "3 atividades selecionadas · 78 h a homologar" com **Aprovar selecionadas**
   e **Devolver com pendência**. O contador atualiza em `aria-live`.
 - Tabela com checkbox, Discente, Atividade, Horas, Espera e link "Abrir comprovante".
   Itens inaptos ao lote vêm desmarcados e desabilitados, com explicação.
 - Rodapé: "4 de 6 atividades de Ensino aptas ao lote · 2 exigem revisão individual" e
-  "O lote aprova a carga solicitada sem ajuste."
+  "O lote valida as atividades e libera os créditos correspondentes."
 
 ### Relatório — `/relatorio`
 O edital exige geração de relatório para entrega. Construa uma página imprimível:

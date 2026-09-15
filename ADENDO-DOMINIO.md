@@ -255,3 +255,16 @@ resultantes, comprovante exigido pela tabela, progresso do discente (`60 de 90 h
 
 Todo o restante do `PROMPT-INICIAL.md` — identidade visual, acessibilidade, arquitetura,
 `lib/storage.ts`, ordem de execução, critérios de aceite — **continua valendo sem alteração**.
+
+---
+
+## 9. Ajustes posteriores (revisão da etapa 2)
+
+- **Esperas da fila.** Para o indicador "3 há mais de 7 dias" da tela 06 ser verdadeiro, o
+  seed passa a ter Bruno 9 dias, Carla 9, Ana 8, Diego 3 e Elisa 1 (antes: 9, 7, 5, 3 e 1).
+  Vale sobre o "mantendo tempos de espera" da seção 6.
+- **Fila derivada do status.** Um item da Ana está na fila se, e somente se, estiver em
+  análise. O #5 (devolvido) não está na fila; entram o #3 e o #4.
+- **Textos das telas 06 e 07b** foram corrigidos diretamente na seção 8 do `PROMPT-INICIAL.md`:
+  "165 créditos homologados", "Turma 2022 · BCDIA", abas pelos quatro grupos e "O lote valida
+  as atividades e libera os créditos correspondentes".

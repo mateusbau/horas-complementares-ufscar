@@ -5,7 +5,8 @@
 //
 // As datas são relativas a `agora` (o momento em que o seed é criado), para a
 // demonstração parecer atual em qualquer dia em que for aberta: a fila começa
-// com esperas de 9, 7, 5, 3 e 1 dias, e "Reiniciar demonstração" recria tudo.
+// com esperas de 9, 9, 8, 3 e 1 dias — três acima de 7 dias, como diz o
+// indicador da tela 06 —, e "Reiniciar demonstração" recria tudo.
 //
 // A fila do docente é derivada do status: toda atividade em análise, de
 // qualquer discente, está na fila. As da Ana (#3 e #4) entram por isso.
@@ -239,7 +240,7 @@ function atividadesDaAna(agora: Date): Atividade[] {
         comprovante: pdf("certificado-proex-meninas-digitais.pdf", 520),
         confirmacoes: { semDuplaContagem: true },
       },
-      7 * 24 + 2
+      8 * 24 + 2
     ),
     // #5
     montar(
@@ -320,8 +321,10 @@ function atividadesDaAna(agora: Date): Atividade[] {
 }
 
 // --- Fila: atividades em análise dos demais discentes ----------------------------
-// Os cinco primeiros por tempo de espera mantêm nomes, RAs e esperas do
-// protótipo (remapeados para tipos da Tabela 7); os demais completam 14 itens.
+// Os cinco primeiros por tempo de espera mantêm nomes e RAs do protótipo
+// (remapeados para tipos da Tabela 7). Esperas: Bruno 9 dias, Carla 9 (duas
+// horas a menos, para o Bruno abrir a fila), Ana 8, Diego 3, Elisa 1. Os demais
+// completam 14 itens.
 
 function filaDosDemais(agora: Date): Atividade[] {
   const item = (
@@ -353,7 +356,7 @@ function filaDosDemais(agora: Date): Atividade[] {
       confirmacoes: { semestreCompleto: true },
       comprovante: pdf("declaracao-coordenacao-monitoria-calculo2.pdf", 640),
     }),
-    item("atv-carla-meninas-digitais", "disc-carla", "Projeto Meninas Digitais", "extensao", 1, 5 * 24 + 5, {
+    item("atv-carla-meninas-digitais", "disc-carla", "Projeto Meninas Digitais", "extensao", 1, 9 * 24 + 1, {
       confirmacoes: { semDuplaContagem: true },
     }),
     item("atv-diego-pibic", "disc-diego", "Iniciação científica PIBIC", "iniciacao-cientifica", 1, 3 * 24 + 1, {

@@ -206,6 +206,10 @@ reprova `bg-black/NN`, fundos neutros escuros translúcidos, `bg-foreground/NN` 
   `circle-dashed` → `CircleDashed`, `x-circle` → `CircleX`.
 - Textos da interface em português, reproduzidos literalmente da especificação.
 - Um commit por etapa, mensagem em português, com `npm run build` limpo.
+- **Toda etapa termina com uma entrada em `DEV-LOG.md`, no mesmo commit:** data, número e nome
+  da etapa, o que foi feito, as decisões tomadas e o porquê de cada uma, e o que ficou
+  pendente. Poucas linhas, em português, escritas para quem vai ler depois sem ter
+  acompanhado — o arquivo vira a documentação do fluxo de desenvolvimento.
 
 ### Modelo de domínio (etapa 2)
 
@@ -239,7 +243,8 @@ Cada tipo da Tabela 7 vale créditos fixos; horas = créditos × `HORAS_POR_CRED
 - **Reclassificação** (tela 07) pode ajustar a quantidade, porque a unidade muda com o tipo, e
   exige justificativa quando algo muda.
 - **Datas do seed são relativas** ao momento em que ele é criado (primeira visita ou
-  "Reiniciar demonstração"): a fila começa com esperas de 9, 7, 5, 3 e 1 dias.
+  "Reiniciar demonstração"): a fila começa com esperas de 9, 9, 8, 3 e 1 dias (Bruno, Carla,
+  Ana, Diego, Elisa) — três acima de 7 dias, como diz o indicador da tela 06.
 - Violação de regra lança `ErroDeRegra`, com mensagens em `erros` prontas para a tela.
 
 ### Procedimento obrigatório após `shadcn add`
