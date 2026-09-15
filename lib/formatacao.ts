@@ -2,7 +2,8 @@
 //
 // Formatação em pt-BR dos valores do domínio para a interface.
 
-import { UNIDADES, obterTipo, type TipoAtividadeId } from "./catalogo"
+import { creditosPorQuantidade, HORAS_POR_CREDITO } from "./calculos"
+import { medidoEmHoras, UNIDADES, obterTipo, type TipoAtividadeId } from "./catalogo"
 
 const numero = new Intl.NumberFormat("pt-BR")
 const percentual = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 })
@@ -54,6 +55,35 @@ export function formatarRequisito(tipoId: TipoAtividadeId): string {
 /** Total secundário, sempre rotulado sem ambiguidade: "N de M horas contabilizadas". */
 export function formatarHorasContabilizadas(obtidas: number, exigidas: number): string {
   return `${numero.format(obtidas)} de ${numero.format(exigidas)} horas contabilizadas`
+}
+
+/**
+ * Premissa do fator crédito → hora, citando a fonte, para todo lugar onde o
+ * total em horas aparecer (painel, relatório). O número vem de
+ * HORAS_POR_CREDITO, nunca escrito aqui: o verificador reprova o valor da
+ * constante fora de lib/calculos.ts.
+ */
+export function formatarPremissaCredito(): string {
+  return `Horas contabilizadas = créditos × ${formatarHoras(HORAS_POR_CREDITO)}, pela definição de crédito da matriz curricular do Projeto Pedagógico (Tabela 4).`
+}
+
+/**
+ * Explica, em linguagem comum e a partir do próprio tipo, a regra da seção
+ * 3.5.4 do PPC para os tipos medidos em horas: a carga da Tabela 7 é o máximo
+ * reconhecido por semestre, e menos horas valem proporcionalmente, sempre
+ * arredondando para baixo. O exemplo (metade do máximo) é calculado, nunca
+ * escrito à mão, para não fixar um número errado se a tabela mudar.
+ */
+export function formatarExplicacaoRequisito(tipoId: TipoAtividadeId): string {
+  const tipo = obterTipo(tipoId)
+  if (!medidoEmHoras(tipo)) return formatarRequisito(tipoId)
+  const metade = Math.round(tipo.cargaMaxima / 2)
+  const creditosNaMetade = creditosPorQuantidade(tipo, metade)
+  return (
+    `Este tipo reconhece até ${formatarHoras(tipo.cargaMaxima)} por semestre, que valem ` +
+    `${formatarCreditos(tipo.creditos)}. Menos horas valem proporcionalmente, sempre arredondando ` +
+    `para baixo — por exemplo, ${formatarHoras(metade)} valem ${formatarCreditos(creditosNaMetade)}.`
+  )
 }
 
 /** Aceita data (AAAA-MM-DD, lida como data local) ou data e hora ISO. */

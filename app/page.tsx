@@ -27,12 +27,15 @@ export default function PaginaEntrada() {
             <GraduationCap className="size-7" />
           </span>
           {/*
-            Hífen condicional (­): em 375 px com texto a 125 %, "Complementares"
-            não cabe na linha. Sem ele, o navegador sem dicionário de português
-            quebra em "Complementar-es"; com ele, em "Comple-mentares", e só
-            quando precisa. Leitores de tela ignoram o caractere.
+            text-h2 abaixo de 640 px: em 375 px com A+ (125 %), "Complementares"
+            no tamanho de h1 (40 px) não cabe na linha. O Chrome no Windows não
+            tem dicionário de português para hyphens: auto (regra global de
+            h1-h3 em globals.css), e o navegador quebraria a palavra com
+            overflow-wrap. Reduzir o tamanho, e não hifenizar à mão, mantém a
+            palavra inteira e legível. O elemento continua h1; só o tamanho
+            visual muda.
           */}
-          <h1>Horas Comple{"­"}mentares</h1>
+          <h1 className="text-h2 sm:text-h1">Horas Complementares</h1>
           <p className="leading-secondary text-muted-foreground">Sistema de gestão · UFSCar Sorocaba</p>
         </header>
         <FormularioEntrada />

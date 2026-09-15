@@ -322,43 +322,65 @@ primária **Nova atividade**.
   ação"), no lugar do "3 novos" fixo, que não correspondia a nenhum dado.
 
 ### 03 · Minhas atividades — `/atividades`
-h1 "Minhas atividades", subtítulo "7 registros · 87 h contabilizadas de 200 h.", ação
+h1 "Minhas atividades", subtítulo "7 registros · 4 de 6 créditos contabilizados.", ação
 **Nova atividade**.
-- Busca "Buscar por título ou categoria" e filtro de status como grupo de chips com contagem:
+> Reescrito em 2026-09-15 pela régua do crédito (`CLAUDE.md`) e por `PROXIMA-ETAPA.md`: colunas
+> "Tipo" (da Tabela 7) e "Créditos"; as horas contabilizadas aparecem só no rodapé, com a fonte
+> do fator crédito → hora (`formatarPremissaCredito`). Não há "categoria" nem teto.
+- Busca "Buscar por título ou tipo" e filtro de status como grupo de chips com contagem:
   Todos · 7 / Validadas · 2 / Em análise · 2 / Pendentes · 2 / Recusadas · 1. Filtro e busca
   funcionais.
-- Tabela com colunas Atividade, Categoria, Horas, Período, Status. Linhas de 44 px, linha
-  inteira clicável levando ao detalhe, ordenável por horas e por período.
-- Rodapé: "Mostrando 7 de 7 registros" · "Total contabilizado: 87 h".
+- Tabela com colunas Atividade, Tipo, Créditos, Período, Status. A coluna Créditos mostra o
+  que a atividade vale pelo tipo declarado, mesmo antes de validada (só o parecer confirma).
+  Linhas de 44 px, linha inteira clicável levando ao detalhe, ordenável por créditos e por
+  período.
+- Rodapé: "Mostrando 7 de 7 registros" · "Total: 4 créditos · 60 horas contabilizadas." — o
+  total reflete só as atividades validadas, igual ao painel, não a lista filtrada.
 - **Mobile**: a tabela vira lista de cards — "título" na primeira linha e
-  "categoria · horas · período" na segunda, com o badge. Nunca scroll horizontal.
+  "tipo · créditos · período" na segunda, com o badge. Nunca scroll horizontal.
 - **Estado vazio** (rota acessível para demonstração, ex. `?demo=vazio`): h3 "Você ainda não
   registrou atividades", texto "Registre cursos, monitorias, projetos de extensão e pesquisa
-  para contabilizar horas. Consulte o catálogo para saber o que é aceito em cada categoria.",
-  botão primário "Registrar primeira atividade" e link "Ver catálogo de atividades aceitas".
+  para contabilizar créditos. Consulte o catálogo para saber quanto vale cada tipo.", botão
+  primário "Registrar primeira atividade" e link "Ver catálogo de atividades aceitas".
 
 ### 04 · Nova atividade — `/atividades/nova`
 Coluna de 640 px. h1 "Nova atividade", subtítulo "Preencha os dados e anexe o comprovante para
 envio ao docente validador.", ação secundária **Ver catálogo**.
+> Reescrito em 2026-09-15 pelo modelo de créditos e por `PROXIMA-ETAPA.md`, item 4: "categoria"
+> e "carga horária livre" saem; entram o tipo da Tabela 7 e a quantidade na unidade dele, com a
+> regra do teto por semestre explicada em linguagem comum (`formatarExplicacaoRequisito`).
 - **Título da atividade · obrigatório** — apoio: "Use o nome que aparece no certificado."
-- **Categoria · obrigatório** — select com "Ensino · minicursos e monitorias" etc. Ao escolher,
-  o texto de apoio passa a mostrar o contexto real: "Teto de 60 h nesta categoria · 42 h já
-  contabilizadas."
-- **Carga horária · obrigatório** — campo numérico com sufixo "horas". Valida contra o teto da
-  categoria e exibe erro em linguagem comum: "Valor acima do teto da categoria Ensino. Informe
-  no máximo 18 h para não exceder as 60 h permitidas." Erro com ícone, `aria-invalid` e
-  `aria-describedby`.
-- **Período de realização** — Início e Término.
+- **Tipo de atividade · obrigatório** — select com os 19 tipos da Tabela 7 pelo nome completo,
+  mais a opção "Não encontrei um tipo correspondente" (`tipoId: null`). Ao escolher um tipo, o
+  apoio passa a mostrar o comprovante exigido, literal da tabela; nos tipos "N h/semestre",
+  também a explicação da carga máxima: "Este tipo reconhece até 180 horas por semestre, que
+  valem 3 créditos. Menos horas valem proporcionalmente, sempre arredondando para baixo — por
+  exemplo, 90 horas valem 1 crédito." Ao escolher "Não encontrei…", aviso (não bloqueia o
+  envio): "Esta atividade não corresponde a nenhum tipo da Tabela 7 do Projeto Pedagógico.
+  Pelo Projeto Pedagógico, atividades fora da tabela só são validadas com aprovação do
+  conselho do curso. Consulte o catálogo: se houver um tipo equivalente, escolha-o antes de
+  enviar."
+- **Quantidade · obrigatório** (some com o tipo) — rótulo e sufixo mudam com o tipo escolhido:
+  "Quantas horas de monitoria constam no comprovante?" ou "Quantas palestras?". Nos tipos em
+  horas, acima do máximo do semestre mostra aviso, não erro: "Este tipo reconhece no máximo
+  180 horas por semestre, que valem 3 créditos. Horas acima disso não são validadas. Se a
+  atividade durou mais de um semestre, registre cada semestre separadamente."
+- **Confirmações condicionais**, exigidas antes do envio conforme o tipo (seção 3 do
+  `ADENDO-DOMINIO.md`): caixa de seleção com a nota (*) da dupla contagem, ou com a nota (**)
+  do semestre completo (Monitoria).
+- **Período de realização** — Início e Término, opcional.
 - **Anexar comprovante · obrigatório** — área de arrastar e soltar com texto "Arraste o arquivo
-  ou selecione no computador", apoio "PDF, JPG ou PNG até 10 MB" e botão "Selecionar arquivo".
-  A área precisa ser **operável por teclado** e não depender de arrastar. Depois de escolhido,
-  mostra nome e tamanho ("certificado-git-secot.pdf · 1,2 MB") com botão de remover.
+  ou selecione no computador", apoio com o comprovante exigido pelo tipo (ou "PDF, JPG ou PNG
+  até 10 MB" antes de escolher o tipo) e botão "Selecionar arquivo". A área precisa ser
+  **operável por teclado** e não depender de arrastar. Depois de escolhido, mostra nome e
+  tamanho ("certificado-git-secot.pdf · 1,2 MB") com botão de remover.
 - **Observações para o docente** — "Opcional · descreva o que foi realizado, caso o certificado
   não deixe claro."
 - Ações: **Enviar para validação** (primário) e **Salvar rascunho**, com indicador
   "Rascunho salvo há 2 min" (autosave real no storage).
-- **Validação dispara ao sair do campo (`onBlur`), nunca a cada tecla.** Ao enviar com erro, o
-  foco vai para o primeiro campo inválido e um resumo de erros é anunciado em `aria-live`.
+- **Validação dispara ao sair do campo (`onBlur`), nunca a cada tecla**, com as duas exceções
+  da tela 01 (campo nunca editado; foco indo para um botão do formulário). Ao enviar com erro,
+  o foco vai para o primeiro campo inválido e um resumo de erros é anunciado em `aria-live`.
 
 ### 05 · Detalhe da atividade · discente — `/atividades/[id]`
 Link "Voltar para Minhas atividades". h1 com o título da atividade, subtítulo

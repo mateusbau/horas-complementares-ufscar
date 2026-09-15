@@ -8,7 +8,14 @@
 import { CircleCheck, CircleDashed } from "lucide-react"
 
 import { AnelProgresso } from "@/components/progresso/AnelProgresso"
-import { formatarCreditos, formatarHoras, formatarHorasContabilizadas, formatarNumero, formatarPercentual } from "@/lib/formatacao"
+import {
+  formatarCreditos,
+  formatarHoras,
+  formatarHorasContabilizadas,
+  formatarNumero,
+  formatarPercentual,
+  formatarPremissaCredito,
+} from "@/lib/formatacao"
 import type { Progresso } from "@/lib/types"
 
 export function ResumoProgresso({ progresso }: { progresso: Progresso }) {
@@ -35,6 +42,7 @@ export function ResumoProgresso({ progresso }: { progresso: Progresso }) {
           <p className="leading-secondary text-muted-foreground">
             {formatarHorasContabilizadas(progresso.horasObtidas, progresso.horasExigidas)}
           </p>
+          <p className="text-caption leading-secondary text-muted-foreground">{formatarPremissaCredito()}</p>
           <p>
             {progresso.integralizado
               ? "Você cumpriu as atividades complementares exigidas para a integralização."
@@ -45,7 +53,11 @@ export function ResumoProgresso({ progresso }: { progresso: Progresso }) {
         </div>
       </div>
 
-      {/* PPC, 3.5.4: pelo menos dois tipos diferentes. Estado com ícone + texto, nunca só cor. */}
+      {/*
+        PPC, 3.5.4: pelo menos dois tipos diferentes. Estado com ícone + texto,
+        nunca só cor. A fonte (Projeto Pedagógico) fica visível sempre, cumprida
+        ou não — não é só justificativa de pendência.
+      */}
       <p className="flex items-start gap-2 border-t pt-4">
         <span className="flex h-6 shrink-0 items-center">
           {tiposOk ? (
@@ -60,7 +72,8 @@ export function ResumoProgresso({ progresso }: { progresso: Progresso }) {
             {formatarNumero(Math.min(progresso.tiposDistintos, progresso.tiposExigidos))} de{" "}
             {formatarNumero(progresso.tiposExigidos)}
           </strong>
-          {tiposOk ? " — exigência cumprida." : " — o Projeto Pedagógico exige pelo menos dois tipos diferentes."}
+          {tiposOk ? " — exigência cumprida." : " — faltam tipos diferentes."} O Projeto Pedagógico (seção 3.5.4)
+          exige pelo menos {formatarNumero(progresso.tiposExigidos)} tipos de atividade diferentes.
         </span>
       </p>
     </section>

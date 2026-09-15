@@ -254,3 +254,43 @@ teclado e no caminho da banca: um clique em "Entrar como visitante" leva ao pain
 - "Nova atividade" e os atalhos levam a telas das etapas 6 a 12; até lá, caem na página de
   não encontrada.
 - O docente continua caindo em `/docente/casca` até a etapa 9.
+
+---
+
+## 2026-09-15 · Etapa 6 — Listagem (tela 03)
+
+**Feito.** Antes da tela, aplicadas três decisões pendentes de `PROXIMA-ETAPA.md` que valem
+para todo o sistema: título do login sem `&shy;` (agora `text-h2 sm:text-h1`, que cabe inteiro
+em 375 px com A+ sem depender de hifenização); a premissa do fator crédito → hora, com a
+fonte, junto de "horas contabilizadas" no painel (`formatarPremissaCredito`); e a exigência de
+dois tipos citando a seção 3.5.4 do PPC sempre, não só quando pendente. Depois, `/atividades`:
+busca, filtro por status com contagem, ordenação por créditos e por período (com
+`aria-sort`), estado vazio de filtro, `?demo=vazio` e cards no mobile. Verificado em 1280 e
+375 px, A−/A/A+ e alto contraste, por teclado, e os três itens corrigidos antes foram
+reverificados no painel e no login.
+
+**Decisões.**
+- **Colunas Tipo e Créditos** (`PROXIMA-ETAPA.md`, item 1): a coluna Créditos mostra o que a
+  atividade vale pelo tipo declarado mesmo antes de validada — mesmo cálculo que a fila do
+  docente já fazia (`creditosDaAtividade`), agora também na lista do aluno. As horas só
+  aparecem, agregadas, no rodapé.
+- **Rodapé mostra o progresso real, não o filtrado:** "Total: 4 créditos · 60 de 90 horas
+  contabilizadas" não muda ao filtrar por status, porque é o mesmo progresso do painel (só
+  atividades validadas contam), não uma soma da lista visível.
+- **Linha inteira clicável com um link real na primeira célula:** o clique em qualquer ponto
+  da linha navega (`onClick` no `<tr>`), e o título é um `<Link>` de verdade, alcançável por
+  Tab e ativado com Enter — a navegação não depende de nenhum comportamento só de mouse.
+- **Texto de busca "por título ou tipo"**, não "por categoria": já não existe categoria.
+
+**Corrigido durante a verificação** (só a captura de `?demo=vazio` mostrou):
+- Com `?demo=vazio`, a lista zerava mas o progresso continuava vindo do estado real da
+  demonstração (4 de 6 créditos) — o subtítulo dizia "0 registros · 4 créditos de 6
+  contabilizados", contradizendo o próprio estado vazio. O progresso passou a ser calculado
+  sobre a mesma lista exibida (`calcularProgresso`, não mais uma segunda chamada ao storage),
+  então o vazio força também os créditos a zero.
+- Um `<th>` estava aninhado dentro de outro `<th>` (o cabeçalho ordenável retornava seu
+  próprio `<th>`, e o pai o envolvia em mais um): HTML inválido e nó de acessibilidade
+  duplicado, achado pela verificação automática por teclado ao localizar o cabeçalho.
+
+**Pendente.** `/atividades/nova` e `/atividades/[id]` (etapas 7 e 8) — os links da tabela para
+o detalhe e o botão "Nova atividade" caem na página de não encontrada até lá.
