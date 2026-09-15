@@ -1,14 +1,11 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 11 **implementadas e com build limpo**, no commit `af23db5`
-(push em `main`). **Atenção — leia antes de tudo:** esse commit está marcado como `WIP` de
-propósito. As etapas 9 e 10 foram codificadas, buildadas e verificadas nesta sessão (capturas em
-1280/375 px, alto contraste, A+, teclado e foco — ver seção 6), mas a sessão foi interrompida
-**antes** de escrever a entrada correspondente no `DEV-LOG.md`, o que o `CLAUDE.md` exige no
-mesmo commit de cada etapa. **A próxima sessão deve começar escrevendo essa entrada** (o que foi
-feito, as decisões e os porquês — rascunho de decisões está na seção 6 abaixo) antes de seguir
-para a etapa 12, para o `DEV-LOG.md` não pular direto da etapa 11 para a 12.
+Estado em **2026-09-15**: etapas 1 a 11 concluídas, com build limpo, verificadas no navegador e
+com entrada no `DEV-LOG.md` (push em `main`). Falta só a **etapa 12** (páginas de apoio e
+varredura final — ver seção 6). O commit `af23db5` que trouxe o código das etapas 9 e 10 ficou
+marcado `WIP` numa sessão anterior por faltar a entrada do `DEV-LOG.md`; essa entrada foi
+escrita depois, num commit separado — não é mais pendência.
 
 ---
 
@@ -53,8 +50,8 @@ verificador de tokens (ver seção 4).
 | 7 · Formulário (tela 04) | Concluída e verificada | `40cca88` |
 | 8 · Detalhe (tela 05) | Concluída e verificada | `ad5082d` |
 | 11 · Relatório | Concluída e verificada (fora de ordem, ver `PROXIMA-ETAPA.md` seção 0) | `53e65b1` |
-| 9 · Painel do docente (06) + fila completa | **Código completo e verificado; falta a entrada no `DEV-LOG.md`** | `af23db5` (WIP) |
-| 10 · Validação (07) + lote (07b) | **Código completo e verificado; falta a entrada no `DEV-LOG.md`** | `af23db5` (WIP) |
+| 9 · Painel do docente (06) + fila completa | Concluída e verificada | `af23db5` (código) + entrada no `DEV-LOG.md` |
+| 10 · Validação (07) + lote (07b) | Concluída e verificada | `af23db5` (código) + entrada no `DEV-LOG.md` |
 | 12 · Páginas de apoio e varredura final | **Não iniciada** — nada deste escopo foi tocado | — |
 
 `/docente/casca`, `components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" já
@@ -111,9 +108,8 @@ Arquivos das etapas 8 e 11 (2026-09-15, fora de ordem — ver `PROXIMA-ETAPA.md`
   sidebar, no menu mobile e nas ações/voltar do cabeçalho; `@page { size: A4 portrait; margin:
   ... }` — suporte de impressão usado pelo relatório, mas já vale para qualquer tela.
 
-Arquivos das etapas 9 e 10 (2026-09-15, commit `af23db5` — **WIP, sem entrada no `DEV-LOG.md`
-ainda**; código completo e buildado, ver seção 6 para o rascunho do que a entrada precisa
-cobrir):
+Arquivos das etapas 9 e 10 (2026-09-15, código no commit `af23db5`; ver `DEV-LOG.md` para as
+decisões e o que foi corrigido na verificação):
 
 - `app/(docente)/docente/page.tsx` e `components/painel/PainelDocente.tsx` — painel do docente
   (06): `components/docente/IndicadoresDocente.tsx` (4 indicadores em crédito, via nova
@@ -210,11 +206,11 @@ cobrir):
 ## 5. O que falta, por etapa
 
 - **8 · Detalhe (05):** concluída (2026-09-15, ver `DEV-LOG.md`).
-- **9 · Painel do docente (06) + fila completa:** **código concluído** (`af23db5`) — falta só a
-  entrada no `DEV-LOG.md`. `/docente/casca` e o item temporário já saíram.
-- **10 · Validação (07) + lote (07b):** **código concluído** (`af23db5`) — falta só a entrada no
-  `DEV-LOG.md`. Reclassificação com antes e depois (`compararReclassificacao`), confirmação do
-  (**) na monitoria, abas pelos quatro grupos, tudo implementado e verificado.
+- **9 · Painel do docente (06) + fila completa:** concluída (2026-09-15, ver `DEV-LOG.md`).
+  `/docente/casca` e o item temporário já saíram.
+- **10 · Validação (07) + lote (07b):** concluída (2026-09-15, ver `DEV-LOG.md`).
+  Reclassificação com antes e depois (`compararReclassificacao`), confirmação do (**) na
+  monitoria, abas pelos quatro grupos, tudo implementado e verificado.
 - **11 · Relatório:** concluída (2026-09-15, ver `DEV-LOG.md`).
 - **12 · Páginas de apoio e varredura final:** **não iniciada.** `/catalogo` do discente já
   passou a existir de verdade na etapa 9 (não é mais pendência desta etapa); ainda faltam
@@ -229,42 +225,24 @@ implementação das etapas 9 e 10 (régua do crédito: "Tipo"/"Créditos" no lug
 
 ---
 
-## 6. Próxima ação concreta: escrever a entrada do `DEV-LOG.md` das etapas 9 e 10, depois seguir para a 12
+## 6. Próxima ação concreta: etapa 12 (páginas de apoio e varredura final)
 
-**Não recomece as etapas 9 e 10 — o código já existe, já builda limpo e já foi verificado no
-navegador** (capturas em 1280/375 px, alto contraste, A+, teclado e foco — ver lista abaixo).
-O único débito é documental: escreva a entrada no `DEV-LOG.md` (uma para a etapa 9, uma para a
-10, ou uma cobrindo as duas — como as etapas 8+11 fizeram uma entrada cada, mantenha uma por
-etapa) e comite só isso, referenciando ou incorporando o commit `af23db5` (WIP). Depois disso,
-o roteiro segue para a etapa 12 (páginas de apoio e varredura final).
+Etapas 9 e 10 concluídas, com entrada no `DEV-LOG.md`. É a última etapa do roteiro. Escopo
+(`PROXIMA-ETAPA.md`, seção 4, tem o detalhe):
 
-O que a entrada precisa registrar (decisões já tomadas nesta sessão, não reabrir):
-
-- **Etapa 9.** `/docente` (painel), `/docente/fila` (fila completa — o item de navegação já
-  existia e apontava para lugar nenhum), catálogo extraído para
-  `components/catalogo/CatalogoConteudo.tsx` e exposto em `/catalogo` (discente — resolve a
-  pendência antiga de "Ver catálogo" 404 das etapas 6 a 8) e `/docente/catalogo` (mesma rota não
-  pode existir em dois grupos de rotas do Next). `obterEstatisticasDocente()` nova em
-  `lib/storage.ts`: "Devolvidas com pendência" conta só quem já foi enviada ao menos uma vez
-  (`enviadaEm !== null` e `status === "pendente"`), para não confundir com atividades cadastradas
-  e nunca enviadas. "Orientandos ativos" é a contagem real de discentes do seed (13), não o "38"
-  fictício do prompt original (já superado pelo adendo); o subtítulo virou "Curso BCDIA" (sem
-  inventar uma "turma", que o domínio não modela). Remoção de `/docente/casca` e
-  `VitrineCasca.tsx` (temporários da etapa 3).
-- **Etapa 10.** Na tela 07, `paraTipoId`/`paraQuantidade` são **sempre** enviados ao parecer
-  (mesmo sem reclassificar) — `compararReclassificacao` já resolve `mudou: false` quando nada
-  muda, o que simplifica a lógica em vez de só enviar esses campos condicionalmente. A
-  confirmação da regra `**` é um checkbox próprio da tela (o docente confirma de novo,
-  independente do que o discente já confirmou no cadastro). Recusar abre modal de confirmação
-  **controlado** (sem `DialogTrigger`, porque a validação do comentário precisa rodar antes de
-  abrir o modal); foco inicial em "Cancelar" via `initialFocus`. No lote (07b), abas são
-  `role="tablist"`/`tab`/`tabpanel` manuais (roving tabindex, sem componente de tabs do
-  shadcn — evita o procedimento de `shadcn add` sem necessidade real). Monitoria fica sempre
-  inapta ao lote (a confirmação `**` só existe na tela individual). Aplicação do lote é
-  **sequencial** (`for...of` com `await`), nunca `Promise.all` — ver armadilha nova na seção 7.
+- Rota genérica em português para as páginas de apoio que ainda faltam — `/simulador`,
+  `/avisos`, `/ajuda`, `/docente/orientandos`, `/docente/relatorio` (`/catalogo` já não é
+  pendência: ganhou conteúdo real na etapa 9). Nenhuma rota da navegação pode dar 404.
+- Favicon próprio (ainda é o do Next).
+- Caminho óbvio de reiniciar a demonstração no site publicado — `reiniciarDemo()` já existe em
+  `lib/storage.ts`, mas ainda não tem botão em nenhuma tela; o `localStorage` de testes não pode
+  chegar ao avaliador.
+- Varredura contra os critérios de aceite da seção 11 do `PROMPT-INICIAL.md` e contra o edital.
+- Conferência de anonimato: nenhum nome de integrante ou de equipe na interface, no título da
+  página, no README ou no `package.json`.
 
 Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
-`DEV-LOG.md`, commit e push em `main` — para cada etapa daqui em diante.
+`DEV-LOG.md`, commit e push em `main` — para esta e qualquer etapa futura.
 
 **Como verificar no navegador.** Nesta sessão, `playwright-core` foi instalado numa pasta
 temporária fora do repositório (`npm install playwright-core --no-save`) e dirigido contra o

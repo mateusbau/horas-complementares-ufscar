@@ -9,30 +9,17 @@ Entrega do hackathon: **17/09**.
 
 ---
 
-## -1. LEIA PRIMEIRO — estado exato em 2026-09-15, sessão interrompida antes do fim
+## -1. Etapas 9 e 10 — concluídas
 
-As etapas 9 e 10 (painel do docente, fila completa, catálogo compartilhado, validação
-individual e em lote) **foram implementadas, buildadas com sucesso e verificadas no navegador**
-nesta sessão — build limpo (`npm run build`, com `verificar-tokens`), capturas em 1280/375 px,
-alto contraste, A+, teclado e foco, tudo revisado. O código está no commit `af23db5` (`main`),
-mas esse commit está marcado **`WIP`** porque a sessão foi interrompida antes de escrever a
-entrada correspondente no `DEV-LOG.md` — o `CLAUDE.md` exige essa entrada no mesmo commit de
-cada etapa, e isso não aconteceu aqui. **Não é um problema de código, é documentação
-pendente.**
+Painel do docente, fila completa, catálogo compartilhado, validação individual e em lote:
+implementados, buildados, verificados no navegador (capturas em 1280/375 px, alto contraste,
+A+, teclado e foco) e com entrada no `DEV-LOG.md`. Código no commit `af23db5`; a entrada de
+documentação que faltava foi escrita num commit posterior. Não é mais pendência — próxima
+etapa é a 12 (seção 4 abaixo).
 
-**Ação da próxima sessão, antes de tocar em qualquer código novo:**
-1. Ler os arquivos criados/alterados no commit `af23db5` (`git show --stat af23db5`) e escrever
-   a entrada do `DEV-LOG.md` para a etapa 9 e para a etapa 10 (uma cada, seguindo o padrão das
-   entradas anteriores: o que foi feito, decisões e porquês, o que ficou pendente). O rascunho
-   das decisões já está em `HANDOFF.md`, seção 6 — não precisa reinvestigar, só transcrever e
-   revisar.
-2. Comitar essa entrada (pode ser um commit só de documentação, ou incorporado como fechamento
-   das etapas 9/10 — decisão livre de quem continuar).
-3. Só então seguir para a etapa 12 (ver seção 4 abaixo, que já lista o roteiro dela).
-
-**Não refazer o que já existe:** `/docente`, `/docente/fila`, `/docente/catalogo`, `/catalogo`
-(discente), `/docente/validacao/[id]` e `/docente/validacao/lote` já existem e funcionam.
-`/docente/casca` e `VitrineCasca.tsx` já saíram.
+`/docente`, `/docente/fila`, `/docente/catalogo`, `/catalogo` (discente),
+`/docente/validacao/[id]` e `/docente/validacao/lote` já existem e funcionam. `/docente/casca` e
+`VitrineCasca.tsx` já saíram.
 
 ---
 

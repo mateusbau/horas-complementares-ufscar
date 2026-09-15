@@ -477,3 +477,128 @@ barra de acessibilidade já tinha isso desde a etapa 3); `@page { size: A4 portr
 **Pendente.** Nada. Com isso, o edital ("gerar relatórios para entrega") tem implementação, e o
 roteiro volta à ordem original do prompt: etapa 9 (painel do docente + fila), 10 (validação +
 lote) e 12 (páginas de apoio e varredura final) — ver `HANDOFF.md`, seção 6.
+
+---
+
+## 2026-09-15 · Etapa 9 — Painel do docente (tela 06) e fila completa
+
+Retomando a ordem original do `PROMPT-INICIAL.md` depois das etapas 8 e 11 (fora de ordem).
+Motivo, já registrado: painel do docente sem a tela de validação é um painel que não faz nada —
+por isso as etapas 9 e 10 foram feitas em sequência, na mesma sessão, sem parar entre elas.
+
+**Feito.** `/docente` (painel), com quatro indicadores em **crédito** — nunca hora agregada,
+régua do crédito do `CLAUDE.md`: "Aguardando validação", "Validadas" (com os créditos
+homologados), "Devolvidas com pendência" e "Orientandos ativos". A nova
+`obterEstatisticasDocente()` (`lib/storage.ts`) calcula os quatro sobre o estado inteiro (todos
+os discentes, não só o da demonstração). Abaixo, a fila de validação em preview (5 itens,
+`FilaValidacao`, componente compartilhado com a fila completa) e "Ver fila completa" leva a
+`/docente/fila` — a mesma tabela, sem o recorte, alcançada também pelo item de navegação "Fila
+de validação" que já existia e apontava para lugar nenhum. Cards de acesso (`Meus orientandos`,
+`Relatório da turma`, `Catálogo de atividades`, `Trocar de perfil`) fecham a tela.
+
+**Feito também**, resolvendo uma pendência mais antiga: o catálogo (Tabela 7) foi extraído para
+`components/catalogo/CatalogoConteudo.tsx` — um componente sem rota própria, sem ação de
+cadastro, só leitura — e exposto em duas rotas que renderizam o mesmo conteúdo:
+`app/(discente)/catalogo/page.tsx` (resolve o "Ver catálogo" que 404 desde a etapa 6) e
+`app/(docente)/docente/catalogo/page.tsx`. Duas rotas porque o Next não permite o mesmo caminho
+em dois grupos de rotas, e cada grupo precisa da sidebar do próprio perfil.
+
+**Limpeza obrigatória, feita:** removidos `app/(docente)/docente/casca/page.tsx` e
+`components/demonstracao/VitrineCasca.tsx` (temporários desde a etapa 3), e o item "Casca da
+interface" saiu da navegação docente (`components/layout/navegacao.tsx`). `INICIO_DO_PERFIL.docente`
+(`lib/rotas.ts`) passa a apontar para `/docente`.
+
+**Decisões.**
+- **"Devolvidas com pendência" conta só quem já foi enviada ao menos uma vez** (`status ===
+  "pendente" && enviadaEm !== null`), não toda atividade `pendente`. O domínio usa `pendente`
+  para dois momentos diferentes sob a ótica do aluno ("a bola está com ele"), mas sob a ótica do
+  docente são coisas distintas: uma atividade nunca enviada não é "devolvida" — ele nunca a viu.
+- **"Orientandos ativos" é a contagem real de discentes do seed (13)**, não o "38" do
+  `PROMPT-INICIAL.md` original (número que a seção 6 do prompt, já superada pelo adendo, nunca
+  justificou). O subtítulo do indicador virou "Curso BCDIA" — nada de inventar uma "Turma 2022",
+  que o domínio não modela (`Discente` não tem esse campo), para não citar um dado que não existe.
+- **Colunas da fila são "Tipo" e "Créditos"**, nunca "Categoria" ou "Horas" — a mesma régua do
+  crédito das telas do discente. A tabela e o card mobile reaproveitam a mesma estrutura de
+  `TabelaAtividades` (etapa 6), com o `StatusBadge` fixo em "Em análise" (a fila é derivada do
+  status: só entra quem está em análise, então o badge nunca varia — mantido mesmo assim porque
+  é o mesmo vocabulário visual do resto do sistema).
+- **"Trocar de perfil" é botão, não link**, no card de acesso do docente
+  (`AcessoRapidoDocente.tsx`): é uma ação (chama `trocarPerfil` e navega depois), não uma rota,
+  o mesmo raciocínio já aplicado ao item homônimo da barra lateral (`navegacao.tsx`, `BlocoPerfil`).
+
+**Pendente.** Nada dentro do escopo desta etapa. `/docente/orientandos` e `/docente/relatorio`
+continuam 404 (cards e itens de navegação apontam para eles) — fica para a etapa 12, junto das
+demais páginas de apoio.
+
+---
+
+## 2026-09-15 · Etapa 10 — Validação (tela 07) e lote (07b)
+
+**Feito — individual.** `/docente/validacao/[id]`: comprovante (mesmo placeholder da tela 05),
+"Dados enviados" (tipo declarado, requisito e comprovante literais da Tabela 7, o que a
+discente informou, período e o progresso dela — `obterProgresso(discenteId)`, já existente),
+"Reclassificação" (select de tipo + campo de quantidade, com "antes e depois" via
+`compararReclassificacao` sempre que o tipo ou a quantidade mudam) e "Parecer do docente"
+(comentário e três ações: Aprovar, Devolver com pendência, Recusar atividade). Recusar abre um
+modal de confirmação ("A recusa exige justificativa e não pode ser desfeita pelo discente."),
+com foco inicial em "Cancelar". "Validar em lote" leva a `/docente/validacao/lote`, já na aba do
+grupo da atividade aberta (`?grupo=`); "Próxima da fila" avança para o próximo item, quando
+houver.
+
+**Feito — lote.** `/docente/validacao/lote`: abas pelos quatro grupos da Tabela 7
+(`role="tablist"`/`tab`/`tabpanel` manuais, sem componente de tabs do shadcn), cada uma com a
+contagem de itens. Dentro de cada aba, uma tabela com checkbox real por atividade (rótulo
+próprio, identificando atividade e discente — nunca a linha inteira como alvo de seleção),
+"Selecionar todos" com estado indeterminado, contagem de selecionados e créditos a homologar
+anunciada em `aria-live` a cada mudança, e duas ações — "Aprovar selecionadas" e "Devolver com
+pendência" — cada uma atrás de um modal de confirmação que diz, em texto, quantas atividades e
+quantos créditos serão afetados, com foco inicial em "Cancelar". Depois de aplicar, o resultado
+é anunciado e o foco volta para a aba ativa (um ponto que sempre existe, mesmo que as linhas
+selecionadas tenham saído da fila).
+
+**Decisões.**
+- **`paraTipoId`/`paraQuantidade` são sempre enviados ao parecer**, mesmo quando o docente não
+  reclassifica nada — `compararReclassificacao` já resolve `mudou: false` quando tipo e
+  quantidade batem com o que a discente declarou, então não reclassificar deixa de ser um caso
+  especial na tela: é só o resultado natural de não mudar os campos.
+- **Atividade sem tipo previsto não pode ser aprovada** (regra já pronta em
+  `validarParecer`/`lib/calculos.ts`): o botão "Aprovar" mostra dinamicamente "Aprovar 0
+  créditos" nesse caso, em vez de ficar desabilitado — o rótulo já avisa que não há nada a
+  aprovar sem reclassificar primeiro, e clicar mostra a mensagem de regra pronta ("Reclassifique-a
+  para um tipo previsto ou recuse-a.").
+- **A confirmação da regra `**` (monitoria) é um checkbox próprio da tela de validação**,
+  independente do que a discente já confirmou no cadastro (`atividade.confirmacoes.semestreCompleto`):
+  o docente confirma de novo, com o texto literal da nota da Tabela 7
+  (`NOTA_SEMESTRE_COMPLETO`), porque é ele quem valida, não quem declara. A nota `*` (dupla
+  contagem) aparece só como informação — `validarParecer` não exige confirmação do docente para
+  essa regra, então não há checkbox para ela.
+- **O modal de recusa é um `Dialog` controlado, sem `DialogTrigger`**: a validação do comentário
+  obrigatório precisa rodar *antes* de abrir o modal (para não abrir uma confirmação que vai
+  falhar), então o botão "Recusar atividade" decide se abre o modal, em vez de um trigger do
+  próprio Dialog decidir por ele.
+- **Monitoria fica sempre inapta ao lote** (desmarcada, desabilitada, com o motivo visível): a
+  confirmação da regra `**` só existe na tela individual, e o lote não tem onde coletá-la — por
+  isso toda atividade de monitoria "exige revisão individual", mesmo dentro da própria aba de
+  Ensino e monitoria.
+- **A aplicação do lote é sequencial (`for...of` com `await`), nunca `Promise.all`.**
+  `registrarParecer` (como toda função de `lib/storage.ts`) lê o `localStorage` inteiro, aplica a
+  mudança e grava de volta; em paralelo, cada chamada leria o mesmo estado antigo e a última a
+  gravar apagaria o que as outras escreveram. Descoberto durante a implementação, antes de gerar
+  dado incorreto — não foi um bug em produção, mas quase foi um.
+
+**Corrigido durante a verificação:**
+- **O foco depois de aplicar o lote não chegava na aba ativa** — ficava em `document.body`. O
+  `Dialog` (Base UI) é controlado e não tem `DialogTrigger`, então a prop `finalFocus` (a API
+  certa para devolver o foco a um elemento específico ao fechar) não tinha um "de onde" confiável
+  para agir. Confirmado por captura de tela e por polling do foco a cada 150 ms num teste
+  automatizado — sem isso, o bug não aparecia num clique manual apressado, só quando alguém
+  esperava e checava de fato onde o foco tinha ido. Corrigido com um `window.setTimeout(...,
+  200)` chamando `.focus()` no botão da aba ativa depois de fechar o modal — 200 ms é maior que a
+  transição de fechamento (`--duration`, 160 ms), então esse `.focus()` sempre vence a corrida.
+- **A mesma verificação levou tempo demais na primeira tentativa** porque a espera do teste não
+  contava `300 ms × quantidade de itens selecionados` (cada `registrarParecer` sequencial soma
+  esse atraso simulado) — o teste checava o resultado antes da última chamada terminar. Não é um
+  bug do sistema, só um lembrete para quem for verificar de novo.
+
+**Pendente.** Nada dentro do escopo desta etapa. Falta a etapa 12 (páginas de apoio e varredura
+final) — ver `PROXIMA-ETAPA.md`.
