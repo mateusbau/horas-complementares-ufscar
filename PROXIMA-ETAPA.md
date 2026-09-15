@@ -1,25 +1,26 @@
-# PRÓXIMA ETAPA — decisões pendentes de aplicação
+# PRÓXIMA ETAPA — histórico de decisões (roteiro concluído)
 
-Decisões tomadas pela equipe em 2026-09-15 que ainda não estão totalmente aplicadas. Itens 1 a
-5 foram decididos ao fim da etapa 5 e majoritariamente aplicados nas etapas 6 e 7 (ver
-`DEV-LOG.md`); o que resta de cada um está listado abaixo, só para as etapas 8 e 11 — **não
-repita o que já foi feito.** Contexto geral em `HANDOFF.md`; regras permanentes em `CLAUDE.md`.
+**As 12 etapas do roteiro estão concluídas** (2026-09-15) — não há próxima etapa planejada.
+Este arquivo fica como histórico das decisões que foram sendo fechadas ao longo do projeto;
+o estado de entrega, com o resultado de cada verificação, está em `HANDOFF.md` (seção "Estado
+de entrega") e em `DEV-LOG.md` (entrada "Etapa 12 — Varredura final antes da entrega").
 
 Entrega do hackathon: **17/09**.
 
 ---
 
-## -1. Etapas 9 e 10 — concluídas
+## -1. Etapas 9 a 12 — concluídas
 
-Painel do docente, fila completa, catálogo compartilhado, validação individual e em lote:
-implementados, buildados, verificados no navegador (capturas em 1280/375 px, alto contraste,
-A+, teclado e foco) e com entrada no `DEV-LOG.md`. Código no commit `af23db5`; a entrada de
-documentação que faltava foi escrita num commit posterior. Não é mais pendência — próxima
-etapa é a 12 (seção 4 abaixo).
+Painel do docente, fila completa, catálogo compartilhado, validação individual e em lote,
+página "Sobre este protótipo", rota genérica para páginas de apoio e toda a varredura final
+(links, primeiro minuto, percurso completo na URL publicada, Lighthouse/axe, critérios de
+aceite, anonimato): implementados, buildados e verificados — local e na URL publicada. Nada
+deste roteiro ficou pendente para a entrega.
 
 `/docente`, `/docente/fila`, `/docente/catalogo`, `/catalogo` (discente),
-`/docente/validacao/[id]` e `/docente/validacao/lote` já existem e funcionam. `/docente/casca` e
-`VitrineCasca.tsx` já saíram.
+`/docente/validacao/[id]`, `/docente/validacao/lote`, `/simulador`, `/avisos`, `/ajuda`,
+`/docente/orientandos`, `/docente/relatorio` e `/sobre` já existem e funcionam. `/docente/casca`
+e `VitrineCasca.tsx` já saíram (duas vezes — ver `HANDOFF.md`, seção 7, sobre o OneDrive).
 
 ---
 
@@ -116,29 +117,14 @@ Pedagógico (seção 3.5.4) exige pelo menos 2 tipos de atividade diferentes.").
 
 ---
 
-## 4. Escopo de corte, se faltar tempo — e o que falta na etapa 12
+## 4. Etapa 12 — feita (nada foi cortado)
 
-**Etapa 12 ainda não foi iniciada.** Nada deste escopo foi tocado. `/catalogo` do discente
-**deixou de ser pendência da etapa 12**: passou a existir de verdade na etapa 9, com conteúdo
-real (`components/catalogo/CatalogoConteudo.tsx`), não como rota genérica.
-
-Ordem do que cortar primeiro, se faltar tempo:
-
-1. **Etapa 12 (páginas de apoio)** vira uma **rota genérica**: uma página só, com a anatomia
-   padrão, atendendo apenas o que ainda falta — `/simulador`, `/avisos`, `/ajuda`,
-   `/docente/orientandos` e `/docente/relatorio` (`/catalogo` já está fora desta lista, ver
-   acima). Nenhuma rota da navegação pode dar 404.
-2. ~~Etapa 8 (detalhe da atividade) em versão magra~~ — feita em 2026-09-15, já na versão
-   magra (dados, situação e parecer, sem extras); não sobrou nada a cortar aqui.
-
-**Não pode cair:** a **etapa 11 (relatório imprimível)**, exigência do edital — já concluída.
-
-O roteiro completo da etapa 12 (`HANDOFF.md`, seção 5): rota genérica para as páginas de apoio
-restantes; favicon próprio (ainda é o do Next); reinício da demonstração com caminho óbvio no
-site publicado (o `localStorage` de testes não pode ir para o avaliador); varredura contra os
-critérios de aceite da seção 11 do `PROMPT-INICIAL.md` e contra o edital; conferência de
-anonimato (nenhum nome de integrante ou de equipe na interface, no título da página, no README
-ou no `package.json`).
+Rota genérica cobrindo `/simulador`, `/avisos`, `/ajuda`, `/docente/orientandos` e
+`/docente/relatorio`; favicon próprio; reinício da demonstração com botão na tela de login;
+varredura contra os critérios de aceite da seção 11 do `PROMPT-INICIAL.md` e contra o edital
+(13 de 13); conferência de anonimato. Nada precisou ser cortado — a etapa 11 (relatório
+imprimível), que era a única marcada como "não pode cair", já estava concluída desde antes.
+Detalhe de cada verificação: `DEV-LOG.md`, entrada da etapa 12.
 
 ---
 

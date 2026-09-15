@@ -602,3 +602,162 @@ selecionadas tenham saído da fila).
 
 **Pendente.** Nada dentro do escopo desta etapa. Falta a etapa 12 (páginas de apoio e varredura
 final) — ver `PROXIMA-ETAPA.md`.
+
+---
+
+## 2026-09-15 · Etapa 12 — Varredura final antes da entrega
+
+Última etapa do roteiro. Não é etapa de feature: garante que um avaliador anônimo, sem
+contexto, usa o sistema inteiro sem tropeçar. Seis partes, nesta ordem.
+
+**Parte 1 — nenhum beco sem saída.** Varredura de todo `href`/`router.push` do projeto contra
+as rotas existentes: só cinco apontavam para nada — `/simulador`, `/avisos`, `/ajuda`,
+`/docente/orientandos`, `/docente/relatorio` (já eram pendência conhecida desde a etapa 9; nenhum
+outro link quebrado apareceu). `components/apoio/PaginaDeApoio.tsx` é o componente
+compartilhado: anatomia de página completa, explica que aquele recurso está fora do escopo desta
+demonstração (com uma frase específica do que a tela faria, nunca "em construção") e devolve ao
+painel do próprio perfil. Cinco rotas novas, cada uma só passando título e descrição.
+
+**Achado à parte, corrigido de novo:** `/docente/casca` e `components/demonstracao/
+VitrineCasca.tsx` — removidos na etapa 9 — tinham reaparecido no disco local antes de eu
+começar esta etapa, quase entrando de novo no build. Causa mais provável: o projeto vive numa
+pasta do OneDrive, que sincroniza e pode restaurar versões antigas por conta própria, sem o git
+saber. Removidos outra vez; ficou registrado como armadilha no `HANDOFF.md` para quem notar o
+mesmo `git status` estranho depois.
+
+**Parte 2 — primeiro minuto do avaliador.** A tela de login já tinha os dois perfis bem
+visíveis (cartões de rádio com nome e descrição) e o botão "Entrar como visitante (dados de
+demonstração)", mas o rótulo "protótipo" só aparecia numa frase pequena perto dos botões — quem
+lê de cima para baixo passa pelos campos "Número UFSCar ou e-mail institucional" e "Senha" antes
+disso, e pode achar que precisa de credencial real. Corrigido com uma linha no cabeçalho, antes
+do formulário: "Protótipo de demonstração — escolha um perfil abaixo e entre como visitante, sem
+credencial real." Troca de perfil já era descobrível (botão "Trocar para perfil X" na barra
+lateral, com esse texto exato) — nada a mudar aqui.
+
+`reiniciarDemo()` já existia em `lib/storage.ts` desde a etapa 2, mas nunca teve um botão em
+lugar nenhum da interface. `components/entrada/ReiniciarDemonstracao.tsx`: botão na tela de
+login (o único lugar que qualquer pessoa alcança, com ou sem sessão — inclusive vindo de "Sair"),
+com confirmação em modal (mesmo padrão das ações destrutivas do docente, foco inicial em
+"Cancelar") e um `window.location.assign("/")` no final, não `router.push`, para nenhuma tela
+guardar em memória um progresso ou uma fila lidos antes do reinício. Testado numa janela
+totalmente nova (seed limpo direto) e numa com dados de um percurso de teste completo já salvos
+(o botão devolveu ao seed original nas duas).
+
+**Parte 3 — percurso completo na URL publicada.** Rodado duas vezes contra
+`https://horas-complementares-ufscar.vercel.app`, a primeira por clique, a segunda só por
+teclado: cadastrar uma palestra (2 unidades = 1 crédito) → ver a prévia do cálculo → anexar
+comprovante → enviar → trocar para o perfil docente → achar a atividade na fila → aprovar
+individualmente → validar outra atividade em lote (grupo Ensino e monitoria, selecionar todos os
+aptos, confirmar, aplicar) → voltar ao perfil discente → confirmar o crédito somado no painel (4
+→ 5 de 6) → abrir o relatório e ver a linha nova → imprimir. As duas rodadas completaram o
+percurso inteiro sem um erro de console, sem um `pageerror`, sem uma resposta 5xx.
+
+**Achado corrigido durante esta parte:** o formulário de cadastro (tela 04) nunca mostrava
+nenhum crédito antes do envio — só o texto da regra (`formatarExplicacaoRequisito`), sem o
+número calculado. Para a régua do crédito valer também na tela mais importante do fluxo do
+discente, um parágrafo aparece assim que tipo e quantidade são válidos: "Isto vale N créditos (M
+horas contabilizadas)." — texto visível comum, não `aria-live` (recalcular a cada tecla digitada
+anunciaria o valor a cada dígito).
+
+**Sobre o repeat por teclado:** o botão "Selecionar arquivo" abre o seletor de arquivos do
+sistema operacional — fora do alcance de qualquer script de teclado dentro da página (nenhuma
+ferramenta de automação de navegador consegue apertar tecla dentro de uma caixa de diálogo do
+SO). O que se testa e se garante é que o Tab alcança o botão certo, com o rótulo certo; o anexo
+em si usa a mesma API de arquivo que o clique usaria depois de a pessoa escolher o arquivo na
+caixa do sistema. Da mesma forma, a navegação por seta/letra dentro de um `<select>` nativo já
+fechado é garantia do próprio navegador em qualquer sistema real — não é algo que este app
+implemente ou possa quebrar — e não foi possível reproduzir de forma confiável via CDP
+(Chromium headless); o que importa e o que foi confirmado é que o Tab alcança o controle certo,
+com o rótulo certo.
+
+**Parte 4 — medição e conformidade.**
+
+Lighthouse (desktop) e axe-core, direto contra a URL publicada, sessão válida gravada antes de
+cada página (sem isso `GuardaSessao` mandaria para o login, mas a tela renderiza igual porque a
+verificação não bloqueia):
+
+| Tela | Performance | Acessibilidade | Boas práticas | SEO | axe |
+|---|---|---|---|---|---|
+| Login | 98 | 100 | 100 | 100 | 0 |
+| Painel (discente) | 89 | 100 | 100 | 100 | 0 |
+| Listagem | 95 | 100 | 100 | 100 | 0 |
+| Formulário | 97 | 100 | 100 | 100 | 0 |
+| Detalhe | 97 | 100 | 100 | 100 | 0 |
+| Painel do docente | 98 | 100 | 100 | 100 | 0 |
+| Validação | 96 | 100 | 100 | 100 | 0 |
+| Relatório | 96 | 100 | 100 | 100 | 0 |
+
+axe também rodou, com 0 violações, na validação em lote (1280 e 375 px) e no painel de cada
+perfil em 375 px. Performance mais baixa no painel do discente (89) é o anel de progresso (SVG
+animado) mais o maior número de componentes na primeira pintura; nenhum dos quatro está abaixo
+de 89, e nenhuma pontuação de Acessibilidade, Boas práticas ou SEO ficou abaixo de 100 em
+nenhuma tela.
+
+**Corrigido a partir do axe:** violação `region` ("All page content should be contained by
+landmarks") em toda tela com sidebar — a marca e o bloco de perfil (nome, RA, "Trocar de
+perfil", "Sair") são irmãos do `<nav>` dentro de um `<div>` comum, não contidos por ele.
+`Sidebar.tsx` virou `<aside aria-label="Barra lateral">`; `MobileNav.tsx` (a mesma marca, na
+faixa mobile) virou `<header>`. Depois da correção, 0 violações em toda tela testada, nas duas
+larguras.
+
+**Critérios de aceite (seção 11 do `PROMPT-INICIAL.md`), um por um:**
+
+- [x] Toda a navegação funciona; nenhuma rota da sidebar dá 404. *(as cinco que faltavam ganharam
+  rota nesta etapa)*
+- [x] "Entrar como visitante" leva a um sistema já populado, em um clique.
+- [x] Os dois perfis são navegáveis, com troca de perfil funcionando.
+- [x] Criar uma atividade nova aparece na listagem e afeta o progresso ao ser validada.
+  *(confirmado na Parte 3: 4 → 5 de 6 créditos)*
+- [x] Nenhum componente lê `localStorage` diretamente.
+- [x] Nenhum hex escrito à mão no JSX.
+- [x] Nenhuma ocorrência de `outline: none`.
+- [x] Todo status aparece com cor + ícone + texto.
+- [x] Um único `h1` por página; níveis de título sem salto. *(confirmado também nas seis páginas
+  novas desta etapa)*
+- [x] Todo campo tem label visível associado; obrigatórios marcados pela palavra "obrigatório".
+- [x] Nenhuma tela quebra em 375 px nem com o texto em 125 %.
+- [x] `npm run build` passa sem erro nem warning de tipo.
+- [x] Nenhum nome de equipe ou de integrante aparece na interface.
+
+Treze de treze. Nenhuma pendência desta lista foi para a entrega.
+
+**Parte 5 — identidade e anonimato.**
+
+- Favicon próprio: `app/icon.svg`, o mesmo emblema do componente `Marca` (quadrado `--brand`,
+  ícone de graduation-cap em branco), substituindo `app/favicon.ico` (o ícone padrão do Next).
+  Convenção do App Router: qualquer `app/icon.*` já é servido e referenciado no `<head>` sem
+  configuração extra.
+- Título e metadados: já estavam em português, descritivos, sem nome de equipe (`"Horas
+  Complementares · UFSCar Sorocaba"` e a descrição em `app/layout.tsx`) — nada a corrigir.
+- `lang="pt-BR"` no `<html>`: já estava, desde a etapa 3.
+- Conferência de anonimato — o que foi procurado e o resultado:
+  - `package.json`: campo `author` ausente (nunca existiu); `name` é `"semdia"`, um nome de
+    projeto genérico, não um nome de pessoa ou de equipe.
+  - `README.md`: sem seção de créditos ou autoria.
+  - Interface (`app/`, `components/`, `lib/`): busca pelo nome do responsável pela conta git
+    deste repositório não encontrou nenhuma ocorrência.
+  - "SeCoT XVIII" aparece várias vezes (rodapé do login, títulos internos de documentação) — é o
+    nome do próprio hackathon/evento, não de uma equipe ou integrante; a especificação original
+    já usa esse nome como parte do produto ("Horas Complementares · SeCoT XVIII"), então foi
+    deixado como está.
+  - Commits do git carregam o nome de quem operou o repositório (autor do commit) — isso é
+    metadado do Git, não "interface, título, README ou `package.json`" (a lista literal da
+    instrução), e reescrever histórico de commits é uma operação destrutiva fora do escopo desta
+    varredura; fica registrado aqui para quem decidir se isso importa antes de tornar o
+    repositório público.
+
+**Parte 6 — "Sobre este protótipo".** Havia tempo depois das partes obrigatórias, então foi
+feita. `app/sobre/page.tsx`, sem sessão exigida, alcançável por um link no rodapé de toda tela
+(`EstruturaPerfil.tsx`, dentro de `<main>`, e do rodapé da própria tela de login). Quatro seções:
+Escopo (o que o protótipo cobre, em texto corrido — não é lista de features), Decisões de
+acessibilidade (teclado completo até no lote, status nunca só por cor, uma única região
+`aria-live`, foco visível de 2 px), Fidelidade à Tabela 7 (créditos exigidos, tipos distintos e a
+premissa do fator de conversão, citando `FONTE_TABELA_7` e `formatarPremissaCredito()` — nenhum
+número do domínio escrito à mão na página) e Avaliação anônima. Testada em 1280 e 375 px.
+
+**Pendente para a entrega.** Nada dentro do escopo desta etapa ou das anteriores. O roteiro do
+`PROMPT-INICIAL.md` está completo. Duas notas para quem for defender o protótipo, não bugs:
+(1) o fator de 15 h por crédito é a leitura mais provável da matriz curricular, mas a
+confirmação com a coordenação do curso segue pendente (documentado desde a etapa 2 e citado de
+novo em "Sobre este protótipo"); (2) o autor dos commits do Git é visível no histórico do
+repositório, fora do que esta varredura de anonimato cobre (ver Parte 5).

@@ -1,11 +1,28 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-15**: etapas 1 a 11 concluídas, com build limpo, verificadas no navegador e
-com entrada no `DEV-LOG.md` (push em `main`). Falta só a **etapa 12** (páginas de apoio e
-varredura final — ver seção 6). O commit `af23db5` que trouxe o código das etapas 9 e 10 ficou
-marcado `WIP` numa sessão anterior por faltar a entrada do `DEV-LOG.md`; essa entrada foi
-escrita depois, num commit separado — não é mais pendência.
+
+## Estado de entrega — 2026-09-15
+
+**As 12 etapas do roteiro estão concluídas.** Build limpo, todas verificadas no navegador (local
+e na URL publicada), com entrada no `DEV-LOG.md`, push em `main`. A entrega de 17/09 está
+coberta: os 13 itens da seção 11 do `PROMPT-INICIAL.md` passam, o edital ("gerar relatórios para
+entrega") está implementado desde a etapa 11, e a etapa 12 fez a varredura final — nenhuma rota
+da navegação dá 404, o percurso completo (cadastrar → validar individual e em lote → relatório
+→ imprimir) roda sem erro na URL publicada por clique e por teclado, Lighthouse e axe saíram
+limpos nas telas principais, e a conferência de anonimato não achou nada. Detalhe completo de
+cada verificação: `DEV-LOG.md`, entrada "Etapa 12 — Varredura final antes da entrega".
+
+**O que ficou como nota para a defesa, não como pendência de código** (seção 7 desta etapa, no
+`DEV-LOG.md`, tem o detalhe):
+- o fator de 15 h por crédito é a leitura mais provável da matriz curricular do PPC, mas a
+  confirmação com a coordenação do curso segue pendente (não é algo que o código resolva);
+- o autor dos commits do Git é visível no histórico do repositório — fora do que a varredura de
+  anonimato cobre (interface, título, README, `package.json`), mas vale saber antes de tornar o
+  repositório público, se a regra do edital chegar até esse detalhe.
+
+Se algo mudar depois desta entrega, siga o mesmo procedimento de sempre (seção 4): build limpo,
+captura em 1280/375 px e alto contraste, entrada no `DEV-LOG.md`, commit e push.
 
 ---
 
@@ -52,7 +69,7 @@ verificador de tokens (ver seção 4).
 | 11 · Relatório | Concluída e verificada (fora de ordem, ver `PROXIMA-ETAPA.md` seção 0) | `53e65b1` |
 | 9 · Painel do docente (06) + fila completa | Concluída e verificada | `af23db5` (código) + entrada no `DEV-LOG.md` |
 | 10 · Validação (07) + lote (07b) | Concluída e verificada | `af23db5` (código) + entrada no `DEV-LOG.md` |
-| 12 · Páginas de apoio e varredura final | **Não iniciada** — nada deste escopo foi tocado | — |
+| 12 · Páginas de apoio e varredura final | Concluída e verificada (local e na URL publicada) | `3a19270` … `9b1cba0` |
 
 `/docente/casca`, `components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" já
 saíram (etapa 9). `INICIO_DO_PERFIL.docente` (`lib/rotas.ts`) já aponta para `/docente`.
@@ -136,6 +153,22 @@ decisões e o que foi corrigido na verificação):
 - Removidos: `app/(docente)/docente/casca/page.tsx` e `components/demonstracao/VitrineCasca.tsx`
   (temporários da etapa 3); `lib/rotas.ts` e `components/layout/navegacao.tsx` atualizados.
 
+Arquivos da etapa 12 (2026-09-15, varredura final — ver `DEV-LOG.md` para as medições e o
+resultado da conferência de aceite):
+
+- `components/apoio/PaginaDeApoio.tsx` — rota genérica para páginas de apoio fora do escopo
+  construído; `app/(discente)/{simulador,avisos,ajuda}/page.tsx` e
+  `app/(docente)/docente/{orientandos,relatorio}/page.tsx` a usam.
+- `components/entrada/ReiniciarDemonstracao.tsx` — botão + confirmação na tela de login, chama
+  `reiniciarDemo()`/`encerrarSessao()` (já existiam em `lib/storage.ts`, sem interface até aqui).
+- `components/atividade/FormularioNovaAtividade.tsx` — prévia do cálculo ("Isto vale N créditos
+  (M horas contabilizadas).") assim que tipo e quantidade são válidos, antes do envio.
+- `components/layout/{Sidebar,MobileNav}.tsx` — `<aside aria-label="Barra lateral">` e
+  `<header>` no lugar de `<div>`, corrigindo uma violação de landmark que o axe achou.
+- `app/icon.svg` — favicon próprio (substitui `app/favicon.ico`, o padrão do Next).
+- `app/sobre/page.tsx` — "Sobre este protótipo", alcançável do rodapé de toda tela
+  (`components/layout/EstruturaPerfil.tsx` e o rodapé do login).
+
 ---
 
 ## 3. O que cada arquivo de `lib/` faz
@@ -203,50 +236,36 @@ decisões e o que foi corrigido na verificação):
 
 ---
 
-## 5. O que falta, por etapa
+## 5. Estado por etapa — todas concluídas
 
-- **8 · Detalhe (05):** concluída (2026-09-15, ver `DEV-LOG.md`).
-- **9 · Painel do docente (06) + fila completa:** concluída (2026-09-15, ver `DEV-LOG.md`).
-  `/docente/casca` e o item temporário já saíram.
-- **10 · Validação (07) + lote (07b):** concluída (2026-09-15, ver `DEV-LOG.md`).
-  Reclassificação com antes e depois (`compararReclassificacao`), confirmação do (**) na
-  monitoria, abas pelos quatro grupos, tudo implementado e verificado.
-- **11 · Relatório:** concluída (2026-09-15, ver `DEV-LOG.md`).
-- **12 · Páginas de apoio e varredura final:** **não iniciada.** `/catalogo` do discente já
-  passou a existir de verdade na etapa 9 (não é mais pendência desta etapa); ainda faltam
-  `/simulador`, `/avisos`, `/ajuda`, `/docente/orientandos`, `/docente/relatorio` sem 404 (o
-  `EstadoErro` já aponta para `/ajuda`); favicon próprio (ainda é o do Next); critérios de
-  aceite da seção 11 do prompt; conferência de anonimato. Ver `PROXIMA-ETAPA.md` para o roteiro
-  completo desta etapa.
+- **8 · Detalhe (05):** concluída (ver `DEV-LOG.md`).
+- **9 · Painel do docente (06) + fila completa:** concluída. `/docente/casca` e o item
+  temporário saíram (e reapareceram uma vez sozinhos — ver seção 7, armadilha do OneDrive).
+- **10 · Validação (07) + lote (07b):** concluída. Reclassificação com antes e depois
+  (`compararReclassificacao`), confirmação do (**) na monitoria, abas pelos quatro grupos.
+- **11 · Relatório:** concluída.
+- **12 · Páginas de apoio e varredura final:** concluída. Rota genérica nas cinco páginas que
+  faltavam, prévia do cálculo no cadastro (achado durante o percurso completo), correção de uma
+  violação de landmark (achado pelo axe), favicon próprio, botão de reiniciar demonstração,
+  página "Sobre este protótipo", e a varredura contra a seção 11 do prompt e contra anonimato —
+  detalhe completo no `DEV-LOG.md`.
 
-**Textos da especificação ainda desatualizados:** já corrigidos nas telas 06, 07 e 07b pela
-implementação das etapas 9 e 10 (régua do crédito: "Tipo"/"Créditos" no lugar de
-"Categoria"/"Horas solicitadas", em toda parte). As telas 02 a 07b estão todas atualizadas.
+**Textos da especificação:** todas as telas (02 a 07b) usam a régua do crédito
+("Tipo"/"Créditos", nunca "Categoria"/"Horas solicitadas"). Nada pendente desta lista.
 
 ---
 
-## 6. Próxima ação concreta: etapa 12 (páginas de apoio e varredura final)
+## 6. Se algo mudar depois desta entrega
 
-Etapas 9 e 10 concluídas, com entrada no `DEV-LOG.md`. É a última etapa do roteiro. Escopo
-(`PROXIMA-ETAPA.md`, seção 4, tem o detalhe):
+Não há próxima etapa planejada — o roteiro do `PROMPT-INICIAL.md` está completo. Se aparecer
+trabalho novo, siga o mesmo procedimento das etapas anteriores: build limpo, captura em 1280 e
+375 px (A−, A, A+ e alto contraste), teclado, entrada no `DEV-LOG.md`, commit e push.
 
-- Rota genérica em português para as páginas de apoio que ainda faltam — `/simulador`,
-  `/avisos`, `/ajuda`, `/docente/orientandos`, `/docente/relatorio` (`/catalogo` já não é
-  pendência: ganhou conteúdo real na etapa 9). Nenhuma rota da navegação pode dar 404.
-- Favicon próprio (ainda é o do Next).
-- Caminho óbvio de reiniciar a demonstração no site publicado — `reiniciarDemo()` já existe em
-  `lib/storage.ts`, mas ainda não tem botão em nenhuma tela; o `localStorage` de testes não pode
-  chegar ao avaliador.
-- Varredura contra os critérios de aceite da seção 11 do `PROMPT-INICIAL.md` e contra o edital.
-- Conferência de anonimato: nenhum nome de integrante ou de equipe na interface, no título da
-  página, no README ou no `package.json`.
-
-Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
-`DEV-LOG.md`, commit e push em `main` — para esta e qualquer etapa futura.
-
-**Como verificar no navegador.** Nesta sessão, `playwright-core` foi instalado numa pasta
+**Como verificar no navegador.** Ao longo do projeto, `playwright-core` foi instalado numa pasta
 temporária fora do repositório (`npm install playwright-core --no-save`) e dirigido contra o
-Chrome já instalado (`executablePath`, sem baixar navegador). Para repetir:
+Chrome já instalado (`executablePath`, sem baixar navegador); na etapa 12, o mesmo caminho
+rodou Lighthouse e axe-core (`npm install lighthouse axe-core --no-save`) direto contra a URL
+publicada. Para repetir:
 - `npm run build && npm run start` (se o build falhar com `EPERM` ao apagar algo em `.next`, veja
   a armadilha correspondente na seção 7 antes de tentar de novo);
 - capturas em 1280 e 375 px, com A−, A, A+ e alto contraste. As preferências e a sessão podem
@@ -309,3 +328,16 @@ prefetches dos links para rotas ainda inexistentes impedem que a rede fique ocio
   ids) await registrarParecer(...)`, nunca `ids.map(...)` com `Promise.all`. Ao testar isso via
   Playwright, contabilize `300 ms × quantidade de itens` na espera antes de checar o resultado —
   não é lento de verdade, só parece nos testes automatizados.
+- **O projeto vive numa pasta do OneDrive, que pode restaurar arquivos apagados por conta
+  própria**, sem o git saber. Descoberto na etapa 12: `/docente/casca` e
+  `components/demonstracao/VitrineCasca.tsx` (removidos na etapa 9) reapareceram no disco antes
+  de eu tocar em qualquer código, e entraram no build (`git status` mostrava os dois como `??`,
+  não rastreados — sinal de que voltaram por fora do git). Se um `git status` mostrar de volta
+  algo que uma etapa anterior já removeu, não assuma que é engano seu: confira o `DEV-LOG.md` da
+  etapa que removeu, e apague de novo antes de seguir.
+- **`<div>` não é landmark — conteúdo de sidebar/topo que não é `<nav>` precisa de um landmark
+  próprio.** O axe (`region`, "All page content should be contained by landmarks") acusou a
+  marca e o bloco de perfil da barra lateral, irmãos do `<nav>` dentro do mesmo `<div>` comum,
+  não contidos por ele. Ao criar uma nova área de layout persistente (barra, rodapé fixo,
+  painel lateral), lembre de dar um elemento semântico ao contêiner raiz (`<aside>`, `<header>`,
+  `<footer>` — o que fizer sentido), não um `<div>` genérico.
