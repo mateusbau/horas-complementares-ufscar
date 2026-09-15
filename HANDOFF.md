@@ -45,8 +45,9 @@ verificador de tokens (ver seção 4).
 | 4 · Login (tela 01) | Concluída e verificada | `8eb51fa` |
 | 5 · Painel do discente (tela 02) | Concluída e verificada | `71ffee8` |
 | 6 · Listagem (tela 03) | Concluída e verificada | `b6c5ee2` |
-| 7 · Formulário (tela 04) | Concluída e verificada | commit desta etapa |
-| 8 a 12 | Não iniciadas | — |
+| 7 · Formulário (tela 04) | Concluída e verificada | `40cca88` |
+| 8 · Detalhe (tela 05) | Concluída e verificada | commit desta etapa |
+| 9 a 12 | Não iniciadas | — |
 
 **Pendência explícita:** o visitante docente cai em `/docente/casca`
 (`INICIO_DO_PERFIL.docente`, em `lib/rotas.ts`) até a tela 06 nascer em `/docente`, na etapa
@@ -161,10 +162,7 @@ Arquivos das etapas 6 e 7:
 
 ## 5. O que falta, por etapa
 
-- **8 · Detalhe (05):** linha do tempo a partir de `historico`; parecer do adendo no #5
-  (devolvido, com o texto literal do docente). Pela régua do crédito: nada de "Carga
-  solicitada" nem "Categoria" — ver `PROXIMA-ETAPA.md` para os textos ainda pendentes e para
-  onde `formatarExplicacaoRequisito` também deveria aparecer aqui.
+- **8 · Detalhe (05):** concluída (2026-09-15, ver `DEV-LOG.md`).
 - **9 · Painel do docente (06) + fila completa:** remover `/docente/casca` e o item temporário.
   Decidir como o docente chega ao catálogo: `/catalogo` está no grupo `(discente)` e mostraria
   a sidebar do discente.
@@ -177,28 +175,22 @@ Arquivos das etapas 6 e 7:
   favicon próprio (ainda é o do Next); critérios de aceite da seção 11 do prompt.
 
 **Textos da especificação ainda desatualizados** (lista atualizada em `PROXIMA-ETAPA.md`, item
-5): telas 05, 06, 07 e 07b ainda falam em "categoria" ou "horas solicitadas". As telas 02, 03
-e 04 já foram reescritas. Regra combinada: corrigir o texto de cada tela na etapa em que ela
-for construída, pela régua do crédito.
+5): telas 06, 07 e 07b ainda falam em "categoria" ou "horas solicitadas". As telas 02, 03, 04 e
+05 já foram reescritas. Regra combinada: corrigir o texto de cada tela na etapa em que ela for
+construída, pela régua do crédito.
 
 ---
 
-## 6. Próxima ação concreta: etapa 8 (Detalhe, tela 05)
+## 6. Próxima ação concreta: etapa 11 (Relatório)
 
-**Antes de tudo, leia `PROXIMA-ETAPA.md`.** O item 2 é desta etapa (explicação da carga máxima
-no detalhe) e o item 5 lista os textos ainda desatualizados.
+Etapa 8 concluída em 2026-09-15 (ver `DEV-LOG.md`): `/atividades/[id]` e `/atividades/[id]/editar`,
+versão magra. Executada fora da ordem original do prompt, por instrução explícita da equipe
+registrada em `PROXIMA-ETAPA.md`, seção 0 — a mesma instrução cobre também o escopo da etapa 11,
+a seguir. Depois da etapa 11: etapas 9 e 10 (painel docente e validação), depois a 12.
 
-Especificação na tela 05 da seção 8 do `PROMPT-INICIAL.md`. Construir
-`app/(discente)/atividades/[id]/page.tsx` com `obterAtividade(id)`, com:
-- link "Voltar para Minhas atividades" (`PageHeader` já tem a prop `voltar`);
-- pré-visualização do comprovante (só o nome/tamanho estão salvos — não há arquivo de verdade;
-  mostrar um placeholder coerente com isso, não uma imagem real);
-- linha do tempo a partir de `atividade.historico` (`EventoHistorico[]`, já com `tipo` e `em`);
-- dados da atividade pelo tipo declarado (`obterTipo`), sem "Categoria" nem "Carga
-  solicitada" — usar os mesmos nomes já estabelecidos (tipo, créditos, requisito);
-- o parecer mais recente (`atividade.pareceres.at(-1)`), com o texto literal do #5 no seed
-  ("O certificado não comprova a participação no evento completo…") quando for essa atividade;
-- ação para reenviar (liga a `enviarAtividade` de `lib/storage.ts`, já pronta desde a etapa 2).
+Especificação da etapa 11 na seção "Relatório" do `PROMPT-INICIAL.md` (ajustada pela régua do
+crédito: agrupar por tipo, não por "categoria") e no item 1 e 3 do `PROXIMA-ETAPA.md`
+(`formatarPremissaCredito` e a exigência de dois tipos, ainda faltando no relatório).
 
 Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
 `DEV-LOG.md`, commit e push em `main`.

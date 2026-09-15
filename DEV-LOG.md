@@ -352,3 +352,63 @@ completo (preencher → enviar → aparecer em `/atividades` com o status e os c
   registrado em `PROXIMA-ETAPA.md`.
 - "Ver catálogo" leva a `/catalogo`, que ainda não existe (etapa 12); cai na página de não
   encontrada.
+
+---
+
+## 2026-09-15 · Etapa 8 — Detalhe da atividade (tela 05), versão magra
+
+**Feito.** `/atividades/[id]`, recebida pela linha clicável da listagem (etapa 6) que até aqui
+caía em "página não encontrada". Escopo enxuto pedido pela equipe: comprovante (só nome e
+tamanho — não há arquivo de verdade, por isso um placeholder explica isso em vez de fingir uma
+pré-visualização), Situação (linha do tempo a partir de `atividade.historico`, sem elaboração
+visual: rótulo, autor e data por evento), Dados da atividade (tipo, requisito e comprovante
+exigido literais da Tabela 7, o que a discente informou, período, validador) e Parecer do
+docente (badge da decisão, comentário, reclassificação quando houver, assinatura). Ações por
+status: `pendente` mostra Editar e Enviar para validação; `analise` e os status finais não
+mostram ação alguma. Id inexistente cai no `EstadoErro` (código HC-404), nunca em erro cru —
+com "Tentar novamente" (repete a busca) porque o padrão já existente não previa um terceiro
+botão, e refazer a busca é uma ação válida mesmo quando o resultado deve se repetir.
+
+Junto, `/atividades/[id]/editar` e `FormularioEditarAtividade`: a ação "Editar" do detalhe
+precisa levar a algum lugar, e a única edição que faz sentido pelo domínio é a de uma atividade
+`pendente` (regra já existente em `atualizarAtividade`, `lib/storage.ts`). Reaproveita os
+mesmos blocos do cadastro (`Campo`, `CampoComprovante`, `CampoConfirmacao`, `Select`) e a mesma
+validação de `lib/calculos.ts`, mas sem rascunho automático — é um registro já salvo, não um
+formulário em andamento — e sem a ação de enviar: salvar volta para o detalhe, e o envio
+acontece lá, como uma ação separada (a instrução da etapa pediu "editar **e** enviar", não um
+botão só). Uma atividade que não está mais `pendente` (por exemplo, o link editado à mão para
+uma em análise) mostra um aviso e um link de volta, sem tentar renderizar o formulário.
+
+**Decisões.**
+- **"Enviar para validação" chama `enviarAtividade` direto do detalhe**, sem navegar — já era o
+  plano do `HANDOFF.md` para esta etapa. Falha (ex.: comprovante ausente, no caso #6 do seed,
+  cadastrada mas nunca enviada) aparece como uma mensagem inline abaixo do cabeçalho, com as
+  mensagens de `ErroDeRegra`; sucesso atualiza o estado local sem recarregar a página, e os
+  botões de ação somem porque o status deixa de ser `pendente`.
+- **O rótulo do parecer não é o `StatusBadge` da atividade.** A primeira versão reusava
+  `StatusBadge(atividade.status)` dentro de "Parecer do docente"; para uma devolução, o status
+  vira `pendente` ("a bola está com o aluno") e o badge dizia "Pendente de envio" — verdadeiro,
+  mas fora de lugar sob um parecer, que deveria dizer o que o docente decidiu. Corrigido com um
+  badge próprio por `DecisaoParecer` (aprovar/devolver/recusar), reaproveitando as mesmas cores
+  de status (sucesso/pendente/recusa) pelo significado, não pelo enum.
+- **A explicação do arredondamento (`formatarExplicacaoRequisito`, item 2 do
+  `PROXIMA-ETAPA.md`) só aparece quando acrescenta algo.** Para tipos em horas, mostra o texto
+  completo (teto do semestre, proporção, exemplo calculado). Para tipos por unidade (evento,
+  palestra...), a função devolve a mesma frase de `formatarRequisito`, já exibida na linha
+  "Requisito da Tabela 7" — repeti-la no rodapé só duplicava a tela; a primeira versão
+  duplicava, corrigido antes do commit.
+- **Autor dos eventos da linha do tempo**: só existe uma docente na demonstração, então
+  `obterDocenteAtual()` (sem relação individual por `parecer.docenteId`) já identifica quem
+  decidiu; "enviada"/"reenviada" são sempre "Você" — é a própria discente vendo a própria
+  atividade, não faz sentido citar o nome dela.
+- **`atv-ana-resumo-anais` (#6, pendente sem nunca ter sido enviada) tem `historico: []`.** A
+  Situação trata a lista vazia como um estado à parte ("Nenhum evento registrado ainda..."), não
+  como uma linha do tempo malformada.
+
+**Corrigido durante a verificação:** o parecer badge (acima) e a explicação duplicada (acima) —
+os dois só apareceram nas capturas reais, comparando uma atividade validada com uma devolvida e
+uma em análise lado a lado, não nos testes automáticos de navegação e foco.
+
+**Pendente.** Nada pendente de etapas anteriores restou para o relatório: a citação de
+`formatarPremissaCredito` e a exigência de dois tipos ficam para a etapa 11, a seguir, na mesma
+sessão.

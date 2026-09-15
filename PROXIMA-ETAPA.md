@@ -80,15 +80,15 @@ verificador reprova.
 
 ---
 
-## 2. Explicar "carga horária é o máximo, arredondada para baixo" — falta o detalhe
+## 2. Explicar "carga horária é o máximo, arredondada para baixo" — feito
 
 **Feito** no cadastro (etapa 7): `formatarExplicacaoRequisito(tipoId)` como apoio do campo de
 quantidade nos tipos "N h/semestre", e o aviso `carga-acima-do-maximo` quando as horas
 informadas passam do teto do semestre.
 
-**Falta:** a mesma explicação no **detalhe da atividade** (tela 05, etapa 8), para quem só vê
-a atividade depois de enviada (o parecer do docente pode citar essa regra, por exemplo).
-Reaproveite `formatarExplicacaoRequisito`, não escreva o texto de novo.
+**Feito** também no **detalhe da atividade** (tela 05, etapa 8, 2026-09-15): mesma função, só
+para tipos em horas (`medidoEmHoras`) — para os demais, o texto seria idêntico ao já exibido na
+linha "Requisito da Tabela 7" e foi omitido para não duplicar.
 
 ---
 
@@ -111,8 +111,8 @@ Ordem do que cortar primeiro:
 1. **Etapa 12 (páginas de apoio)** vira uma **rota genérica**: uma página só, com a anatomia
    padrão, atendendo `/catalogo`, `/simulador`, `/avisos`, `/ajuda`, `/docente/orientandos` e
    `/docente/relatorio`. Nenhuma rota da navegação pode dar 404.
-2. **Etapa 8 (detalhe da atividade)** em versão **magra**: dados, situação e parecer, sem os
-   extras.
+2. ~~Etapa 8 (detalhe da atividade) em versão magra~~ — feita em 2026-09-15, já na versão
+   magra (dados, situação e parecer, sem extras); não sobrou nada a cortar aqui.
 
 **Não pode cair:** a **etapa 11 (relatório imprimível)**, exigência do edital.
 
@@ -120,9 +120,8 @@ Ordem do que cortar primeiro:
 
 ## 5. Textos da especificação ainda com "categoria" ou "horas solicitadas"
 
-As telas 02, 03 e 04 já foram corrigidas (etapas 5, 6 e 7). Continuam por corrigir, na etapa em
-que cada uma for construída, pela régua do crédito (`CLAUDE.md`):
-- 05: subtítulo "Ensino · 18 h solicitadas" e os rótulos "Categoria" e "Carga solicitada";
+As telas 02, 03, 04 e 05 já foram corrigidas (etapas 5, 6, 7 e 8). Continuam por corrigir, na
+etapa em que cada uma for construída, pela régua do crédito (`CLAUDE.md`):
 - 06: colunas "Categoria" e "Horas" da fila;
 - 07: subtítulo "Ensino · 30 h solicitadas";
 - 07b: subtítulo "da mesma categoria", barra "78 h a homologar", coluna "Horas" e rodapé "4 de

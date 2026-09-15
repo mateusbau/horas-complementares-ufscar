@@ -28,7 +28,7 @@ export function PageHeader({
       {voltar && (
         <Link
           href={voltar.href}
-          className="mb-2 inline-flex min-h-target items-center gap-2 text-label text-accent-text underline underline-offset-4 hover:decoration-2"
+          className="mb-2 inline-flex min-h-target items-center gap-2 text-label text-accent-text underline underline-offset-4 hover:decoration-2 print:hidden"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
           {voltar.rotulo}
@@ -42,7 +42,7 @@ export function PageHeader({
           </p>
         )}
         {acao && (
-          <div className="mt-2 flex flex-wrap items-start gap-2 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:justify-end">
+          <div className="mt-2 flex flex-wrap items-start gap-2 sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:mt-0 sm:justify-end print:hidden">
             {acao}
           </div>
         )}
