@@ -412,3 +412,68 @@ uma em análise lado a lado, não nos testes automáticos de navegação e foco.
 **Pendente.** Nada pendente de etapas anteriores restou para o relatório: a citação de
 `formatarPremissaCredito` e a exigência de dois tipos ficam para a etapa 11, a seguir, na mesma
 sessão.
+
+---
+
+## 2026-09-15 · Etapa 11 — Relatório
+
+Executada fora da ordem do `PROMPT-INICIAL.md`, por instrução explícita da equipe (registrada em
+`PROXIMA-ETAPA.md`, seção 0): é o único item do edital ("gerar relatórios para entrega") ainda
+sem implementação, e vale mais agora do que o fluxo docente (etapas 9 e 10).
+
+**Feito.** `/relatorio`, alcançável do painel e da sidebar (já existia o item de navegação,
+apontando para uma rota que ainda não existia). Só atividades **validadas** entram — mesma fonte
+de verdade do painel e da listagem (`calcularProgresso`) — com um aviso explícito de quantas
+ficaram de fora e por quê ("5 de 7 atividades registradas não entram, porque ainda não foram
+validadas (2 em análise, 2 pendentes, 1 recusada)"). Quatro seções, cada uma um `h2`:
+Identificação (discente, RA, curso, data de emissão), Total consolidado (créditos e horas,
+citando `formatarPremissaCredito`, e a exigência de dois tipos do PPC 3.5.4, no mesmo formato já
+usado no painel), Atividades por tipo (tabela agrupada por tipo da Tabela 7 — não por
+"categoria" — com créditos e horas por linha e uma linha de total, `<caption>`, `scope="col"` no
+cabeçalho e `scope="row"` no total) e a fonte (`FONTE_TABELA_7`) no rodapé. Botão "Imprimir ou
+salvar em PDF" chama `window.print()` direto, sem biblioteca nova.
+
+**Feito também**, de apoio à impressão, reaproveitável por qualquer tela: `print:hidden` na
+`Sidebar`, no `MobileNav` e nas ações/link "voltar" do `PageHeader` (não só do relatório — a
+barra de acessibilidade já tinha isso desde a etapa 3); `@page { size: A4 portrait; margin: 14mm
+12mm }` em `app/globals.css`.
+
+**Decisões.**
+- **A tabela também tem versão em cards para mobile**, escondida a partir de 768 px e forçada de
+  volta em `@media print` (`hidden md:block print:block` / `md:hidden print:hidden`) — o mesmo
+  padrão de `TabelaAtividades` (etapa 6). Sem isso, os quatro colunas ("Tipo", "Você
+  registrou", "Créditos", "Horas contabilizadas") não cabiam em 375 px sem rolagem horizontal, e
+  "nenhuma tela pode quebrar no mobile" vale também aqui — mesmo sendo uma tela pensada para
+  impressão, alguém pode abri-la no celular antes de decidir imprimir.
+- **`print:break-inside-avoid`** nas seções de Identificação e Total consolidado, e em cada
+  linha da tabela: sem isso, uma quebra de página no meio de uma linha ou de um bloco curto fica
+  ilegível. Não foi aplicado à seção da tabela inteira, de propósito — com mais tipos validados,
+  a tabela precisa poder continuar na página seguinte (o cabeçalho da tabela se repete sozinho,
+  comportamento nativo do navegador para `<thead>` em impressão).
+- **Números da tabela por extenso** ("45 horas", não "45"): a régua do crédito
+  (`CLAUDE.md`) vale também em células de tabela — um número solto na coluna "Horas
+  contabilizadas" ficaria ambíguo num documento que vai para a secretaria.
+- **Sem lista de atividades individuais no relatório**, só o resumo por tipo (créditos e horas
+  somados) — é exatamente o que a instrução da etapa pediu ("créditos e horas contabilizadas por
+  linha e total geral") e o que `progresso.porTipo` já calcula; uma segunda tabela por atividade
+  seria refinamento não pedido, na mesma linha da recomendação de manter a etapa 8 enxuta.
+- **`emitidoEm` é fixado no primeiro render** (`useState(() => new Date())`), não recalculado a
+  cada renderização: é a data que vai para o documento impresso, não deve mudar entre o
+  carregamento da tela e o clique em "Imprimir".
+
+**Corrigido durante a verificação:**
+- **"1 recusadas"** — o texto de atividades excluídas usava só a forma plural
+  (`analise`/`pendente`/`recusada` → "em análise"/"pendentes"/"recusadas"), errado para
+  quantidade 1. Corrigido com singular e plural por status, escolhido pela contagem.
+- **`window.print()` de verdade**, não só o botão: verificado interceptando `window.print` num
+  teste automatizado (chamada 1 vez ao clicar) — o clique visual não garante que o handler certo
+  foi ligado ao botão certo.
+- Gerei o relatório como PDF (`page.pdf()` do Playwright) para conferir a paginação real em A4,
+  não só a prévia de tela: com poucas atividades o conteúdo cabe quase todo numa página, sobrando
+  duas linhas de rodapé na segunda — comportamento normal de quebra de página do navegador, não
+  um corte de conteúdo, e que só piora graciosamente conforme mais atividades forem validadas
+  (mais linhas na tabela, mais páginas) em vez de cortar ou sobrepor texto.
+
+**Pendente.** Nada. Com isso, o edital ("gerar relatórios para entrega") tem implementação, e o
+roteiro volta à ordem original do prompt: etapa 9 (painel do docente + fila), 10 (validação +
+lote) e 12 (páginas de apoio e varredura final) — ver `HANDOFF.md`, seção 6.

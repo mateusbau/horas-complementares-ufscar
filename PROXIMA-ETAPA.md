@@ -69,14 +69,13 @@ Gravada aqui antes de escrever código, para sobreviver a uma eventual compacta�
 
 ---
 
-## 1. Fator de 15 h por crédito — falta o relatório
+## 1. Fator de 15 h por crédito — feito
 
 **Feito** no painel (etapa 6): `formatarPremissaCredito()` em `lib/formatacao.ts`, citando a
 matriz curricular, junto de "horas contabilizadas" em `ResumoProgresso.tsx`.
 
-**Falta:** a mesma nota no **relatório** (etapa 11), no cabeçalho ou junto ao total. Use
-`formatarPremissaCredito()`; não escreva 15 (nem 90, nem 6) fora de `lib/calculos.ts` — o
-verificador reprova.
+**Feito** também no **relatório** (etapa 11, 2026-09-15): mesma função, na seção "Total
+consolidado".
 
 ---
 
@@ -92,15 +91,14 @@ linha "Requisito da Tabela 7" e foi omitido para não duplicar.
 
 ---
 
-## 3. Exigência de dois tipos diferentes — falta o relatório
+## 3. Exigência de dois tipos diferentes — feito
 
 **Feito** no painel (etapa 6): a exigência aparece sempre, cumprida ou não, citando a seção
 3.5.4 do PPC ("Tipos de atividade diferentes: 2 de 2 — exigência cumprida. O Projeto
 Pedagógico (seção 3.5.4) exige pelo menos 2 tipos de atividade diferentes.").
 
-**Falta:** a mesma condição e fonte no **relatório** (etapa 11). Use
-`progresso.tiposDistintos`/`tiposExigidos` (já existem no `Progresso`), não invente uma nova
-leitura da regra.
+**Feito** também no **relatório** (etapa 11, 2026-09-15): mesma leitura, usando
+`progresso.tiposDistintos`/`tiposExigidos`.
 
 ---
 

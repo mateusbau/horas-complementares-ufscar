@@ -46,8 +46,9 @@ verificador de tokens (ver seção 4).
 | 5 · Painel do discente (tela 02) | Concluída e verificada | `71ffee8` |
 | 6 · Listagem (tela 03) | Concluída e verificada | `b6c5ee2` |
 | 7 · Formulário (tela 04) | Concluída e verificada | `40cca88` |
-| 8 · Detalhe (tela 05) | Concluída e verificada | commit desta etapa |
-| 9 a 12 | Não iniciadas | — |
+| 8 · Detalhe (tela 05) | Concluída e verificada | `ad5082d` |
+| 11 · Relatório | Concluída e verificada (fora de ordem, ver `PROXIMA-ETAPA.md` seção 0) | commit desta etapa |
+| 9, 10, 12 | Não iniciadas | — |
 
 **Pendência explícita:** o visitante docente cai em `/docente/casca`
 (`INICIO_DO_PERFIL.docente`, em `lib/rotas.ts`) até a tela 06 nascer em `/docente`, na etapa
@@ -90,8 +91,20 @@ Arquivos das etapas 6 e 7:
 - `lib/storage.ts`: `salvarRascunho`/`obterRascunho`/`limparRascunho` — rascunho do formulário,
   à parte de `Atividade` (aceita dados parciais, nunca aparece em `listarAtividades()`).
 - `lib/formatacao.ts`: `formatarPremissaCredito`, `formatarExplicacaoRequisito`,
-  `formatarRascunhoSalvo`, `formatarTamanhoArquivo` — ainda faltam no relatório e no detalhe
-  (`PROXIMA-ETAPA.md`).
+  `formatarRascunhoSalvo`, `formatarTamanhoArquivo`.
+
+Arquivos das etapas 8 e 11 (2026-09-15, fora de ordem — ver `PROXIMA-ETAPA.md`, seção 0):
+
+- `app/(discente)/atividades/[id]/page.tsx` e `components/atividade/DetalheAtividade.tsx` —
+  detalhe (05): comprovante (placeholder), linha do tempo do `historico`, dados pelo tipo
+  declarado, parecer do docente, ações por status. `app/(discente)/atividades/[id]/editar/` e
+  `FormularioEditarAtividade.tsx` — edição de atividade `pendente` (chamada por "Editar").
+- `app/(discente)/relatorio/page.tsx` e `components/relatorio/Relatorio.tsx` — relatório
+  imprimível: identificação, total consolidado, exigência de dois tipos, tabela por tipo (card
+  em mobile), fonte. Botão de imprimir com `window.print()`.
+- `components/layout/{Sidebar,MobileNav,PageHeader}.tsx` e `app/globals.css`: `print:hidden` na
+  sidebar, no menu mobile e nas ações/voltar do cabeçalho; `@page { size: A4 portrait; margin:
+  ... }` — suporte de impressão usado pelo relatório, mas já vale para qualquer tela.
 
 ---
 
@@ -168,8 +181,7 @@ Arquivos das etapas 6 e 7:
   a sidebar do discente.
 - **10 · Validação (07) + lote (07b):** reclassificação com antes e depois
   (`compararReclassificacao`), confirmação do (**) na monitoria, abas pelos quatro grupos.
-- **11 · Relatório:** agrupado por tipo da Tabela 7, com créditos e horas, citando
-  `FONTE_TABELA_7`; `@media print` escondendo barra, sidebar e botões.
+- **11 · Relatório:** concluída (2026-09-15, ver `DEV-LOG.md`).
 - **12 · Páginas de apoio e varredura final:** `/catalogo`, `/simulador`, `/avisos`, `/ajuda`,
   `/docente/orientandos`, `/docente/relatorio` sem 404 (o `EstadoErro` já aponta para `/ajuda`);
   favicon próprio (ainda é o do Next); critérios de aceite da seção 11 do prompt.
@@ -181,16 +193,17 @@ construída, pela régua do crédito.
 
 ---
 
-## 6. Próxima ação concreta: etapa 11 (Relatório)
+## 6. Próxima ação concreta: etapa 9 (Painel do docente + fila completa)
 
-Etapa 8 concluída em 2026-09-15 (ver `DEV-LOG.md`): `/atividades/[id]` e `/atividades/[id]/editar`,
-versão magra. Executada fora da ordem original do prompt, por instrução explícita da equipe
-registrada em `PROXIMA-ETAPA.md`, seção 0 — a mesma instrução cobre também o escopo da etapa 11,
-a seguir. Depois da etapa 11: etapas 9 e 10 (painel docente e validação), depois a 12.
+Etapas 8 e 11 concluídas em 2026-09-15 (ver `DEV-LOG.md`), fora da ordem original do prompt, por
+instrução explícita da equipe registrada em `PROXIMA-ETAPA.md`, seção 0. Retomando o roteiro do
+`PROMPT-INICIAL.md`: agora etapa 9 (`/docente`, painel e fila), depois a 10 (validação e lote),
+por último a 12.
 
-Especificação da etapa 11 na seção "Relatório" do `PROMPT-INICIAL.md` (ajustada pela régua do
-crédito: agrupar por tipo, não por "categoria") e no item 1 e 3 do `PROXIMA-ETAPA.md`
-(`formatarPremissaCredito` e a exigência de dois tipos, ainda faltando no relatório).
+**Pendência que a etapa 9 precisa resolver** (registrada desde a etapa 3): `/docente/casca`,
+`components/demonstracao/VitrineCasca.tsx` e o item "Casca da interface" na navegação docente
+são temporários e saem assim que `/docente` (tela 06) nascer — hoje `INICIO_DO_PERFIL.docente`
+(`lib/rotas.ts`) ainda aponta para a casca.
 
 Build limpo, verificação por captura em 1280 e 375 px (A−, A, A+ e alto contraste), entrada no
 `DEV-LOG.md`, commit e push em `main`.

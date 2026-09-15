@@ -64,6 +64,15 @@ table, .tabular { font-variant-numeric: tabular-nums; }
   }
 }
 
+/* Página impressa (relatório, tela 11): A4 retrato com margem, sem as bordas
+   de card do sistema de tela (a folha já é a borda). */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+}
+
 /* ==========================================================================
    Complementos — derivados dos tokens acima, nenhuma cor nova de marca
    ========================================================================== */

@@ -10,7 +10,7 @@ import type { Perfil } from "@/lib/types"
 
 export function Sidebar({ perfil }: { perfil: Perfil }) {
   return (
-    <div className="sticky top-(--altura-barra) hidden h-[calc(100dvh-var(--altura-barra))] w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-r bg-surface px-3 py-6 md:flex">
+    <div className="sticky top-(--altura-barra) hidden h-[calc(100dvh-var(--altura-barra))] w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-r bg-surface px-3 py-6 md:flex print:hidden">
       <Marca className="px-3" />
       <div className="flex-1">
         <ListaNavegacao perfil={perfil} />
