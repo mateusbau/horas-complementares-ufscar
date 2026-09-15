@@ -156,8 +156,9 @@ export function BlocoPerfil({ perfil, onNavegar }: { perfil: Perfil; onNavegar?:
               {identidade.iniciais}
             </span>
             <span className="flex min-w-0 flex-col">
-              <span className="truncate text-label">{identidade.nome}</span>
-              <span className="truncate text-caption leading-secondary text-muted-foreground">
+              {/* Quebra linha em vez de cortar: com texto em A+, nada se perde. */}
+              <span className="break-words text-label">{identidade.nome}</span>
+              <span className="break-words text-caption leading-secondary text-muted-foreground">
                 {identidade.detalhe} · {NOME_PERFIL[perfil]}
               </span>
             </span>

@@ -67,7 +67,12 @@ function DialogContent({
         )}
         {...props}
       >
-        {children}
+        {/*
+          O X vem antes do conteúdo no DOM: o foco inicial cai no primeiro
+          focável, e assim fica no topo, com o título visível mesmo quando o
+          modal rola (texto em A+). Em confirmações destrutivas, é também a
+          opção menos arriscada para começar.
+        */}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
@@ -77,6 +82,7 @@ function DialogContent({
             <span className="sr-only">Fechar</span>
           </DialogPrimitive.Close>
         )}
+        {children}
       </DialogPrimitive.Popup>
     </DialogPortal>
   )

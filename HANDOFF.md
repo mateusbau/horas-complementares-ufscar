@@ -1,7 +1,7 @@
 # HANDOFF — Horas Complementares · SeCoT XVIII
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
-Estado em **2026-09-14**, commit `23a0845`.
+Estado em **2026-09-15**: etapas 1 a 3 concluídas; próxima é a etapa 4 (Login).
 
 ---
 
@@ -36,12 +36,8 @@ verificador de tokens (ver seção 4).
 | 1 · Fundação | Concluída e aprovada | `3c456ac`, `a7bb47e`, `aa3f70d` |
 | 2 · Domínio | Concluída e aprovada (refeita pelo adendo) | `6fbd57a` |
 | Correções pós-etapa 2 (textos das telas 06 e 07b, seed) | Concluídas | `6dfd4c9` |
-| **3 · Casca** | **Parcial: código escrito, sem verificação no navegador** | `23a0845` |
+| 3 · Casca | Concluída e verificada no navegador (teclado, 375 px, A−/A/A+, hidratação) | `23a0845` + commit de fechamento |
 | 4 a 12 | Não iniciadas | — |
-
-**Etapa 3, o que existe:** passam o verificador de tokens, o TypeScript (`npx tsc --noEmit`),
-o ESLint e o `npm run build`. **O que não foi feito:** percurso por teclado, checagem em 375 px e
-em A+ no navegador, e a entrada da etapa 3 no `DEV-LOG.md`.
 
 Arquivos da etapa 3:
 
@@ -120,7 +116,6 @@ Arquivos da etapa 3:
 
 ## 5. O que falta, por etapa
 
-- **3 · Casca (terminar):** verificação no navegador (ver seção 6); entrada no `DEV-LOG.md`.
 - **4 · Login (01):** substituir a vitrine em `/`. "Entrar como visitante" em um clique, caindo
   no painel do perfil escolhido. Criar a sessão simulada no `storage.ts` e ligar a ela o
   "Trocar de perfil" e o "Sair" da sidebar (hoje são links simples para `/docente`, `/painel`
@@ -151,38 +146,31 @@ telas 02, 03, 05, 06, 07 e 07b.
 
 ---
 
-## 6. Próxima ação concreta: fechar a etapa 3
+## 6. Próxima ação concreta: etapa 4 (Login)
 
-1. **Liberar a porta 3000.** Um processo desconhecido estava escutando nela quando o trabalho
-   parou. Verifique o que é antes de encerrar; pode não ser deste projeto. Alternativa:
-   `npx next start -p 3001`.
-2. `npm run build`, depois `npm run start`, e abrir `/casca`, `/docente/casca` e `/`.
-3. Conferir por teclado (Tab, Shift+Tab, Enter, Espaço, Esc):
-   - o primeiro Tab mostra "Pular para o conteúdo", e Enter leva o foco ao `<main id="conteudo">`;
-   - o item ativo da navegação tem os três sinais (fundo `--accent-soft`, barra de 3 px em
-     `--primary`, peso 500) e `aria-current="page"`;
-   - A+ e alto contraste mudam o `<html>`, são anunciados na região ao vivo ("Tamanho do texto:
-     texto maior, 125%." / "Alto contraste ativado.") e **continuam aplicados ao recarregar,
-     sem piscar e sem erro de hidratação** no console;
-   - o modal de atalhos abre com Enter, prende o foco, fecha com Esc e devolve o foco ao botão.
-4. Em 375 px: a sidebar some e aparece o botão "Abrir menu de navegação" (44 px, com
-   `aria-expanded`). O menu prende o foco, fecha com Esc devolvendo o foco ao botão, e fecha
-   ao escolher um item. Nenhuma rolagem horizontal em 375 px com A−, A e A+.
-5. Pontos de risco a olhar: a barra e a sidebar fixas com texto em A+ numa tela baixa; se a
-   classe `break-words` (usada no `PageHeader`) existe no Tailwind v4 instalado; as animações
-   do menu deslizante (só opacidade e deslocamento, 160 ms).
-6. Corrigir o que falhar, rodar `npm run build`, escrever a entrada da etapa 3 no `DEV-LOG.md`
-   (o que foi feito, as decisões e o porquê, pendências) e fazer o commit.
+Especificação na tela 01 da seção 8 do `PROMPT-INICIAL.md`. Em resumo:
 
-Decisões da etapa 3 que devem constar nessa entrada do DEV-LOG:
+1. Substituir a vitrine de tokens em `app/page.tsx` pela tela de login: sem sidebar, card
+   centralizado de até 640 px, perfil de acesso como `radiogroup` navegável por Tab e setas,
+   os dois campos, "Esqueci minha senha", e os botões **Entrar** e **Entrar como visitante
+   (dados de demonstração)**. O `<main>` mantém `id="conteudo"` e `tabIndex={-1}`.
+2. Criar a sessão simulada no `storage.ts` (perfil escolhido) e ligar a ela o "Trocar de
+   perfil" e o "Sair" do `BlocoPerfil` (`components/layout/navegacao.tsx`).
+3. "Entrar como visitante" precisa funcionar em um clique e cair no painel do perfil. Como
+   `/painel` e `/docente` só surgem nas etapas 5 e 9, decidir com a equipe para onde o
+   visitante vai até lá.
 
-- As preferências de acessibilidade são síncronas no `storage.ts`: com o atraso de 300 ms, a
-  tela piscaria em 100 % antes de ir a 125 %.
-- O script inline é gerado no `storage.ts`, para o `localStorage` continuar só lá.
-- `useSyncExternalStore` evita erro de hidratação nos `aria-pressed`.
-- O alto contraste não cria cor nova.
-- Não há atalhos de uma tecla só.
-- O "Nova atividade" fica fora da navegação, porque já é a ação primária dos cabeçalhos.
+**Como verificar no navegador.** A verificação da etapa 3 usou `playwright-core` dirigindo
+o Chrome instalado, com scripts fora do repositório. Para repetir: instalar `playwright-core`
+numa pasta temporária, subir `npm run build && npm run start`, e conferir:
+- teclado (primeiro Tab no link de pular, foco visível, Esc devolvendo o foco);
+- 375 px com A−, A e A+ sem rolagem horizontal;
+- recarga sem piscar e sem erro de hidratação no console.
+
+**Olhe também as capturas de tela**: na etapa 3, os três defeitos encontrados só apareceram
+nelas. Espere o fim das animações (160 ms) antes de capturar. Evite `waitUntil:
+"networkidle"`: os prefetches dos links da navegação para rotas ainda inexistentes impedem
+que a rede fique ociosa.
 
 ---
 
@@ -199,3 +187,9 @@ Decisões da etapa 3 que devem constar nessa entrada do DEV-LOG:
   (`git commit -F arquivo.txt`); passar por `-F -` com here-string não funciona.
 - **`npx shadcn add` sem terminal interativo** para na pergunta de sobrescrita. Responda com
   `"n" | npx shadcn@latest add <componente>` no PowerShell.
+- **Link com aparência de botão:** use `buttonVariants(...)` de `components/ui/button.tsx`,
+  que já resolve as classes pelo `cn`. Concatenar classes de variante à mão faz a borda do
+  "outline" sumir.
+- **Modal aberto deixa o resto da página inerte** (Base UI). Em testes automatizados,
+  `getByRole` não acha o botão que abriu o modal enquanto ele está aberto; use um seletor
+  CSS, como `[data-slot="sheet-trigger"]`.

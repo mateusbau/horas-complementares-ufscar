@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
  * - o rótulo pode quebrar linha, para não estourar em 375 px com texto a 125 %;
  * - transição só de cor.
  */
-const buttonVariants = cva(
+const variantesBotao = cva(
   "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-transparent bg-clip-padding text-center text-label transition-colors select-none active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-danger [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -41,16 +41,30 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * Classes do botão já resolvidas pelo `cn`, para usar também fora do <Button>
+ * (ex.: um <Link> com aparência de botão). Sem o `cn`, a base `border-transparent`
+ * e a borda da variante ficariam juntas no elemento, e a transparente venceria
+ * pela ordem do CSS — o botão "outline" apareceria sem borda.
+ */
+function buttonVariants(props?: Parameters<typeof variantesBotao>[0]) {
+  return cn(variantesBotao(props))
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof variantesBotao>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={
+        typeof className === "function"
+          ? (estado) => buttonVariants({ variant, size, className: className(estado) })
+          : buttonVariants({ variant, size, className })
+      }
       {...props}
     />
   )

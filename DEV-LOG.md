@@ -83,3 +83,51 @@ o adendo não substitui explicitamente, à espera de decisão da equipe:
 - 07: subtítulo "Ensino · 30 h solicitadas";
 - 07b: subtítulo "da mesma categoria", barra "78 h a homologar", coluna "Horas" e rodapé
   "4 de 6 atividades de Ensino aptas ao lote".
+
+---
+
+## 2026-09-15 · Etapa 3 — Casca
+
+**Feito.** Estrutura comum a todas as telas: link "Pular para o conteúdo", barra de
+acessibilidade fixa (alto contraste, tamanho do texto A−/A/A+, modal de atalhos de teclado),
+sidebar de 240 px dos dois perfis com item ativo em três sinais, menu deslizante abaixo de
+768 px, `PageHeader` com a anatomia obrigatória, região `aria-live` única e os estados de
+carregando, vazio e erro. `dialog` e `sheet` do shadcn entraram pelo procedimento obrigatório
+(primeira execução real: o `button.tsx` foi preservado respondendo N à sobrescrita). A etapa
+foi escrita em 2026-09-14 e verificada no navegador em 2026-09-15, depois de uma perda de
+sessão: teclado, 1280 e 375 px, A−/A/A+, alto contraste, recarga sem piscar e sem erro de
+hidratação.
+
+**Decisões.**
+- Preferências de acessibilidade são síncronas no `storage.ts`, exceção à regra dos 300 ms:
+  com atraso, a tela piscaria em 100 % antes de ir a 125 %. Um script inline no `<head>` as
+  aplica antes da primeira pintura; ele é gerado no `storage.ts`, para o `localStorage`
+  continuar só lá.
+- `useSyncExternalStore` na barra: o React usa o valor padrão na hidratação e o salvo logo
+  depois, sem erro de hidratação nos `aria-pressed`.
+- Alto contraste sem cor nova: reforça bordas e texto secundário com valores da própria paleta.
+- Sem atalhos de uma tecla só (WCAG 2.1.4): conflitariam com leitores de tela. O modal lista
+  as teclas padrão, útil para quem não navega por teclado no dia a dia.
+- Uma única região `aria-live` para tudo (preferências, ações, erros), para evitar anúncios
+  sobrepostos.
+- "Nova atividade" fica fora da navegação: já é a ação primária dos cabeçalhos.
+
+**Corrigido durante a verificação** (os testes automáticos passavam; as capturas de tela
+mostraram os problemas):
+- Botão "outline" usado num `<Link>` aparecia sem borda: fora do `<Button>`, as classes não
+  passavam pelo `cn`, e `border-transparent` vencia. `buttonVariants` agora já devolve as
+  classes resolvidas, então o erro não se repete em outros usos.
+- Com A+, a sidebar cortava "Perfil discente" com reticências. Agora o texto quebra linha:
+  quem aumenta o texto não perde informação.
+- Com A+, o modal de atalhos abria rolado até o fim, com o título escondido, porque o
+  primeiro focável era o "Fechar" do rodapé. O X de fechar passou a vir antes do conteúdo no
+  DOM. Em confirmações destrutivas (tela 07), o foco também começa na opção menos arriscada.
+
+**Pendente.**
+- Os links da navegação para telas ainda não criadas dão 404 (inclusive nos prefetches do
+  Next); somem conforme as etapas 4 a 12 criarem as páginas.
+- "Trocar de perfil" e "Sair" são links simples até a sessão simulada da etapa 4.
+- O bloco de perfil do menu mobile recarrega (skeleton de 300 ms) a cada abertura.
+- Rotas temporárias `/casca` e `/docente/casca` e o item "Casca da interface" na navegação:
+  remover nas etapas 5 e 9.
+- Decidir na etapa 9 como o docente chega ao catálogo (`/catalogo` está no grupo do discente).
