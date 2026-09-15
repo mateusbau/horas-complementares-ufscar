@@ -9,6 +9,66 @@ Entrega do hackathon: **17/09**.
 
 ---
 
+## 0. Instrução recebida em 2026-09-15 — etapas 8 e 11, nesta ordem, sem parar
+
+Gravada aqui antes de escrever código, para sobreviver a uma eventual compactação de contexto
+(instrução explícita). Texto da instrução, na íntegra:
+
+> As etapas 1 a 7 estão concluídas e publicadas. Execute agora as ETAPAS 8 E 11, EM SEQUÊNCIA,
+> SEM PARAR ENTRE ELAS.
+>
+> Inverto a ordem do roteiro de propósito. Motivo, para constar no DEV-LOG: a etapa 8 fecha um
+> link quebrado que já está publicado (a linha clicável da listagem aponta para uma tela
+> inexistente), e a etapa 11 é o único item do edital — "gerar relatórios para entrega" — ainda
+> sem nenhuma implementação. As duas valem mais, agora, do que o fluxo docente.
+>
+> **ETAPA 8 — DETALHE DA ATIVIDADE (tela 05), VERSÃO MAGRA.** Escopo deliberadamente enxuto. Não
+> invente refinamento aqui.
+> - Rota `/atividades/[id]`, recebendo a linha clicável que já existe.
+> - Dados da atividade, o tipo da Tabela 7 com requisito e comprovante em texto literal, e o
+>   cálculo explicado: o que o aluno informou, quantos créditos vale e por quê, incluindo o
+>   arredondamento para baixo quando houver.
+> - Linha do tempo a partir do histórico, simples: eventos com data e autor, sem elaboração
+>   visual.
+> - Parecer do docente conforme o adendo, quando existir.
+> - Ações conforme o status: editar e enviar quando pendente, nada quando em análise.
+> - Id inexistente cai no EstadoErro, nunca em erro cru.
+>
+> **ETAPA 11 — RELATÓRIO.** Requisito explícito do edital e o que substitui o papel que o aluno
+> imprime hoje. Trate como entrega principal.
+> - Rota própria, alcançável do painel e da listagem.
+> - Somente atividades validadas. Deixe explícito na tela que as demais não entram e quantas
+>   são.
+> - Agrupado por tipo da Tabela 7, com créditos e horas contabilizadas por linha e total geral.
+> - Cita `FONTE_TABELA_7` e a premissa do fator de 15 h derivada da matriz curricular, como já
+>   fazem o painel e o catálogo.
+> - Mostra o cumprimento da exigência de pelo menos dois tipos diferentes, citando a seção 3.5.4
+>   do PPC.
+> - Identificação do aluno, curso e data de emissão.
+> - `@media print` escondendo barra de acessibilidade, sidebar, navegação e botões. A página
+>   impressa precisa caber e ficar legível em A4 retrato, sem corte.
+> - Botão de imprimir ou salvar em PDF via `window.print()`. Sem biblioteca nova.
+> - Acessibilidade: conteúdo estruturado, não imagem. Cabeçalhos reais, tabela com cabeçalho
+>   associado às células, ordem de leitura coerente no leitor de tela.
+>
+> **PROCEDIMENTO**
+> - Um commit por etapa, `DEV-LOG.md` no mesmo commit, build limpo, push ao fim de cada uma.
+> - Capturas em 1280 e 375 px, A−/A/A+, alto contraste e percurso por teclado. No relatório,
+>   capture também a prévia de impressão.
+> - ANTES de começar a escrever código, grave este bloco no `PROXIMA-ETAPA.md` e commite, para a
+>   instrução sobreviver a uma eventual compactação de contexto.
+> - Atualize `PROXIMA-ETAPA.md` ao terminar e pare ao fim da etapa 11.
+>
+> **ROTEIRO RESTANTE.** Depois deste bloco: etapas 9 e 10 (painel docente e validação, com o
+> lote), e por último a etapa 12, reduzida a uma rota genérica no lugar das páginas de apoio,
+> mais favicon próprio e varredura final contra os critérios de aceite. Entrega dia 17. Se algo
+> cair por tempo, cai a etapa 12 e o refinamento do mobile docente — nunca o relatório.
+>
+> Pendência para a etapa 9: `/docente/casca` e o item "Casca da interface" da navegação docente
+> ainda estão publicados e precisam sair.
+
+---
+
 ## 1. Fator de 15 h por crédito — falta o relatório
 
 **Feito** no painel (etapa 6): `formatarPremissaCredito()` em `lib/formatacao.ts`, citando a
