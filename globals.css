@@ -1,0 +1,348 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* A documentação cita nomes de classe como exemplo; não deve gerar CSS */
+@source not "../*.md";
+
+/*
+ * Sem modo escuro. A variante `dark:` fica presa a uma classe `.dark` que
+ * nunca é aplicada; sem esta linha, o Tailwind v4 ativaria as classes `dark:`
+ * dos componentes shadcn pelo `prefers-color-scheme` do sistema operacional.
+ */
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Tokens da identidade visual (PROMPT-INICIAL.md, seção 4) — não alterar
+   ========================================================================== */
+
+:root {
+  /* Marca */
+  --brand:            #EA580C;  /* decorativo, nunca texto */
+  --primary:          #C2410C;
+  --primary-hover:    #9A3412;
+  --primary-fg:       #FFFFFF;
+  --accent-text:      #9A3412;
+  --accent-soft:      #FFF7ED;
+
+  /* Neutros quentes */
+  --background:       #FAFAF9;
+  --surface:          #FFFFFF;
+  --border:           #E7E5E4;
+  --input-border:     #78716C;
+  --foreground:       #1C1917;
+  --muted-foreground: #57534E;
+
+  /* Status */
+  --success: #15803D;  --success-bg: #F0FDF4;
+  --review:  #1D4ED8;  --review-bg:  #EFF6FF;
+  --pending: #57534E;  --pending-bg: #F5F5F4;
+  --danger:  #B91C1C;  --danger-bg:  #FEF2F2;
+
+  /* Foco, forma e movimento */
+  --ring:        #1C1917;
+  --ring-offset: #FFFFFF;
+  --radius:      0.5rem;
+  --duration:    160ms;
+  --ease:        cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Foco visível em tudo que recebe teclado */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Números alinhados em coluna nas tabelas de horas */
+table, .tabular { font-variant-numeric: tabular-nums; }
+
+/* Movimento reduzido: pelo sistema (prefers-reduced-motion) ou pela preferência da pessoa
+   (lib/preferencias.ts, tela de Configurações) — qualquer um dos dois já reduz. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+html.reduzir-animacoes *,
+html.reduzir-animacoes *::before,
+html.reduzir-animacoes *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* Página impressa (relatório, tela 11): A4 retrato com margem, sem as bordas
+   de card do sistema de tela (a folha já é a borda). */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+}
+
+/* ==========================================================================
+   Complementos — derivados dos tokens acima, nenhuma cor nova de marca
+   ========================================================================== */
+
+/*
+ * A cor do contorno fica definida já em repouso. Como `transition-colors`
+ * também anima outline-color, sem isto o foco surgiria na cor do texto (branco
+ * no botão primário) e só chegaria a --ring depois de 160 ms.
+ */
+:where(a, button, input, select, textarea, [tabindex]) {
+  outline-color: var(--ring);
+}
+
+:root {
+  color-scheme: light;
+
+  /* Superfície neutra de skeleton e fundos discretos (seção 8: #F5F5F4) */
+  --muted: #F5F5F4;
+
+  /*
+   * Trilha de gráfico (anel e barras de progresso): #E7E5E4, como a borda, mas
+   * token próprio porque o alto contraste escurece --border. Com a trilha
+   * escura, o laranja do progresso ficaria a ~1,4:1 dela e sumiria em escala
+   * de cinza; a trilha fica clara nos dois modos.
+   */
+  --trilha: #E7E5E4;
+
+  /*
+   * Escurecimento de fundo atrás de modal e menu deslizante: --foreground a 50 %.
+   * É o menor valor redondo em que a superfície branca do modal atinge 3:1 contra
+   * o que fica atrás dela (WCAG 1.4.11): 3,47:1 sobre a página e 3,35:1 sobre um
+   * card. A 40 % cairia para 2,5:1. Única cor de overlay do sistema.
+   * Escrito como rgb() com alfa, e não color-mix(): o minificador gera para
+   * color-mix um fallback sem transparência, que deixaria o overlay opaco em
+   * navegadores sem suporte. Se --foreground mudar, atualize aqui também.
+   */
+  --overlay: rgb(28 25 23 / 0.5);  /* #1C1917 (--foreground) a 50 % */
+
+  /* Aliases com os nomes que os componentes shadcn/ui esperam */
+  --primary-foreground:   var(--primary-fg);
+  --card:                 var(--surface);
+  --card-foreground:      var(--foreground);
+  --popover:              var(--surface);
+  --popover-foreground:   var(--foreground);
+  --secondary:            var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent:               var(--accent-soft);
+  --accent-foreground:    var(--foreground);
+  --destructive:          var(--danger);
+  --input:                var(--input-border);
+}
+
+/* ==========================================================================
+   Barra de acessibilidade (lib/preferencias.ts aplica classe e atributo)
+   ========================================================================== */
+
+/* Tamanho do texto: todo o layout usa rem e acompanha. */
+html[data-tamanho-texto="menor"] { font-size: 87.5%; }
+html[data-tamanho-texto="maior"] { font-size: 125%; }
+
+/*
+ * Alto contraste: bordas e texto secundário mais fortes, sem cor nova — só
+ * valores da paleta. Borda de separação passa à cor de campo; borda de campo
+ * e texto secundário passam à cor do texto. Valores literais, e não var(),
+ * porque --border apontando para --input-border herdaria a redefinição abaixo.
+ */
+html.alto-contraste {
+  --border: #78716C;
+  --input-border: #1C1917;
+  --muted-foreground: #1C1917;
+}
+
+/*
+ * Densidade da lista (tela de Configurações): "compacta" (ausente) é o
+ * padrão da identidade visual. Duas peças:
+ *
+ * 1. .h-row/.min-h-row (sidebar, itens de lista): sobrescreve a PROPRIEDADE,
+ *    não a variável --spacing-row — o Tailwind v4 gera essas classes com o
+ *    valor de @theme inline já resolvido, sem var() no CSS final
+ *    (height:max(2.75rem,44px) literal), então redefinir a variável não
+ *    teria efeito nelas.
+ * 2. .celula-densidade (célula de <td>/<th> de tabela): numa linha de
+ *    tabela, height no <tr> não controla a altura real — o conteúdo e o
+ *    padding da célula já a definem (confirmado: o <tr> de FilaValidacao já
+ *    tinha .h-row e a linha não mudava de tamanho). O padding vertical da
+ *    célula é o que muda de fato; substitui o py-2 fixo que as tabelas
+ *    usavam (components/docente/FilaValidacao.tsx, components/atividade/TabelaAtividades.tsx).
+ *
+ * .h-target/.min-h-target (alvo clicável) ficam de fora dos dois seletores de
+ * propósito: nenhum modo cai abaixo do mínimo de 44 px.
+ */
+html[data-densidade="confortavel"] .h-row {
+  height: max(3.5rem, 56px);
+}
+html[data-densidade="confortavel"] .min-h-row {
+  min-height: max(3.5rem, 56px);
+}
+
+.celula-densidade {
+  padding-block: 0.5rem; /* = py-2, o valor de sempre */
+}
+html[data-densidade="confortavel"] .celula-densidade {
+  padding-block: 0.75rem;
+}
+
+/* Altura da barra: alvo de 44 px + 4 px acima e abaixo. A sidebar começa logo abaixo. */
+:root {
+  --altura-barra: calc(max(2.75rem, 44px) + 0.5rem);
+}
+
+/* ==========================================================================
+   Exposição ao Tailwind v4 — as classes utilitárias usam os mesmos valores
+   ========================================================================== */
+
+@theme inline {
+  /* Cores: a paleta padrão do Tailwind é desligada; só existem as do sistema */
+  --color-*: initial;
+
+  --color-brand: var(--brand);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-input-border: var(--input-border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-overlay: var(--overlay);
+  --color-trilha: var(--trilha);
+
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --color-review: var(--review);
+  --color-review-bg: var(--review-bg);
+  --color-pending: var(--pending);
+  --color-pending-bg: var(--pending-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+
+  --color-ring: var(--ring);
+
+  /* Nomes shadcn/ui */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+
+  /* Fonte: Inter 400/500/700, carregada em app/layout.tsx */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Pesos permitidos — nada abaixo de 400, nada além destes três */
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+
+  /* Escala tipográfica: text-h1, text-h2, text-h3, text-body, text-label, text-caption */
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.2;
+  --text-h1--font-weight: 700;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.2;
+  --text-h2--font-weight: 700;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--font-weight: 500;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 400;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.45;
+  --text-label--font-weight: 500;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.45;
+  --text-caption--font-weight: 400;
+
+  /* Alturas de linha: leading-heading, leading-body, leading-secondary */
+  --leading-heading: 1.2;
+  --leading-body: 1.5;
+  --leading-secondary: 1.45;
+
+  /* Raio único de 8 px em todas as variações; pílula só com rounded-full (badge) */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+
+  /* Sombra: só existe shadow-overlay (modal, dropdown, tooltip); card usa borda */
+  --shadow-*: initial;
+  --shadow-overlay: 0 8px 24px rgb(28 25 23 / 0.12), 0 2px 6px rgb(28 25 23 / 0.08);
+
+  /* Larguras: max-w-content (1200 px) e max-w-form (640 px) */
+  --container-content: 75rem;
+  --container-form: 40rem;
+
+  /*
+   * Medidas estruturais. `target` e `row` acompanham o tamanho do texto (rem),
+   * mas nunca ficam abaixo de 44 px, nem com o texto em A− (87,5 %).
+   */
+  --spacing-sidebar: 15rem;
+  --spacing-target: max(2.75rem, 44px);
+  --spacing-row: max(2.75rem, 44px);
+
+  /* Movimento: 160 ms em cubic-bezier(0.2, 0, 0, 1) */
+  --ease-standard: var(--ease);
+  --default-transition-duration: var(--duration);
+  --default-transition-timing-function: var(--ease);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-background text-body text-foreground;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+
+  h2 {
+    @apply text-h2;
+  }
+
+  h3 {
+    @apply text-h3;
+  }
+
+  /*
+   * Em 375 px com texto a 125 %, uma palavra longa ("Complementares", 40 px)
+   * não cabe na linha e vazaria da tela. Títulos hifenizam só palavras longas
+   * (12+ letras, 6 de cada lado, pelo lang="pt-BR") e quebram à força como
+   * último recurso. Palavras comuns não são hifenizadas.
+   */
+  h1,
+  h2,
+  h3 {
+    overflow-wrap: break-word;
+    hyphens: auto;
+    hyphenate-limit-chars: 12 6 6;
+  }
+}
