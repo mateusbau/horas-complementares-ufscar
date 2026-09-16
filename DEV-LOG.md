@@ -761,3 +761,51 @@ número do domínio escrito à mão na página) e Avaliação anônima. Testada 
 confirmação com a coordenação do curso segue pendente (documentado desde a etapa 2 e citado de
 novo em "Sobre este protótipo"); (2) o autor dos commits do Git é visível no histórico do
 repositório, fora do que esta varredura de anonimato cobre (ver Parte 5).
+
+---
+
+## 2026-09-16 · OCR local de certificados — branch `ocr`
+
+**Solicitação.** Integrar OCR ao cadastro com revisão humana e atualizar o handoff.
+A pasta fornecida foi comparada com `main` (`a35fb6f`); a integração foi aplicada sobre
+`ocr` (`0b466fb`), incluindo os uploads existentes do usuário. Removidas cópias idênticas
+de arquivos de `app/` inseridas na raiz por upload e artefatos gerados que estavam rastreados.
+
+**Implementação.** `lib/ocr/ler.ts` carrega Tesseract.js/PDF.js sob demanda; `parse.ts`
+extrai candidatos conservadores. `LeituraComprovante.tsx` oferece início, cancelamento,
+texto reconhecido, edição e confirmação. `CampoComprovante` fornece o `File` original;
+`obterArquivoComprovante` em storage recupera arquivos de rascunhos no IndexedDB.
+Instituição/categoria/carga vão para observações com nome do arquivo; título/período/horas
+inteiras preenchem apenas campos vazios. Horas não viram eventos, e confirmações não são marcadas.
+
+**Verificação executada.**
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm ci --ignore-scripts` no clone da branch | Instalação concluída; auditoria sem vulnerabilidades conhecidas |
+| `npm run verificar:ocr` | 20 verificações passaram: campos, ambiguidades, números decimais, datas inválidas/bissextas, período e emissão |
+| `npm run build` | Passou: tokens, 24 verificações de migração, compilação, TypeScript e geração das rotas |
+| Lint dos arquivos alterados/adicionados | Sem erros ou avisos |
+| Lint global | 6 erros e 3 avisos anteriores, em arquivos não alterados nesta implementação; detalhados abaixo |
+| JPG de monitoria do seed | Leu 180 horas, modalidade, instituição e período; mostrou confusão de OCR entre II/11 no título, corrigível na revisão |
+| PDF digital de curso do seed | Leu nome do curso, 60 horas, instituição e período; não confundiu modalidade presencial com categoria |
+| PDF escaneado criado a partir do JPG fictício | Renderização + OCR funcionaram, inclusive no build de produção local |
+| Aplicar revisão | Título já digitado preservado; horas preencheram Monitoria; confirmação do semestre continuou desmarcada |
+| Tipo contado em palestras | Quantidade permaneceu vazia ao aplicar carga horária de certificado |
+| Cancelar e reabrir rascunho | Cancelamento sem aplicar resultado; arquivo salvo recuperado após recarregar |
+| 375 px, A+ e alto contraste | Revisão legível, sem overflow horizontal e sem IDs duplicados; foco na revisão |
+| Revisão inválida por teclado | Enter com carga “abc” impediu aplicar e focou o campo de carga |
+
+**Pendências anteriores de lint.** `react-hooks/set-state-in-effect` em
+`DetalheAtividade`, `FormularioEditarAtividade`, `VisualizadorComprovante` e
+`ValidacaoAtividade`; duas aspas JSX em `AtalhosDeTeclado`. Avisos em `TelaOrientandos`
+(dependências), `ValidacaoAtividade` (variável não usada) e `ReiniciarDemonstracao`
+(navegação). Não foram suprimidos globalmente. Corrigidas as aspas de `Sobre`, arquivo
+já alterado para explicar o OCR local.
+
+**Próxima pessoa.** Validar o preview Vercel da branch; testar NVDA/VoiceOver e certificados
+anonimizados variados. O teste de navegador não é auditoria completa de acessibilidade.
+Não houve merge em `main`. O envio pelo conector retornou 403: instalação encontrada apenas
+em `rhedymarques`, repositório pertence a `mateusbau`; Git local sem autenticação. Código
+preparado em commit/patch local para envio após corrigir a conexão. Limites e decisões
+atuais estão no topo do `HANDOFF.md`.

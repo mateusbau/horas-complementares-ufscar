@@ -329,6 +329,13 @@ export async function obterUrlComprovante(comprovante: Comprovante): Promise<str
   }
 }
 
+/** Recupera o arquivo local para OCR, inclusive ao reabrir um rascunho. */
+export async function obterArquivoComprovante(comprovante: Comprovante): Promise<File | null> {
+  if (comprovante.comprovanteId.startsWith("/")) return null
+  const blob = await lerBlob(comprovante.comprovanteId)
+  return blob ? new File([blob], comprovante.nome, { type: blob.type }) : null
+}
+
 /** Best-effort: usado ao trocar ou remover um comprovante já enviado, para não acumular blob órfão. */
 export async function removerComprovante(comprovanteId: string): Promise<void> {
   if (comprovanteId.startsWith("/")) return

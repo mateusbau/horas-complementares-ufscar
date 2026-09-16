@@ -78,3 +78,18 @@ Tabela 7 vale créditos fixos, e a exigência para integralizar é de 90 horas. 
 
 As regras de identidade visual, acessibilidade e código estão em `CLAUDE.md`. A especificação
 completa está em `PROMPT-INICIAL.md`.
+
+## OCR de comprovantes
+
+Na tela **Nova atividade**, anexe um PDF, JPG ou PNG e clique em **Ler comprovante**.
+Confira o texto e os campos reconhecidos antes de confirmar. O processamento ocorre no
+navegador, com Tesseract.js em português e PDF.js; os documentos não são enviados a uma API
+de OCR. Até 10 MB e 5 páginas por PDF. O preenchimento manual permanece disponível.
+
+`npm run dev` e `npm run build` preparam automaticamente os recursos em `public/ocr/` a
+partir das dependências instaladas. Essa pasta é gerada, não precisa de upload manual.
+Use `npm ci` após baixar/clonar o projeto. Os verificadores requerem Node 24+.
+
+`npm run verificar:ocr` testa a extração. A classificação no catálogo continua explícita;
+instituição e categoria textual revisadas são preservadas nas observações. Consulte
+`HANDOFF.md` e a entrada de 2026-09-16 em `DEV-LOG.md` para limitações e testes realizados.

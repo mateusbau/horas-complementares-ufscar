@@ -1,5 +1,13 @@
 # PRÓXIMA ETAPA — histórico de decisões (roteiro concluído)
 
+## 2026-09-16 — continuidade do OCR
+
+A implementação de OCR está preparada para a branch `ocr`; o envio está bloqueado pela
+permissão da integração (403). Leia primeiro a atualização de 2026-09-16 em
+`HANDOFF.md` e a entrada OCR no `DEV-LOG.md`: validação do preview Vercel, leitores de tela,
+certificados com layouts variados e as pendências anteriores de lint são os próximos itens.
+O texto abaixo registra o estado anterior à solicitação de OCR.
+
 **As 12 etapas do roteiro estão concluídas** (2026-09-15) — não há próxima etapa planejada.
 Este arquivo fica como histórico das decisões que foram sendo fechadas ao longo do projeto;
 o estado de entrega, com o resultado de cada verificação, está em `HANDOFF.md` (seção "Estado

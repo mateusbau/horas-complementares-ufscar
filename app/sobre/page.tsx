@@ -31,7 +31,8 @@ export default function PaginaSobre() {
           <h2 id="titulo-escopo">Escopo</h2>
           <p className="leading-secondary text-muted-foreground">
             Protótipo só de frontend, para um hackathon: sem backend, sem autenticação real e sem
-            chamada de IA. Os dados vivem no navegador de cada visitante, com um conjunto de
+            envio de documentos a serviços de IA. O cadastro oferece leitura automática local (OCR),
+            com revisão dos dados antes de aplicar. Os dados vivem no navegador de cada visitante, com um conjunto de
             demonstração pronto no primeiro acesso.
           </p>
           <p className="leading-secondary text-muted-foreground">
@@ -49,7 +50,7 @@ export default function PaginaSobre() {
             <li>
               Todo percurso funciona só com teclado, inclusive a validação em lote: caixas de
               seleção reais (nunca uma linha inteira fazendo às vezes de alvo), estado
-              indeterminado no "selecionar todos", confirmação com foco inicial na opção menos
+              indeterminado no &quot;selecionar todos&quot;, confirmação com foco inicial na opção menos
               arriscada e foco devolvido a um ponto estável depois de aplicar.
             </li>
             <li>

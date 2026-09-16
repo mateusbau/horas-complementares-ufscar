@@ -41,6 +41,11 @@ const PASSOS = [
 
 const PERGUNTAS = [
   {
+    id: "leitura-comprovante",
+    pergunta: "Como preencher os dados a partir do certificado?",
+    resposta: "Na tela Nova atividade, anexe um PDF, JPG ou PNG e escolha Ler comprovante. Confira e corrija os dados reconhecidos antes de confirmar. A leitura acontece neste navegador; PDF aceita até 5 páginas. Só campos vazios são preenchidos. Instituição e categoria lidas ficam nas observações; escolha o tipo correto no catálogo. Você pode cancelar e preencher manualmente a qualquer momento.",
+  },
+  {
     id: "certificado-nao-soma",
     pergunta: "Por que meu certificado não soma todas as horas?",
     resposta:
