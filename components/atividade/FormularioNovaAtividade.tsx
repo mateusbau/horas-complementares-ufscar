@@ -13,7 +13,7 @@
 
 import { CircleAlert } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react"
 
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
@@ -53,10 +53,17 @@ function ehCampoFormulario(campo: string): campo is CampoFormulario {
 export function FormularioNovaAtividade() {
   const router = useRouter()
   const anunciar = useAnunciar()
+  const searchParams = useSearchParams()
 
   const [carregando, setCarregando] = useState(true)
   const [titulo, setTitulo] = useState("")
-  const [selecaoTipo, setSelecaoTipo] = useState<SelecaoTipo>("")
+  // ?tipo=<id> (link de "O que fecha o que falta", no painel): só um ponto de
+  // partida — se houver rascunho salvo com tipo próprio, o efeito abaixo o
+  // sobrescreve, porque o rascunho é o trabalho que a pessoa já tinha em andamento.
+  const [selecaoTipo, setSelecaoTipo] = useState<SelecaoTipo>(() => {
+    const tipoDaUrl = searchParams.get("tipo")
+    return tipoDaUrl && CATALOGO.some((t) => t.id === tipoDaUrl) ? (tipoDaUrl as TipoAtividadeId) : ""
+  })
   const [quantidadeTexto, setQuantidadeTexto] = useState("")
   const [inicio, setInicio] = useState("")
   const [termino, setTermino] = useState("")
