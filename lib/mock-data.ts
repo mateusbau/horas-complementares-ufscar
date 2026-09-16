@@ -12,9 +12,10 @@
 // A fila do docente é derivada do status: toda atividade em análise, de
 // qualquer discente, está na fila. As da Ana (#3 e #4) entram por isso.
 
-import { CURSO, type TipoAtividadeId } from "./catalogo"
+import { CURSO, NOTA_SEMESTRE_COMPLETO, type TipoAtividadeId } from "./catalogo"
 import type {
   Atividade,
+  Aviso,
   Comprovante,
   Confirmacoes,
   Discente,
@@ -514,15 +515,79 @@ function historicoDosDemais(agora: Date): Atividade[] {
   ]
 }
 
+// --- Avisos (central de avisos, perfil discente) ----------------------------------
+// Cada aviso corresponde a um evento real das atividades da Ana acima — nenhuma
+// data ou crédito é inventado à parte. Dois começam não lidos (os dois mais
+// recentes), para o badge da sidebar aparecer já na primeira visita.
+
+function criarAvisos(agora: Date): Aviso[] {
+  return [
+    {
+      id: "aviso-meninas-aguardando",
+      tipo: "aguardando",
+      titulo: "Projeto de extensão Meninas Digitais aguarda validação",
+      // Mesmo prazo de espera de atv-ana-meninas-digitais (8*24+2 horas ≈ 8 dias).
+      descricao: "Em análise há 8 dias.",
+      em: diasAtras(agora, 1).toISOString(),
+      lido: false,
+      atividadeId: "atv-ana-meninas-digitais",
+    },
+    {
+      id: "aviso-monitoria-regra",
+      tipo: "regra",
+      titulo: "Lembrete: monitoria exige semestre completo",
+      descricao: `${NOTA_SEMESTRE_COMPLETO} Tabela 7, nota do duplo asterisco.`,
+      em: diasAtras(agora, 2).toISOString(),
+      lido: false,
+      atividadeId: null,
+    },
+    {
+      id: "aviso-dois-tipos-marco",
+      tipo: "marco",
+      titulo: "Marco atingido: 2 tipos de atividade diferentes",
+      descricao:
+        "O Projeto Pedagógico (seção 3.5.4) exige atividades de pelo menos 2 tipos diferentes da Tabela 7 — você já tem isso garantido.",
+      // Mesmo dia da validação de atv-ana-organizacao-semana (validadaHaDias:
+      // 100), a segunda atividade validada da Ana, de um tipo diferente da
+      // primeira (monitoria + organização de evento).
+      em: diasAtras(agora, 100).toISOString(),
+      lido: true,
+      atividadeId: null,
+    },
+    {
+      id: "aviso-monitoria-validada",
+      tipo: "validada",
+      titulo: "Monitoria de Algoritmos e Estruturas de Dados I foi validada",
+      descricao: "3 créditos contabilizados.",
+      // Mesma data de validação de atv-ana-monitoria-aed1 (validadaHaDias: 180).
+      em: diasAtras(agora, 180).toISOString(),
+      lido: true,
+      atividadeId: "atv-ana-monitoria-aed1",
+    },
+    {
+      id: "aviso-coursera-recusada",
+      tipo: "recusada",
+      titulo: "Curso online de banco de dados (Coursera) foi recusado",
+      descricao:
+        "Motivo: tipo de atividade não previsto na Tabela 7 do Projeto Pedagógico. Cursos em plataformas comerciais não constam entre os tipos aceitos. Envie uma nova atividade, se for o caso.",
+      // Mesma data de courseraRecusada em atividadesDaAna (diasAtras(agora, 193)).
+      em: diasAtras(agora, 193).toISOString(),
+      lido: true,
+      atividadeId: "atv-ana-coursera",
+    },
+  ]
+}
+
 // --- Estado inicial ----------------------------------------------------------------
 
 export function criarEstadoInicial(agora: Date): EstadoDemo {
   return {
-    versao: 3,
+    versao: 4,
     discenteAtualId: ID_DISCENTE_DEMO,
     docenteAtualId: ID_DOCENTE_DEMO,
     discentes: DISCENTES.map((d) => ({ ...d })),
     docentes: [{ ...DOCENTE }],
     atividades: [...atividadesDaAna(agora), ...filaDosDemais(agora), ...historicoDosDemais(agora)],
+    avisos: criarAvisos(agora),
   }
 }

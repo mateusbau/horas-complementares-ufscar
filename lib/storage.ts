@@ -35,6 +35,7 @@ import {
 import { criarEstadoInicial } from "./mock-data"
 import type {
   Atividade,
+  Aviso,
   Comprovante,
   Discente,
   Docente,
@@ -47,11 +48,13 @@ import type {
   Progresso,
   Sessao,
   StatusAtividade,
+  TipoAviso,
 } from "./types"
 
 const CHAVE = "horas-complementares:estado"
 const ATRASO_MS = 300
 const STATUS: readonly StatusAtividade[] = ["validada", "analise", "pendente", "recusada"]
+const TIPOS_AVISO: readonly TipoAviso[] = ["validada", "recusada", "aguardando", "marco", "regra"]
 
 // --- Infraestrutura -----------------------------------------------------------------
 
@@ -84,7 +87,7 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   if (typeof valor !== "object" || valor === null) return false
   const e = valor as Partial<EstadoDemo>
   return (
-    e.versao === 3 && // estado de versão anterior é descartado e o seed é recriado
+    e.versao === 4 && // estado de versão anterior é descartado e o seed é recriado
     typeof e.discenteAtualId === "string" &&
     typeof e.docenteAtualId === "string" &&
     Array.isArray(e.discentes) &&
@@ -99,6 +102,17 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
         (a.tipoId === null || ehTipoAtividadeId(a.tipoId)) &&
         Array.isArray(a.historico) &&
         Array.isArray(a.pareceres)
+    ) &&
+    Array.isArray(e.avisos) &&
+    e.avisos.every(
+      (a) =>
+        typeof a?.id === "string" &&
+        TIPOS_AVISO.includes(a.tipo) &&
+        typeof a.titulo === "string" &&
+        typeof a.descricao === "string" &&
+        typeof a.em === "string" &&
+        typeof a.lido === "boolean" &&
+        (a.atividadeId === null || typeof a.atividadeId === "string")
     )
   )
 }
@@ -243,6 +257,29 @@ export async function obterProgresso(discenteId?: string): Promise<Progresso> {
   const estado = ler()
   const alvo = discenteId ?? estado.discenteAtualId
   return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
+}
+
+// --- Avisos (central de avisos, perfil discente) ------------------------------------------
+
+/** Do mais recente para o mais antigo. */
+export async function listarAvisos(): Promise<Aviso[]> {
+  await esperar()
+  const estado = ler()
+  return copia(estado.avisos).sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime())
+}
+
+export async function marcarAvisoComoLido(id: string): Promise<void> {
+  await esperar()
+  const estado = ler()
+  estado.avisos = estado.avisos.map((a) => (a.id === id ? { ...a, lido: true } : a))
+  gravar(estado)
+}
+
+export async function marcarTodosAvisosComoLidos(): Promise<void> {
+  await esperar()
+  const estado = ler()
+  estado.avisos = estado.avisos.map((a) => ({ ...a, lido: true }))
+  gravar(estado)
 }
 
 // --- Comprovantes --------------------------------------------------------------------------

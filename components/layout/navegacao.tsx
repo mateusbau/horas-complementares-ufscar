@@ -27,6 +27,8 @@ import { useEffect, useState } from "react"
 
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { Skeleton } from "@/components/feedback/Skeleton"
+import { useAvisos } from "@/hooks/use-avisos"
+import { formatarNumero } from "@/lib/formatacao"
 import { CONFIGURACOES_DO_PERFIL, INICIO_DO_PERFIL } from "@/lib/rotas"
 import { encerrarSessao, obterDiscenteAtual, obterDocenteAtual, trocarPerfil } from "@/lib/storage"
 import type { Perfil } from "@/lib/types"
@@ -81,6 +83,9 @@ export function ListaNavegacao({
   onNavegar?: () => void
 }) {
   const caminho = usePathname()
+  // Só o perfil discente tem Central de avisos; o hook é chamado sempre
+  // (regra dos hooks), o badge é que só aparece nesse item.
+  const { naoLidos } = useAvisos()
 
   return (
     <nav aria-label="Navegação principal">
@@ -88,12 +93,23 @@ export function ListaNavegacao({
         {ITENS[perfil].map((item) => {
           const ativo = estaAtivo(item, caminho)
           const Icone = item.icone
+          const ehAvisos = item.href === "/avisos"
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
                 onClick={onNavegar}
                 aria-current={ativo ? "page" : undefined}
+                // aria-label explícito quando há badge: o nome acessível calculado a
+                // partir do conteúdo (ícone + texto + badge) insere um espaço antes da
+                // vírgula do sufixo sr-only ("avisos , 2 não lidos") — o navegador junta
+                // o texto de nós irmãos com espaço entre eles. Só o aria-label dá controle
+                // exato da string, no formato "Central de avisos, 3 não lidos" pedido.
+                aria-label={
+                  ehAvisos && naoLidos > 0
+                    ? `${item.rotulo}, ${formatarNumero(naoLidos)} ${naoLidos === 1 ? "não lido" : "não lidos"}`
+                    : undefined
+                }
                 className={cn(
                   "relative flex min-h-row items-center gap-3 overflow-hidden rounded-lg px-3 py-2 text-body text-foreground transition-colors hover:bg-muted",
                   ativo &&
@@ -102,6 +118,14 @@ export function ListaNavegacao({
               >
                 <Icone aria-hidden="true" className="size-5 shrink-0" />
                 {item.rotulo}
+                {ehAvisos && naoLidos > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-caption font-bold text-primary-foreground"
+                  >
+                    {formatarNumero(naoLidos)}
+                  </span>
+                )}
               </Link>
             </li>
           )

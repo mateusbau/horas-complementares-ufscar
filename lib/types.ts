@@ -243,21 +243,39 @@ export type ItemFila = {
   esperaDias: number
 }
 
+// --- Avisos (central de avisos, perfil discente) ----------------------------------
+
+export type TipoAviso = "validada" | "recusada" | "aguardando" | "marco" | "regra"
+
+export type Aviso = {
+  id: string
+  tipo: TipoAviso
+  titulo: string
+  descricao: string
+  /** Data e hora ISO. */
+  em: string
+  lido: boolean
+  /** Atividade relacionada; `null` quando o aviso não aponta para uma (marco, regra). */
+  atividadeId: string | null
+}
+
 // --- Estado da demonstração -------------------------------------------------------
 
 export type EstadoDemo = {
   /**
-   * 3: comprovantes do seed apontando para arquivos reais em /public/comprovantes
-   * (campo `comprovanteId` em `Comprovante`). 2: quantidade em horas nos tipos
+   * 4: nova coleção `avisos` (central de avisos). 3: comprovantes do seed
+   * apontando para arquivos reais em /public/comprovantes (campo
+   * `comprovanteId` em `Comprovante`). 2: quantidade em horas nos tipos
    * "h/semestre" (leitura da seção 3.5.4 do PPC).
    *
    * Sobe a cada mudança no seed — ver lib/storage.ts, `ehEstadoValido`.
    */
-  versao: 3
+  versao: 4
   /** Quem está usando o sistema na demonstração. */
   discenteAtualId: string
   docenteAtualId: string
   discentes: Discente[]
   docentes: Docente[]
   atividades: Atividade[]
+  avisos: Aviso[]
 }

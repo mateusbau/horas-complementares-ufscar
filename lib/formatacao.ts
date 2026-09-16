@@ -2,7 +2,7 @@
 //
 // Formatação em pt-BR dos valores do domínio para a interface.
 
-import { creditosPorQuantidade, HORAS_POR_CREDITO } from "./calculos"
+import { creditosPorQuantidade, diasDeEspera, HORAS_POR_CREDITO } from "./calculos"
 import { medidoEmHoras, UNIDADES, obterTipo, type TipoAtividadeId } from "./catalogo"
 
 const numero = new Intl.NumberFormat("pt-BR")
@@ -123,6 +123,13 @@ export function formatarRascunhoSalvo(desde: string, agora: Date): string {
   if (minutos < 60) return `Rascunho salvo há ${numero.format(minutos)} min`
   const horas = Math.floor(minutos / 60)
   return `Rascunho salvo há ${numero.format(horas)} ${horas === 1 ? "hora" : "horas"}`
+}
+
+/** "hoje", "há 1 dia", "há 9 dias" — mesmo cálculo de dias inteiros de diasDeEspera. */
+export function formatarRelativo(em: string, agora: Date): string {
+  const dias = diasDeEspera(em, agora)
+  if (dias === 0) return "hoje"
+  return dias === 1 ? "há 1 dia" : `há ${numero.format(dias)} dias`
 }
 
 /** "certificado-git-secot.pdf · 1,2 MB" (só o tamanho, sem o nome). */

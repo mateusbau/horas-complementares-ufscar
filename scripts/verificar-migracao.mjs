@@ -1,9 +1,12 @@
 // scripts/verificar-migracao.mjs
 //
 // Garante que um estado salvo de versão anterior seja descartado e o seed
-// recriado. O caso que este script cobre é o que passou batido na v2 → v3: o
-// seed mudou (comprovantes reais), a versão não subiu, e quem já tinha aberto
-// o sistema seguiu vendo os dados antigos indefinidamente.
+// recriado. O caso original é o que passou batido na v2 → v3: o seed mudou
+// (comprovantes reais), a versão não subiu, e quem já tinha aberto o sistema
+// seguiu vendo os dados antigos indefinidamente. A v3 → v4 (avisos) é a mesma
+// classe de bug: sem subir a versão, um estado salvo sem a coleção `avisos`
+// continuaria "válido" e a central de avisos nunca apareceria para quem já
+// tinha usado o sistema antes desta mudança.
 //
 // Cobre também a mesma classe de bug na chave de preferências (aparência,
 // notificações — lib/preferencias.ts): uma versão salva incompatível precisa
@@ -58,15 +61,15 @@ const CHAVE = "horas-complementares:estado"
 const CHAVE_PREFERENCIAS = "horas-complementares:preferencias"
 
 // --- Estado da versão anterior --------------------------------------------------
-// Estruturalmente válido para a v2: passaria pelo portão antigo sem reclamar.
-// É esse o cenário do bug — não um estado corrompido, mas um estado legítimo
-// de uma versão anterior.
+// Forma exata da v3 (sem a coleção `avisos`, adicionada na v4): passaria pelo
+// portão antigo sem reclamar. É esse o cenário do bug — não um estado
+// corrompido, mas um estado legítimo de uma versão anterior.
 
-const TITULO_ANTIGO = "Atividade remanescente da versão 2"
+const TITULO_ANTIGO = "Atividade remanescente da versão 3"
 
 function estadoAntigo() {
   return {
-    versao: 2,
+    versao: 3,
     discenteAtualId: "disc-ana",
     docenteAtualId: "doc-renata",
     discentes: [{ id: "disc-ana", nome: "Ana Liz Souza", ra: "811902", curso: "BCDIA", ano: "3º ano" }],
@@ -89,6 +92,7 @@ function estadoAntigo() {
         pareceres: [],
       },
     ],
+    // Sem `avisos`: é exatamente a forma de antes desta versão.
   }
 }
 
@@ -110,7 +114,7 @@ function conferir(descricao, condicao, detalhe) {
 const storage = await import(pathToFileURL(path.resolve("lib/storage.ts")).href)
 
 // 1. Estado de versão anterior, já populado: o caso que faltou.
-console.log("\nEstado salvo da versão 2 (localStorage já populado):")
+console.log("\nEstado salvo da versão 3 (localStorage já populado):")
 memoria.clear()
 armazenamento.setItem(CHAVE, JSON.stringify(estadoAntigo()))
 
@@ -124,7 +128,7 @@ try {
 }
 
 const salvo = JSON.parse(armazenamento.getItem(CHAVE))
-conferir("o estado antigo é substituído no armazenamento", salvo.versao === 3, `versão gravada: ${salvo.versao}`)
+conferir("o estado antigo é substituído no armazenamento", salvo.versao === 4, `versão gravada: ${salvo.versao}`)
 conferir(
   "a atividade da versão anterior desaparece",
   !atividades.some((a) => a.titulo === TITULO_ANTIGO),
@@ -145,6 +149,39 @@ conferir(
   `esperado 6 comprovantes em /comprovantes/, encontrado ${comArquivoReal.length}`
 )
 
+// O caso desta versão: `avisos` não existia na v3 — precisa aparecer, populado.
+const avisosMigrados = await storage.listarAvisos()
+conferir(
+  "os avisos do seed aparecem após a migração",
+  avisosMigrados.length === 5,
+  `esperado 5 avisos, encontrado ${avisosMigrados.length}`
+)
+conferir(
+  "os avisos migrados vêm do mais recente para o mais antigo",
+  avisosMigrados.every((a, i) => i === 0 || new Date(avisosMigrados[i - 1].em) >= new Date(a.em)),
+  `ordem: ${avisosMigrados.map((a) => a.em).join(", ")}`
+)
+conferir(
+  "dois avisos começam não lidos (para o badge aparecer)",
+  avisosMigrados.filter((a) => !a.lido).length === 2,
+  `não lidos: ${avisosMigrados.filter((a) => !a.lido).length}`
+)
+
+// 1b. Isola o portão de versão em si: um estado com `avisos` já no formato
+//     certo, mas com `versao` da release anterior, precisa ser descartado do
+//     mesmo jeito. Sem isto, o teste acima provaria só que o array `avisos`
+//     ausente falha — não que o número da versão importa.
+console.log("\nEstado com avisos no formato certo, mas versão da release anterior:")
+memoria.clear()
+const quaseV4 = { ...estadoAntigo(), versao: 3, avisos: [{ id: "aviso-x", tipo: "regra", titulo: "x", descricao: "x", em: new Date().toISOString(), lido: false, atividadeId: null }] }
+armazenamento.setItem(CHAVE, JSON.stringify(quaseV4))
+const avisosComVersaoErrada = await storage.listarAvisos()
+conferir(
+  "versão errada é descartada mesmo com avisos no formato certo",
+  avisosComVersaoErrada.length === 5 && avisosComVersaoErrada.every((a) => a.id !== "aviso-x"),
+  `encontrado ${avisosComVersaoErrada.length} avisos, ids: ${avisosComVersaoErrada.map((a) => a.id).join(", ")}`
+)
+
 // 2. Estado da versão corrente: não pode ser descartado a cada leitura, senão a
 //    migração viraria um "reinicia sempre" e apagaria o trabalho de quem usa.
 console.log("\nEstado salvo da versão corrente (não deve ser descartado):")
@@ -160,6 +197,25 @@ conferir(
   "o estado válido foi descartado — a migração está reiniciando sempre"
 )
 
+// 2b. Marcar avisos como lidos: efeito reflete de imediato no armazenamento
+//     (a base do badge da sidebar em hooks/use-avisos.ts).
+console.log("\nAvisos — marcar como lido e marcar todos como lidos:")
+const [primeiroAviso] = await storage.listarAvisos()
+await storage.marcarAvisoComoLido(primeiroAviso.id)
+const apósUm = await storage.listarAvisos()
+conferir(
+  "marcarAvisoComoLido marca só o aviso pedido",
+  apósUm.find((a) => a.id === primeiroAviso.id)?.lido === true,
+  "o aviso marcado não ficou lido"
+)
+await storage.marcarTodosAvisosComoLidos()
+const apósTodos = await storage.listarAvisos()
+conferir(
+  "marcarTodosAvisosComoLidos marca todos",
+  apósTodos.every((a) => a.lido),
+  `restaram não lidos: ${apósTodos.filter((a) => !a.lido).length}`
+)
+
 // 3. Caminho feliz de sempre: primeira visita, armazenamento vazio.
 console.log("\nArmazenamento vazio (primeira visita):")
 memoria.clear()
@@ -167,9 +223,11 @@ const doZero = await storage.listarAtividades()
 conferir("o seed é criado do zero", doZero.length > 0, "nenhuma atividade na primeira visita")
 conferir(
   "grava a versão corrente",
-  JSON.parse(armazenamento.getItem(CHAVE)).versao === 3,
+  JSON.parse(armazenamento.getItem(CHAVE)).versao === 4,
   "a versão gravada não é a corrente"
 )
+const avisosDoZero = await storage.listarAvisos()
+conferir("os avisos do seed já vêm na primeira visita", avisosDoZero.length === 5, `encontrado ${avisosDoZero.length}`)
 
 // 4. Preferências (chave separada): mesma classe de bug, versão incompatível
 //    precisa voltar aos padrões, e a chave não pode ser tocada por
