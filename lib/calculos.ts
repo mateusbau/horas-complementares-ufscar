@@ -169,6 +169,39 @@ export function calcularProgresso(atividades: readonly Atividade[]): Progresso {
 }
 
 /**
+ * Prévia dos créditos ainda em análise (painel do discente, faixa de
+ * progresso): soma isolada por atividade, sem a acumulação entre registros
+ * do mesmo tipo que calcularProgresso faz para o que já foi validado — essa
+ * junção só é oficial depois do parecer.
+ */
+export function creditosEmAnalise(atividades: readonly Atividade[]): number {
+  return atividades
+    .filter((a) => a.status === "analise")
+    .reduce((soma, a) => soma + creditosDaAtividade(a), 0)
+}
+
+/**
+ * "Exigências do Projeto Pedagógico" (painel do discente): as duas notas de
+ * rodapé da Tabela 7 (asterisco e duplo asterisco) só chegam ao
+ * armazenamento com a confirmação marcada — o formulário de cadastro exige
+ * isso antes do envio (avisosDeCadastro). Aqui a regra é conferida de volta,
+ * a partir das atividades já registradas, para o checklist nunca afirmar
+ * algo que os dados não sustentam.
+ */
+export function semDuplaContagemGarantida(atividades: readonly Atividade[]): boolean {
+  return atividades
+    .filter((a) => a.tipoId !== null && obterTipo(a.tipoId).vedadaDuplaContagem)
+    .every((a) => a.confirmacoes.semDuplaContagem)
+}
+
+/** Ver semDuplaContagemGarantida: mesma ideia, para o duplo asterisco (só Monitoria). */
+export function semestreCompletoGarantido(atividades: readonly Atividade[]): boolean {
+  return atividades
+    .filter((a) => a.tipoId !== null && obterTipo(a.tipoId).exigeSemestreCompleto)
+    .every((a) => a.confirmacoes.semestreCompleto)
+}
+
+/**
  * "O que fecha o que falta": para cada tipo, a menor quantidade que cobre os
  * créditos faltantes.
  * - Em horas: a validação fracionada permite fechar exatamente; acima do teto
