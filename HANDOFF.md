@@ -2,6 +2,74 @@
 
 Documento de passagem para quem vai continuar o projeto sem ter acompanhado nada até aqui.
 
+## Atualização — OCR local, 2026-09-16, branch `ocr`
+
+Esta seção prevalece sobre as referências históricas abaixo a OCR/IA indisponível.
+Base conferida no GitHub: `main` em `a35fb6f`; branch `ocr` recebida em `0b466fb`.
+O código da pasta fornecida foi comparado com essa base; as diferenças de código existentes
+na branch eram os arquivos de configuração enviados por upload. A implementação completa
+está preparada localmente para a branch `ocr`, sem merge automático em `main`.
+
+**Publicação via Git:** o acesso local de escrita foi liberado em 2026-09-16. A atualização
+remota `eb8cea3` foi incorporada preservando o histórico. Cópias idênticas de rotas enviadas
+fora de `app/` foram removidas; os arquivos corretos continuam em `app/`. O envio é para
+`ocr`, sem merge em `main`. A restrição 403 anterior do conector não impede o Git autenticado.
+
+### Implementado
+
+- Nova atividade: anexar → **Ler comprovante** → revisar/corrigir → confirmar campos vazios.
+- Tesseract.js 7 em português para JPG/PNG; PDF.js 6 extrai texto de PDFs digitais e renderiza
+  páginas sem texto suficiente para OCR. Até 10 MB e 5 páginas; sem truncamento silencioso.
+- Workers, WASM e modelo português servidos pelo próprio site. `predev` e `prebuild` executam
+  `scripts/preparar-ocr.mjs`; `public/ocr/` é gerado a partir do lockfile e não deve ser commitado.
+- Extração conservadora de nome, carga, categoria textual, instituição e período. Datas de
+  emissão não são usadas como realização; datas inválidas/ambíguas ficam vazias. O texto
+  reconhecido fica disponível para conferência. OCR não verifica autenticidade.
+- Campos preenchidos são preservados. Instituição/categoria/carga revisadas ficam nas
+  observações, identificadas pelo nome do comprovante. Não foi alterado o schema do domínio.
+- Tipo da Tabela 7 continua sendo escolha explícita do aluno. Horas só preenchem quantidade
+  em tipos medidos em horas e se forem inteiras; frações ficam nas observações, sem arredondar.
+  Confirmações, pareceres e regras de crédito não são alterados pelo OCR.
+- Cancelamento, prazo de 2 minutos, erros com alternativa manual, foco na revisão, retorno ao
+  título ao aplicar e anúncios pelo `useAnunciar`. Rascunhos recuperam o arquivo do IndexedDB.
+- Ajuda e Sobre atualizados. O stub `lib/ai/analise-comprovante.ts` continua reservado para
+  eventual serviço de IA; o OCR real está em `lib/ocr/`, sem chamar esse stub.
+- Corrigido upload incompleto na branch: removidas cópias idênticas de arquivos de `app/`
+  que estavam na raiz, log local e artefatos gerados rastreados. Histórico preservado.
+
+### Executar e verificar
+
+```sh
+npm ci
+npm run dev
+npm run verificar:ocr
+npm run build
+npm run lint
+```
+
+Use Node 24+ (os verificadores importam TypeScript com remoção nativa de tipos).
+Na demonstração: perfil Discente → Nova atividade → selecionar um comprovante → Ler comprovante.
+Fixtures existentes: JPG de monitoria `01-declaracao-coordenacao-monitoria-calculo2.jpg` e PDF
+digital `06-certificado-curso-python.pdf`, ambos em `public/comprovantes/`.
+
+### Limitações e próximos passos
+
+1. Ampliar testes com certificados reais anonimizados, fotos inclinadas, datas por extenso e
+   layouts distintos. A extração usa regras conservadoras, não um modelo semântico.
+2. Validar com NVDA/VoiceOver e aparelhos móveis reais. A árvore acessível/foco e o teclado
+   do navegador não substituem testes com pessoas e leitores de tela.
+3. PDFs com texto parcial e imagens na mesma página podem exigir preenchimento manual:
+   o fallback atual usa OCR quando há menos de 40 caracteres úteis na página.
+4. OCR foi integrado a **Nova atividade**, inclusive seus rascunhos; edição de atividade já
+   enviada mantém o fluxo manual. Categoria textual não classifica automaticamente o catálogo.
+5. Confirmar o preview da branch na Vercel antes do merge. A publicação do commit não comprova
+   o deploy. Ver resultados e pendências de lint na entrada OCR do `DEV-LOG.md`.
+
+Durante a inicialização do Tesseract, cancelar descarta os resultados imediatamente; o worker
+em inicialização é encerrado quando sua criação termina. Depois de iniciado, é encerrado ao cancelar.
+
+---
+
 ## Estado de entrega — 2026-09-15
 
 **As 12 etapas do roteiro estão concluídas.** Build limpo, todas verificadas no navegador (local

@@ -21,12 +21,13 @@ import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { Campo } from "@/components/formulario/Campo"
 import { CampoComprovante } from "@/components/formulario/CampoComprovante"
 import { CampoConfirmacao } from "@/components/formulario/CampoConfirmacao"
+import { LeituraComprovante } from "@/components/atividade/LeituraComprovante"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { avisosDeCadastro, creditosDaAtividade, horasDeCreditos, validarNovaAtividade } from "@/lib/calculos"
-import { CATALOGO, UNIDADES, obterTipo, type TipoAtividadeId } from "@/lib/catalogo"
+import { CATALOGO, UNIDADES, obterTipo, medidoEmHoras, type TipoAtividadeId } from "@/lib/catalogo"
 import { formatarCreditos, formatarExplicacaoRequisito, formatarHoras, formatarRascunhoSalvo } from "@/lib/formatacao"
 import { criarAtividade, limparRascunho, obterRascunho, removerComprovante, salvarRascunho } from "@/lib/storage"
 import type { Comprovante, Confirmacoes, NovaAtividade, Periodo } from "@/lib/types"
@@ -68,6 +69,7 @@ export function FormularioNovaAtividade() {
   const [inicio, setInicio] = useState("")
   const [termino, setTermino] = useState("")
   const [comprovante, setComprovante] = useState<Comprovante | null>(null)
+  const [arquivoOCR, setArquivoOCR] = useState<File | null>(null)
   const [observacoes, setObservacoes] = useState("")
   const [confirmacoes, setConfirmacoes] = useState<Confirmacoes>(SEM_CONFIRMACOES)
 
@@ -456,6 +458,7 @@ export function FormularioNovaAtividade() {
           rotulo="Anexar comprovante"
           obrigatorio
           comprovante={comprovante}
+          onArquivo={setArquivoOCR}
           onEscolher={(c) => {
             setComprovante(c)
             marcarEditado("comprovante")
@@ -463,6 +466,7 @@ export function FormularioNovaAtividade() {
           onRemover={() => {
             if (comprovante) void removerComprovante(comprovante.comprovanteId)
             setComprovante(null)
+            setArquivoOCR(null)
             marcarEditado("comprovante")
           }}
           apoio={tipo ? `${tipo.comprovante}. PDF, JPG ou PNG até 10 MB.` : "PDF, JPG ou PNG até 10 MB."}
@@ -470,6 +474,19 @@ export function FormularioNovaAtividade() {
           // eslint-disable-next-line react-hooks/refs -- .current só é lido em focarCampo, dentro do handler aoEnviar; encaminhado por CampoComprovante até o botão real.
           botaoRef={refs.comprovanteBotao}
         />
+
+        {comprovante && <LeituraComprovante key={comprovante.comprovanteId} comprovante={comprovante} arquivo={arquivoOCR} aplicar={(dados) => {
+          if (!titulo.trim()) setTitulo(dados.titulo)
+          if (!quantidadeTexto && tipo && medidoEmHoras(tipo) && Number.isInteger(Number(dados.horas)) && Number(dados.horas) > 0) setQuantidadeTexto(dados.horas)
+          if (!inicio && !termino && dados.data && dados.termino && dados.termino >= dados.data) { setInicio(dados.data); setTermino(dados.termino) }
+          const notas = [dados.instituicao && `Instituição emissora: ${dados.instituicao}`, dados.categoria && `Categoria no certificado: ${dados.categoria}`, dados.horas && `Carga horária no certificado: ${dados.horas} horas`].filter(Boolean).join("\n")
+          if (notas) {
+            const bloco = `Dados revisados de ${comprovante.nome}:\n${notas}`
+            setObservacoes((atual) => atual.includes(bloco) ? atual : [atual, bloco].filter(Boolean).join("\n\n"))
+          }
+          anunciar("Dados revisados aplicados aos campos vazios. Confira o tipo e a quantidade antes de enviar.")
+          refs.titulo.current?.focus()
+        }} />}
 
         <Campo id="observacoes" rotulo="Observações para o docente" apoio="Opcional · descreva o que foi realizado, caso o certificado não deixe claro.">
           {(aria) => (

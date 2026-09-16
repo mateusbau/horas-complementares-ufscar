@@ -30,6 +30,7 @@ export function CampoComprovante({
   obrigatorio = false,
   comprovante,
   onEscolher,
+  onArquivo,
   onRemover,
   apoio,
   erro,
@@ -40,6 +41,7 @@ export function CampoComprovante({
   obrigatorio?: boolean
   comprovante: Comprovante | null
   onEscolher: (comprovante: Comprovante) => void
+  onArquivo?: (arquivo: File) => void
   onRemover: () => void
   /** Texto da coluna "Tipo de comprovante" do tipo escolhido, ou o genérico antes de escolher. */
   apoio: string
@@ -69,6 +71,7 @@ export function CampoComprovante({
     try {
       const comprovante = await salvarComprovante(arquivo)
       onEscolher(comprovante)
+      onArquivo?.(arquivo)
     } catch {
       setErroLocal("Não foi possível processar o arquivo agora. Tente novamente.")
     } finally {
