@@ -30,6 +30,8 @@ export type Discente = {
   curso: string
   /** Ex.: "3º ano". */
   ano: string
+  /** Docente orientador; `null` quando não tem (não aparece em "Meus orientandos" de ninguém). */
+  orientadorId: string | null
 }
 
 export type Docente = {
@@ -263,14 +265,15 @@ export type Aviso = {
 
 export type EstadoDemo = {
   /**
-   * 4: nova coleção `avisos` (central de avisos). 3: comprovantes do seed
-   * apontando para arquivos reais em /public/comprovantes (campo
-   * `comprovanteId` em `Comprovante`). 2: quantidade em horas nos tipos
-   * "h/semestre" (leitura da seção 3.5.4 do PPC).
+   * 5: `Discente.orientadorId` (vínculo docente ↔ orientandos, telas "Meus
+   * orientandos" e "Relatório da turma"). 4: nova coleção `avisos` (central de
+   * avisos). 3: comprovantes do seed apontando para arquivos reais em
+   * /public/comprovantes (campo `comprovanteId` em `Comprovante`). 2:
+   * quantidade em horas nos tipos "h/semestre" (leitura da seção 3.5.4 do PPC).
    *
    * Sobe a cada mudança no seed — ver lib/storage.ts, `ehEstadoValido`.
    */
-  versao: 4
+  versao: 5
   /** Quem está usando o sistema na demonstração. */
   discenteAtualId: string
   docenteAtualId: string

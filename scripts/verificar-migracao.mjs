@@ -3,10 +3,11 @@
 // Garante que um estado salvo de versão anterior seja descartado e o seed
 // recriado. O caso original é o que passou batido na v2 → v3: o seed mudou
 // (comprovantes reais), a versão não subiu, e quem já tinha aberto o sistema
-// seguiu vendo os dados antigos indefinidamente. A v3 → v4 (avisos) é a mesma
-// classe de bug: sem subir a versão, um estado salvo sem a coleção `avisos`
-// continuaria "válido" e a central de avisos nunca apareceria para quem já
-// tinha usado o sistema antes desta mudança.
+// seguiu vendo os dados antigos indefinidamente. A v3 → v4 (avisos) e a v4 →
+// v5 (Discente.orientadorId, telas "Meus orientandos" e "Relatório da
+// turma") são a mesma classe de bug: sem subir a versão, um estado salvo sem
+// o campo novo continuaria "válido" e a tela nova ficaria vazia ou quebrada
+// para quem já tinha usado o sistema antes da mudança.
 //
 // Cobre também a mesma classe de bug na chave de preferências (aparência,
 // notificações — lib/preferencias.ts): uma versão salva incompatível precisa
@@ -61,17 +62,18 @@ const CHAVE = "horas-complementares:estado"
 const CHAVE_PREFERENCIAS = "horas-complementares:preferencias"
 
 // --- Estado da versão anterior --------------------------------------------------
-// Forma exata da v3 (sem a coleção `avisos`, adicionada na v4): passaria pelo
-// portão antigo sem reclamar. É esse o cenário do bug — não um estado
-// corrompido, mas um estado legítimo de uma versão anterior.
+// Forma exata da v4 (com `avisos`, mas sem `Discente.orientadorId`, campo da
+// v5): passaria pelo portão antigo sem reclamar. É esse o cenário do bug —
+// não um estado corrompido, mas um estado legítimo de uma versão anterior.
 
-const TITULO_ANTIGO = "Atividade remanescente da versão 3"
+const TITULO_ANTIGO = "Atividade remanescente da versão 4"
 
 function estadoAntigo() {
   return {
-    versao: 3,
+    versao: 4,
     discenteAtualId: "disc-ana",
     docenteAtualId: "doc-renata",
+    // Sem `orientadorId`: é exatamente a forma de antes desta versão.
     discentes: [{ id: "disc-ana", nome: "Ana Liz Souza", ra: "811902", curso: "BCDIA", ano: "3º ano" }],
     docentes: [{ id: "doc-renata", nome: "Prof.ª Renata Marques", departamento: "DCoMP", iniciais: "RM" }],
     atividades: [
@@ -92,7 +94,7 @@ function estadoAntigo() {
         pareceres: [],
       },
     ],
-    // Sem `avisos`: é exatamente a forma de antes desta versão.
+    avisos: [],
   }
 }
 
@@ -114,7 +116,7 @@ function conferir(descricao, condicao, detalhe) {
 const storage = await import(pathToFileURL(path.resolve("lib/storage.ts")).href)
 
 // 1. Estado de versão anterior, já populado: o caso que faltou.
-console.log("\nEstado salvo da versão 3 (localStorage já populado):")
+console.log("\nEstado salvo da versão 4 (localStorage já populado):")
 memoria.clear()
 armazenamento.setItem(CHAVE, JSON.stringify(estadoAntigo()))
 
@@ -128,7 +130,7 @@ try {
 }
 
 const salvo = JSON.parse(armazenamento.getItem(CHAVE))
-conferir("o estado antigo é substituído no armazenamento", salvo.versao === 4, `versão gravada: ${salvo.versao}`)
+conferir("o estado antigo é substituído no armazenamento", salvo.versao === 5, `versão gravada: ${salvo.versao}`)
 conferir(
   "a atividade da versão anterior desaparece",
   !atividades.some((a) => a.titulo === TITULO_ANTIGO),
@@ -167,19 +169,58 @@ conferir(
   `não lidos: ${avisosMigrados.filter((a) => !a.lido).length}`
 )
 
+// O caso desta versão: `Discente.orientadorId` não existia na v4 — precisa
+// aparecer, e "Meus orientandos"/"Relatório da turma" precisam achar os 9
+// orientandos do seed, não a lista vazia de um discente sem o campo.
+const orientandosMigrados = await storage.listarOrientandos()
+conferir(
+  "os orientandos do seed aparecem após a migração",
+  orientandosMigrados.length === 9,
+  `esperado 9 orientandos, encontrado ${orientandosMigrados.length}`
+)
+const relatorioMigrado = await storage.obterRelatorioTurma()
+conferir(
+  "o relatório da turma concorda com a lista de orientandos",
+  relatorioMigrado.totalAlunos === orientandosMigrados.length,
+  `totalAlunos: ${relatorioMigrado.totalAlunos}, orientandos: ${orientandosMigrados.length}`
+)
+
 // 1b. Isola o portão de versão em si: um estado com `avisos` já no formato
 //     certo, mas com `versao` da release anterior, precisa ser descartado do
 //     mesmo jeito. Sem isto, o teste acima provaria só que o array `avisos`
 //     ausente falha — não que o número da versão importa.
-console.log("\nEstado com avisos no formato certo, mas versão da release anterior:")
+console.log("\nEstado com avisos no formato certo, mas versão de duas releases atrás:")
 memoria.clear()
-const quaseV4 = { ...estadoAntigo(), versao: 3, avisos: [{ id: "aviso-x", tipo: "regra", titulo: "x", descricao: "x", em: new Date().toISOString(), lido: false, atividadeId: null }] }
+const quaseV4 = {
+  ...estadoAntigo(),
+  versao: 3,
+  avisos: [{ id: "aviso-x", tipo: "regra", titulo: "x", descricao: "x", em: new Date().toISOString(), lido: false, atividadeId: null }],
+}
 armazenamento.setItem(CHAVE, JSON.stringify(quaseV4))
 const avisosComVersaoErrada = await storage.listarAvisos()
 conferir(
-  "versão errada é descartada mesmo com avisos no formato certo",
+  "versão bem antiga é descartada mesmo com avisos no formato certo",
   avisosComVersaoErrada.length === 5 && avisosComVersaoErrada.every((a) => a.id !== "aviso-x"),
   `encontrado ${avisosComVersaoErrada.length} avisos, ids: ${avisosComVersaoErrada.map((a) => a.id).join(", ")}`
+)
+
+// 1c. Mesmo isolamento para o portão desta versão: um estado com `avisos` E
+//     `Discente.orientadorId` já no formato certo, mas `versao` da release
+//     anterior, ainda precisa ser descartado. Prova que é o número da
+//     versão que decide, não a ausência de um campo específico.
+console.log("\nEstado com orientadorId no formato certo, mas versão da release anterior:")
+memoria.clear()
+const quaseV5 = {
+  ...estadoAntigo(),
+  discentes: [{ ...estadoAntigo().discentes[0], orientadorId: "doc-outra-pessoa" }],
+  avisos: [],
+}
+armazenamento.setItem(CHAVE, JSON.stringify(quaseV5))
+const orientandosComVersaoErrada = await storage.listarOrientandos()
+conferir(
+  "versão errada é descartada mesmo com orientadorId no formato certo",
+  orientandosComVersaoErrada.length === 9,
+  `esperado 9 orientandos do seed recriado, encontrado ${orientandosComVersaoErrada.length}`
 )
 
 // 2. Estado da versão corrente: não pode ser descartado a cada leitura, senão a
@@ -223,11 +264,17 @@ const doZero = await storage.listarAtividades()
 conferir("o seed é criado do zero", doZero.length > 0, "nenhuma atividade na primeira visita")
 conferir(
   "grava a versão corrente",
-  JSON.parse(armazenamento.getItem(CHAVE)).versao === 4,
+  JSON.parse(armazenamento.getItem(CHAVE)).versao === 5,
   "a versão gravada não é a corrente"
 )
 const avisosDoZero = await storage.listarAvisos()
 conferir("os avisos do seed já vêm na primeira visita", avisosDoZero.length === 5, `encontrado ${avisosDoZero.length}`)
+const orientandosDoZero = await storage.listarOrientandos()
+conferir(
+  "os orientandos do seed já vêm na primeira visita",
+  orientandosDoZero.length === 9,
+  `encontrado ${orientandosDoZero.length}`
+)
 
 // 4. Preferências (chave separada): mesma classe de bug, versão incompatível
 //    precisa voltar aos padrões, e a chave não pode ser tocada por

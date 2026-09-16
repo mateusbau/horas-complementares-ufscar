@@ -33,6 +33,7 @@ import {
   montarAtividade,
 } from "./calculos"
 import { criarEstadoInicial } from "./mock-data"
+import { agregarTurma, resumirOrientando, type RelatorioTurma, type ResumoOrientando } from "./orientandos"
 import type {
   Atividade,
   Aviso,
@@ -87,10 +88,13 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   if (typeof valor !== "object" || valor === null) return false
   const e = valor as Partial<EstadoDemo>
   return (
-    e.versao === 4 && // estado de versão anterior é descartado e o seed é recriado
+    e.versao === 5 && // estado de versão anterior é descartado e o seed é recriado
     typeof e.discenteAtualId === "string" &&
     typeof e.docenteAtualId === "string" &&
     Array.isArray(e.discentes) &&
+    e.discentes.every(
+      (d) => typeof d?.id === "string" && (d.orientadorId === null || typeof d.orientadorId === "string")
+    ) &&
     Array.isArray(e.docentes) &&
     Array.isArray(e.atividades) &&
     e.atividades.every(
@@ -448,8 +452,31 @@ export async function obterEstatisticasDocente(): Promise<EstatisticasDocente> {
     validadas: validadas.length,
     creditosHomologados: validadas.reduce((soma, a) => soma + creditosDaAtividade(a), 0),
     devolvidas: devolvidas.length,
-    orientandosAtivos: estado.discentes.length,
+    orientandosAtivos: estado.discentes.filter((d) => d.orientadorId === estado.docenteAtualId).length,
   }
+}
+
+// --- Orientandos e relatório da turma (telas do docente) ------------------------------------
+// As duas telas usam a mesma agregação (lib/orientandos.ts): o relatório é
+// calculado em cima dos mesmos ResumoOrientando que a lista mostra, nunca
+// recalculado à parte, para as duas concordarem sempre.
+
+function construirResumosOrientandos(estado: EstadoDemo, agora: Date): ResumoOrientando[] {
+  return estado.discentes
+    .filter((d) => d.orientadorId === estado.docenteAtualId)
+    .map((d) => resumirOrientando(d, estado.atividades.filter((a) => a.discenteId === d.id), agora))
+}
+
+export async function listarOrientandos(): Promise<ResumoOrientando[]> {
+  await esperar()
+  const estado = ler()
+  return copia(construirResumosOrientandos(estado, new Date()))
+}
+
+export async function obterRelatorioTurma(): Promise<RelatorioTurma> {
+  await esperar()
+  const estado = ler()
+  return copia(agregarTurma(construirResumosOrientandos(estado, new Date())))
 }
 
 // --- Sessão simulada ------------------------------------------------------------------------

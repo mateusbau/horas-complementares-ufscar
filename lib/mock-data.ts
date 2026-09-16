@@ -39,29 +39,38 @@ const DOCENTE: Docente = {
   iniciais: "RM",
 }
 
-function discente(id: string, nome: string, ra: string, ano: string): Discente {
-  return { id, nome, ra, curso: CURSO.sigla, ano }
+function discente(
+  id: string,
+  nome: string,
+  ra: string,
+  ano: string,
+  orientadorId: string | null = null
+): Discente {
+  return { id, nome, ra, curso: CURSO.sigla, ano, orientadorId }
 }
 
+// 9 são orientandos da Prof.ª Renata (telas "Meus orientandos" e "Relatório
+// da turma"); os outros 5 não têm orientador nesta demonstração — mostram que
+// o vínculo filtra de verdade, e não "todo mundo é orientando de todo mundo".
 const DISCENTES: Discente[] = [
-  discente(ID_DISCENTE_DEMO, "Ana Liz Souza", "811902", "3º ano"),
-  discente("disc-bruno", "Bruno Okamoto", "812345", "4º ano"),
-  discente("disc-carla", "Carla Menezes", "810778", "4º ano"),
-  discente("disc-diego", "Diego Ferraz", "813410", "2º ano"),
-  discente("disc-elisa", "Elisa Nakamura", "812004", "3º ano"),
-  discente("disc-felipe", "Felipe Antunes", "811337", "3º ano"),
+  discente(ID_DISCENTE_DEMO, "Ana Liz Souza", "811902", "3º ano", ID_DOCENTE_DEMO),
+  discente("disc-bruno", "Bruno Okamoto", "812345", "4º ano", ID_DOCENTE_DEMO),
+  discente("disc-carla", "Carla Menezes", "810778", "4º ano", ID_DOCENTE_DEMO),
+  discente("disc-diego", "Diego Ferraz", "813410", "2º ano", ID_DOCENTE_DEMO),
+  discente("disc-elisa", "Elisa Nakamura", "812004", "3º ano", ID_DOCENTE_DEMO),
+  discente("disc-felipe", "Felipe Antunes", "811337", "3º ano", ID_DOCENTE_DEMO),
   discente("disc-gabriela", "Gabriela Reis", "812560", "3º ano"),
   discente("disc-henrique", "Henrique Sato", "813021", "2º ano"),
   discente("disc-isabela", "Isabela Prado", "810945", "4º ano"),
   discente("disc-joao", "João Vitor Lima", "812871", "3º ano"),
   // Nome e RA batem com o comprovante real (public/comprovantes/02 e 05).
-  discente("disc-larissa", "Larissa Prado Nakamura", "813077", "3º ano"),
+  discente("disc-larissa", "Larissa Prado Nakamura", "813077", "3º ano", ID_DOCENTE_DEMO),
   // Idem: comprovante público 04.
-  discente("disc-marcos", "Marcos Vinícius Rocha", "811264", "2º ano"),
+  discente("disc-marcos", "Marcos Vinícius Rocha", "811264", "2º ano", ID_DOCENTE_DEMO),
   discente("disc-otavio", "Otávio Ribeiro", "812219", "4º ano"),
   // Nova: só ela tem comprovante em PDF (public/comprovantes/06), para a
   // validação mostrar o <embed>, não só a miniatura de imagem.
-  discente("disc-camila", "Camila Ferreira Antunes", "812901", "2º ano"),
+  discente("disc-camila", "Camila Ferreira Antunes", "812901", "2º ano", ID_DOCENTE_DEMO),
 ]
 
 // --- Auxiliares de data --------------------------------------------------------
@@ -515,6 +524,94 @@ function historicoDosDemais(agora: Date): Atividade[] {
   ]
 }
 
+// --- Orientandos da Prof.ª Renata: casos específicos das telas do docente --------
+// Somam-se ao que cada um já tinha (não altera nenhum registro existente, para
+// não mexer no que as demais telas já mostram — os comprovantes de Bruno, por
+// exemplo, seguem servindo a validação individual como antes). Cobre os quatro
+// casos pedidos: integralizou (Bruno), créditos suficientes com um tipo só —
+// o risco silencioso (Carla), pendência parada além do limiar de risco
+// (Diego, DIAS_PENDENCIA_ANTIGA em lib/calculos.ts) e progresso intermediário
+// com tipos variados (Larissa, Camila).
+
+function atividadesDosOrientandos(agora: Date): Atividade[] {
+  const validado = (
+    id: string,
+    discenteId: string,
+    titulo: string,
+    tipoId: TipoAtividadeId,
+    quantidade: number,
+    enviadaHaDias: number
+  ) =>
+    validada(
+      agora,
+      {
+        id,
+        discenteId,
+        titulo,
+        tipoId,
+        quantidade,
+        periodo: periodo(agora, enviadaHaDias + 30, enviadaHaDias + 10),
+        comprovante: pdf(`comprovante-${id.replace("atv-", "")}.pdf`, 300),
+      },
+      enviadaHaDias,
+      enviadaHaDias - 5
+    )
+
+  return [
+    // Bruno: já tinha 2 créditos em 2 tipos (congresso-simposio, palestra);
+    // com mais estes dois, integraliza (8 créditos, 4 tipos).
+    validado("atv-bruno-extensao-cursinho", "disc-bruno", "Extensão — Cursinho popular", "extensao", 180, 150),
+    validado(
+      "atv-bruno-projeto-acessibilidade",
+      "disc-bruno",
+      "Participação no Projeto Acessibilidade Digital",
+      "participacao-projeto",
+      180,
+      130
+    ),
+    // Carla: já tinha 3 créditos em disciplina-eletiva (1 tipo só); com mais
+    // esta, chega aos créditos exigidos ainda num tipo só — o caso que o
+    // sistema enxerga e o aluno não.
+    validado(
+      "atv-carla-eletiva-etica-dados",
+      "disc-carla",
+      "Disciplina eletiva de Ética em Dados",
+      "disciplina-eletiva",
+      60,
+      180
+    ),
+    // Larissa e Camila: primeiro crédito validado de cada uma, tipos
+    // diferentes entre si — progresso inicial, não integralizado.
+    validado("atv-larissa-congic", "disc-larissa", "Congresso de Iniciação Científica da UFSCar", "congresso-simposio", 1, 60),
+    // Camila: 60 de 180 h máximas da extensão — 1 crédito só, não os 3 do
+    // teto, o mesmo arredondamento para baixo do painel do discente.
+    validado("atv-camila-extensao-horta", "disc-camila", "Extensão — Horta comunitária", "extensao", 60, 40),
+  ]
+}
+
+/**
+ * Diego: uma atividade em análise há mais de DIAS_PENDENCIA_ANTIGA
+ * (lib/calculos.ts) sem parecer do docente — o caso "pendência antiga". Fica
+ * fora de atividadesDosOrientandos porque emAnalise() tem uma assinatura
+ * diferente de validada() (não recebe data de decisão).
+ */
+function pendenciaAntigaDeDiego(agora: Date): Atividade {
+  return emAnalise(
+    agora,
+    {
+      id: "atv-diego-iniciacao-cientifica-antiga",
+      discenteId: "disc-diego",
+      titulo: "Iniciação científica — Processamento de linguagem natural",
+      tipoId: "iniciacao-cientifica",
+      quantidade: 180,
+      periodo: periodo(agora, 60, 20),
+      comprovante: pdf("comprovante-diego-ic-antiga.pdf", 420),
+      confirmacoes: { semDuplaContagem: true },
+    },
+    20 * 24 // 20 dias de espera, acima do limiar de risco (DIAS_PENDENCIA_ANTIGA)
+  )
+}
+
 // --- Avisos (central de avisos, perfil discente) ----------------------------------
 // Cada aviso corresponde a um evento real das atividades da Ana acima — nenhuma
 // data ou crédito é inventado à parte. Dois começam não lidos (os dois mais
@@ -582,12 +679,18 @@ function criarAvisos(agora: Date): Aviso[] {
 
 export function criarEstadoInicial(agora: Date): EstadoDemo {
   return {
-    versao: 4,
+    versao: 5,
     discenteAtualId: ID_DISCENTE_DEMO,
     docenteAtualId: ID_DOCENTE_DEMO,
     discentes: DISCENTES.map((d) => ({ ...d })),
     docentes: [{ ...DOCENTE }],
-    atividades: [...atividadesDaAna(agora), ...filaDosDemais(agora), ...historicoDosDemais(agora)],
+    atividades: [
+      ...atividadesDaAna(agora),
+      ...filaDosDemais(agora),
+      ...historicoDosDemais(agora),
+      ...atividadesDosOrientandos(agora),
+      pendenciaAntigaDeDiego(agora),
+    ],
     avisos: criarAvisos(agora),
   }
 }

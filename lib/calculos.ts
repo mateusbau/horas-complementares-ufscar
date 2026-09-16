@@ -53,6 +53,13 @@ export const TIPOS_DISTINTOS_EXIGIDOS = 2
 // Valor em créditos, aplicado à soma validada de cada tipo.
 export const TETOS_POR_TIPO: Partial<Record<TipoAtividadeId, number>> = {}
 
+// Não vem do PPC (ao contrário das constantes acima): é o limiar escolhido
+// para o sinal de risco "pendência antiga" na visão do docente (telas de
+// orientandos e relatório da turma) — quanto tempo sem retorno já é motivo de
+// atenção. Centralizado aqui pela mesma regra dos outros números do domínio:
+// o verificador de tokens só permite os literais 90/15/6 neste arquivo.
+export const DIAS_PENDENCIA_ANTIGA = 15
+
 /** Erro de regra de negócio, com mensagens prontas para mostrar ao usuário. */
 export class ErroDeRegra extends Error {
   // Campo explícito em vez de `constructor(readonly erros)`: parameter property
