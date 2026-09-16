@@ -6,6 +6,7 @@
 
 import { Marca } from "@/components/layout/Marca"
 import { BlocoPerfil, ListaNavegacao } from "@/components/layout/navegacao"
+import { INICIO_DO_PERFIL } from "@/lib/rotas"
 import type { Perfil } from "@/lib/types"
 
 export function Sidebar({ perfil }: { perfil: Perfil }) {
@@ -14,7 +15,7 @@ export function Sidebar({ perfil }: { perfil: Perfil }) {
       aria-label="Barra lateral"
       className="sticky top-(--altura-barra) hidden h-[calc(100dvh-var(--altura-barra))] w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-r bg-surface px-3 py-6 md:flex print:hidden"
     >
-      <Marca className="px-3" />
+      <Marca href={INICIO_DO_PERFIL[perfil]} className="px-3" />
       <div className="flex-1">
         <ListaNavegacao perfil={perfil} />
       </div>
