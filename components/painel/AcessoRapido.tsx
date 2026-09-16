@@ -1,12 +1,12 @@
 // components/painel/AcessoRapido.tsx
 //
-// Quatro atalhos do painel. O cartão inteiro é o link: um alvo grande, um só
+// Três atalhos do painel. O cartão inteiro é o link: um alvo grande, um só
 // Tab e um só contorno de foco (o global, na borda do cartão). O nome do link
 // é só o título (aria-labelledby); descrição e contador entram como descrição
 // (aria-describedby), para o leitor de tela não ler um bloco longo como nome.
 // O contador de avisos é real: atividades com a "bola com o aluno" (pendente).
 
-import { Bell, BookOpen, Calculator, FileText, type LucideIcon } from "lucide-react"
+import { Bell, BookOpen, FileText, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 
 import { formatarNumero } from "@/lib/formatacao"
@@ -15,7 +15,6 @@ type Atalho = { id: string; href: string; titulo: string; descricao: string; ico
 
 export function AcessoRapido({ pendentes }: { pendentes: number }) {
   const atalhos: Atalho[] = [
-    { id: "simulador", href: "/simulador", titulo: "Simulador de créditos", descricao: "Teste combinações antes de registrar.", icone: Calculator },
     { id: "catalogo", href: "/catalogo", titulo: "Catálogo de atividades", descricao: "O que é aceito e quanto vale cada tipo.", icone: BookOpen },
     { id: "relatorio", href: "/relatorio", titulo: "Relatório", descricao: "Gere o comprovante consolidado.", icone: FileText },
     {
@@ -34,7 +33,7 @@ export function AcessoRapido({ pendentes }: { pendentes: number }) {
   return (
     <section aria-labelledby="titulo-atalhos" className="flex flex-col gap-4">
       <h2 id="titulo-atalhos">Acesso rápido</h2>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-4 sm:grid-cols-3">
         {atalhos.map((atalho) => {
           const Icone = atalho.icone
           const idTitulo = `atalho-${atalho.id}-titulo`

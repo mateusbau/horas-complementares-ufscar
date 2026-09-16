@@ -209,7 +209,7 @@ export type Progresso = {
   porGrupo: CreditosPorGrupo[]
 }
 
-/** Uma linha do bloco "o que fecha o que falta" (painel e simulador). */
+/** Uma linha do bloco "o que fecha o que falta" (painel). */
 export type OpcaoFechamento = {
   tipoId: TipoAtividadeId
   /** Quantidade a registrar, na unidade do tipo (horas, eventos, palestras...). */

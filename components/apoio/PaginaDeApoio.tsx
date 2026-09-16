@@ -2,8 +2,8 @@
 //
 // Rota genérica para páginas de apoio referenciadas na navegação e nos cards
 // de acesso rápido, mas fora do escopo construído deste protótipo (etapa 12):
-// `/simulador`, `/avisos`, `/ajuda`, `/docente/orientandos` e
-// `/docente/relatorio`. Sem isso, cada uma cairia na página de erro 404 do
+// `/avisos`, `/ajuda`, `/docente/orientandos` e `/docente/relatorio`. Sem
+// isso, cada uma cairia na página de erro 404 do
 // Next, em inglês — nenhuma rota da navegação pode fazer isso. Mantém a
 // anatomia obrigatória de página (h1 + ação de volta) e explica com clareza o
 // que aconteceria ali, em vez de "em construção".
