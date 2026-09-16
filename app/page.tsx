@@ -10,17 +10,29 @@
 
 import { GraduationCap } from "lucide-react"
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 
 import { FormularioEntrada } from "@/components/entrada/FormularioEntrada"
 import { ReiniciarDemonstracao } from "@/components/entrada/ReiniciarDemonstracao"
 import { ID_CONTEUDO } from "@/components/layout/SkipLink"
+import ufscarLogo from "@/public/ufscar-logo.png"
 
 export const metadata: Metadata = { title: "Entrar · Horas Complementares" }
 
 export default function PaginaEntrada() {
   return (
     <div className="flex flex-col items-center px-4 py-8 md:py-12">
+      {/*
+        Primeiro elemento visual da tela, acima do cartão de login. O anel e o
+        fundo só aparecem em alto contraste (mesmo tratamento de
+        components/layout/Marca.tsx): o PNG não muda de cor com a preferência,
+        e a superfície da página também não, então sem isso o logo continuaria
+        exatamente igual nos dois modos.
+      */}
+      <span className="mb-6 inline-flex shrink-0 rounded-md [html.alto-contraste_&]:bg-surface [html.alto-contraste_&]:p-1 [html.alto-contraste_&]:ring-1 [html.alto-contraste_&]:ring-foreground">
+        <Image src={ufscarLogo} alt="Universidade Federal de São Carlos" className="h-12 w-auto sm:h-16" />
+      </span>
       <main
         id={ID_CONTEUDO}
         tabIndex={-1}
