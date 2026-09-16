@@ -56,12 +56,20 @@
 /* Números alinhados em coluna nas tabelas de horas */
 table, .tabular { font-variant-numeric: tabular-nums; }
 
-/* Movimento reduzido */
+/* Movimento reduzido: pelo sistema (prefers-reduced-motion) ou pela preferência da pessoa
+   (lib/preferencias.ts, tela de Configurações) — qualquer um dos dois já reduz. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html.reduzir-animacoes *,
+html.reduzir-animacoes *::before,
+html.reduzir-animacoes *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
 }
 
 /* Página impressa (relatório, tela 11): A4 retrato com margem, sem as bordas
@@ -143,6 +151,39 @@ html.alto-contraste {
   --border: #78716C;
   --input-border: #1C1917;
   --muted-foreground: #1C1917;
+}
+
+/*
+ * Densidade da lista (tela de Configurações): "compacta" (ausente) é o
+ * padrão da identidade visual. Duas peças:
+ *
+ * 1. .h-row/.min-h-row (sidebar, itens de lista): sobrescreve a PROPRIEDADE,
+ *    não a variável --spacing-row — o Tailwind v4 gera essas classes com o
+ *    valor de @theme inline já resolvido, sem var() no CSS final
+ *    (height:max(2.75rem,44px) literal), então redefinir a variável não
+ *    teria efeito nelas.
+ * 2. .celula-densidade (célula de <td>/<th> de tabela): numa linha de
+ *    tabela, height no <tr> não controla a altura real — o conteúdo e o
+ *    padding da célula já a definem (confirmado: o <tr> de FilaValidacao já
+ *    tinha .h-row e a linha não mudava de tamanho). O padding vertical da
+ *    célula é o que muda de fato; substitui o py-2 fixo que as tabelas
+ *    usavam (components/docente/FilaValidacao.tsx, components/atividade/TabelaAtividades.tsx).
+ *
+ * .h-target/.min-h-target (alvo clicável) ficam de fora dos dois seletores de
+ * propósito: nenhum modo cai abaixo do mínimo de 44 px.
+ */
+html[data-densidade="confortavel"] .h-row {
+  height: max(3.5rem, 56px);
+}
+html[data-densidade="confortavel"] .min-h-row {
+  min-height: max(3.5rem, 56px);
+}
+
+.celula-densidade {
+  padding-block: 0.5rem; /* = py-2, o valor de sempre */
+}
+html[data-densidade="confortavel"] .celula-densidade {
+  padding-block: 0.75rem;
 }
 
 /* Altura da barra: alvo de 44 px + 4 px acima e abaixo. A sidebar começa logo abaixo. */

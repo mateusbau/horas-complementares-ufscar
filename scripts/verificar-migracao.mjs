@@ -5,6 +5,11 @@
 // seed mudou (comprovantes reais), a versão não subiu, e quem já tinha aberto
 // o sistema seguiu vendo os dados antigos indefinidamente.
 //
+// Cobre também a mesma classe de bug na chave de preferências (aparência,
+// notificações — lib/preferencias.ts): uma versão salva incompatível precisa
+// voltar aos padrões, e a chave de preferências precisa sobreviver a
+// reiniciarDemo()/limparDadosLocais(), que só tocam a chave de estado.
+//
 // O ponto central é começar com o localStorage JÁ POPULADO. Num navegador
 // limpo o seed é sempre recriado e tudo parece funcionar — é exatamente por
 // isso que teste com armazenamento vazio esconde esta classe de bug.
@@ -50,6 +55,7 @@ globalThis.window = { localStorage: armazenamento }
 globalThis.localStorage = armazenamento
 
 const CHAVE = "horas-complementares:estado"
+const CHAVE_PREFERENCIAS = "horas-complementares:preferencias"
 
 // --- Estado da versão anterior --------------------------------------------------
 // Estruturalmente válido para a v2: passaria pelo portão antigo sem reclamar.
@@ -165,6 +171,70 @@ conferir(
   "a versão gravada não é a corrente"
 )
 
+// 4. Preferências (chave separada): mesma classe de bug, versão incompatível
+//    precisa voltar aos padrões, e a chave não pode ser tocada por
+//    reiniciarDemo() nem por limparDadosLocais() — são dados pessoais, não
+//    dados da demonstração.
+console.log("\nPreferências — versão anterior já salva (localStorage já populado):")
+const preferencias = await import(pathToFileURL(path.resolve("lib/preferencias.ts")).href)
+
+memoria.clear()
+// Forma antiga completa (todos os OUTROS campos válidos, só a versão errada):
+// isola o portão de versão em si, e não some com o teste por causa de campo
+// novo faltando — o que passaria mesmo sem checar `versao` nenhuma.
+armazenamento.setItem(
+  CHAVE_PREFERENCIAS,
+  JSON.stringify({
+    altoContraste: true,
+    tamanhoTexto: "maior",
+    reduzirAnimacoes: false,
+    densidade: "compacta",
+    notificarValidacao: true,
+    notificarRecusa: true,
+    notificarPrazos: true,
+    notificarMarcos: true,
+  })
+)
+const lidasAntigas = storage.lerPreferencias()
+conferir(
+  "preferência de versão incompatível volta aos padrões",
+  JSON.stringify(lidasAntigas) === JSON.stringify(preferencias.PREFERENCIAS_PADRAO),
+  `lidas: ${JSON.stringify(lidasAntigas)}`
+)
+
+console.log("\nPreferências — versão corrente (não deve ser descartada):")
+const preferenciasCustom = { ...preferencias.PREFERENCIAS_PADRAO, altoContraste: true, densidade: "confortavel" }
+armazenamento.setItem(CHAVE_PREFERENCIAS, JSON.stringify(preferenciasCustom))
+const lidasCustom = storage.lerPreferencias()
+conferir(
+  "preferência da versão corrente é preservada",
+  lidasCustom.altoContraste === true && lidasCustom.densidade === "confortavel",
+  `lidas: ${JSON.stringify(lidasCustom)}`
+)
+
+// limparDadosLocais() também apaga blobs do IndexedDB, que não existe neste
+// script (só no navegador) — a parte dela reaproveita reiniciarDemo() por
+// baixo (lib/storage.ts), então testar reiniciarDemo() aqui já cobre a
+// chave de preferências para as duas ações; o IndexedDB é conferido à parte,
+// no navegador real (verify/check-configuracoes.mjs).
+console.log("\nPreferências — sobrevivem a reiniciarDemo():")
+const antesDeReiniciar = armazenamento.getItem(CHAVE_PREFERENCIAS)
+await storage.reiniciarDemo()
+conferir(
+  "reiniciarDemo() não toca a chave de preferências",
+  armazenamento.getItem(CHAVE_PREFERENCIAS) === antesDeReiniciar,
+  "a chave de preferências mudou depois de reiniciarDemo()"
+)
+
+console.log("\nPreferências — armazenamento vazio (primeira visita):")
+memoria.clear()
+const preferenciasDoZero = storage.lerPreferencias()
+conferir(
+  "preferências padrão na primeira visita",
+  JSON.stringify(preferenciasDoZero) === JSON.stringify(preferencias.PREFERENCIAS_PADRAO),
+  `lidas: ${JSON.stringify(preferenciasDoZero)}`
+)
+
 // --- Resultado ------------------------------------------------------------------
 
 if (falhas.length === 0) {
@@ -176,6 +246,8 @@ console.error(`\nverificar-migracao: ${falhas.length} falha(s) de ${verificacoes
 for (const falha of falhas) console.error(`  - ${falha}`)
 console.error(
   "\nSe o seed mudou, suba `versao` em lib/types.ts, lib/mock-data.ts e no" +
-    " teste de `ehEstadoValido` em lib/storage.ts."
+    " teste de `ehEstadoValido` em lib/storage.ts." +
+    "\nSe a forma das preferências mudou, suba `versao` em lib/preferencias.ts" +
+    " (tipo, PREFERENCIAS_PADRAO e `ehPreferencias`)."
 )
 process.exit(1)

@@ -58,13 +58,13 @@ export function FilaValidacao({ itens }: { itens: ItemFila[] }) {
                 onClick={() => router.push(`/docente/validacao/${item.atividadeId}`)}
                 className="h-row cursor-pointer transition-colors hover:bg-muted"
               >
-                <td className="px-4 py-2 text-body">
+                <td className="celula-densidade px-4 text-body">
                   {item.discente.nome}
                   {item.discente.ra && (
                     <span className="text-caption text-muted-foreground"> · RA {item.discente.ra}</span>
                   )}
                 </td>
-                <td className="px-4 py-2">
+                <td className="celula-densidade px-4">
                   <Link
                     href={`/docente/validacao/${item.atividadeId}`}
                     onClick={(e) => e.stopPropagation()}
@@ -73,10 +73,10 @@ export function FilaValidacao({ itens }: { itens: ItemFila[] }) {
                     {item.titulo}
                   </Link>
                 </td>
-                <td className="px-4 py-2 text-body text-muted-foreground">{nomeDoTipo(item)}</td>
-                <td className="px-4 py-2 text-body">{formatarCreditos(item.creditos)}</td>
-                <td className="px-4 py-2 text-body text-muted-foreground">{formatarEspera(item.esperaDias)}</td>
-                <td className="px-4 py-2">
+                <td className="celula-densidade px-4 text-body text-muted-foreground">{nomeDoTipo(item)}</td>
+                <td className="celula-densidade px-4 text-body">{formatarCreditos(item.creditos)}</td>
+                <td className="celula-densidade px-4 text-body text-muted-foreground">{formatarEspera(item.esperaDias)}</td>
+                <td className="celula-densidade px-4">
                   <StatusBadge status="analise" />
                 </td>
               </tr>

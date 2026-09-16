@@ -69,3 +69,18 @@ export async function removerBlob(id: string): Promise<void> {
     banco.close()
   }
 }
+
+/** Apaga todos os blobs, inclusive os que não pertencem a nenhuma atividade restante. */
+export async function limparTodosBlobs(): Promise<void> {
+  const banco = await abrirBanco()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transacao = banco.transaction(NOME_LOJA, "readwrite")
+      transacao.objectStore(NOME_LOJA).clear()
+      transacao.oncomplete = () => resolve()
+      transacao.onerror = () => reject(transacao.error ?? new Error("Não foi possível limpar os comprovantes."))
+    })
+  } finally {
+    banco.close()
+  }
+}

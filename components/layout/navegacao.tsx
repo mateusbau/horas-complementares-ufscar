@@ -18,6 +18,7 @@ import {
   Layers,
   ListChecks,
   LogOut,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -27,7 +28,7 @@ import { useEffect, useState } from "react"
 
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { Skeleton } from "@/components/feedback/Skeleton"
-import { INICIO_DO_PERFIL } from "@/lib/rotas"
+import { CONFIGURACOES_DO_PERFIL, INICIO_DO_PERFIL } from "@/lib/rotas"
 import { encerrarSessao, obterDiscenteAtual, obterDocenteAtual, trocarPerfil } from "@/lib/storage"
 import type { Perfil } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -122,6 +123,9 @@ function iniciaisDe(nome: string): string {
 /** Quem está usando, trocar de perfil e sair. */
 export function BlocoPerfil({ perfil, onNavegar }: { perfil: Perfil; onNavegar?: () => void }) {
   const [identidade, setIdentidade] = useState<Identidade | null>(null)
+  const caminho = usePathname()
+  const hrefConfiguracoes = CONFIGURACOES_DO_PERFIL[perfil]
+  const emConfiguracoes = caminho === hrefConfiguracoes
 
   useEffect(() => {
     let ativo = true
@@ -193,8 +197,19 @@ export function BlocoPerfil({ perfil, onNavegar }: { perfil: Perfil; onNavegar?:
           </>
         )}
       </div>
-      {/* Botões, não links: executam uma ação (mudar ou encerrar a sessão) antes de navegar. */}
+      {/* Configurações é navegação (Link); as duas de baixo executam uma ação antes de navegar. */}
       <ul className="flex flex-col gap-1">
+        <li>
+          <Link
+            href={hrefConfiguracoes}
+            onClick={onNavegar}
+            aria-current={emConfiguracoes ? "page" : undefined}
+            className={cn(CLASSE_ACAO, emConfiguracoes && "bg-accent-soft font-medium hover:bg-accent-soft")}
+          >
+            <Settings aria-hidden="true" className="size-5 shrink-0" />
+            Configurações
+          </Link>
+        </li>
         <li>
           <button type="button" onClick={() => void executar("trocar")} className={CLASSE_ACAO}>
             <ArrowLeftRight aria-hidden="true" className="size-5 shrink-0" />

@@ -11,11 +11,13 @@
 // componente "use client", e mostre skeleton até a resposta chegar.
 
 import { ehTipoAtividadeId } from "./catalogo"
-import { gravarBlob, lerBlob, removerBlob } from "./comprovantes-db"
+import { gravarBlob, lerBlob, limparTodosBlobs, removerBlob } from "./comprovantes-db"
 import { redimensionarImagem } from "./imagem"
 import {
+  ATRIBUTO_DENSIDADE,
   ATRIBUTO_TAMANHO_TEXTO,
   CLASSE_ALTO_CONTRASTE,
+  CLASSE_REDUZIR_ANIMACOES,
   PREFERENCIAS_PADRAO,
   ehPreferencias,
   type Preferencias,
@@ -505,15 +507,23 @@ export function salvarPreferencias(preferencias: Preferencias): void {
 /**
  * Script inline para o <head> do layout raiz: aplica as preferências no <html>
  * durante a leitura do HTML, antes da primeira pintura. Deve espelhar
- * `aplicarPreferencias` de lib/preferencias.ts.
+ * `aplicarPreferencias` de lib/preferencias.ts — inclusive o portão de versão:
+ * sem ele, uma preferência salva por uma versão anterior ainda seria aplicada
+ * aqui (antes da pintura) e depois desfeita pelo React ao montar (que já
+ * rejeita a versão errada e usa os padrões), piscando a configuração errada
+ * por um instante.
  */
 export const SCRIPT_PREFERENCIAS = `(function(){try{var p=JSON.parse(localStorage.getItem(${JSON.stringify(
   CHAVE_PREFERENCIAS
-)})||"null");if(!p)return;var h=document.documentElement;if(p.altoContraste===true)h.classList.add(${JSON.stringify(
+)})||"null");if(!p||p.versao!==1)return;var h=document.documentElement;if(p.altoContraste===true)h.classList.add(${JSON.stringify(
   CLASSE_ALTO_CONTRASTE
+)});if(p.reduzirAnimacoes===true)h.classList.add(${JSON.stringify(
+  CLASSE_REDUZIR_ANIMACOES
 )});if(p.tamanhoTexto==="menor"||p.tamanhoTexto==="maior")h.setAttribute(${JSON.stringify(
   ATRIBUTO_TAMANHO_TEXTO
-)},p.tamanhoTexto)}catch(e){}})()`
+)},p.tamanhoTexto);if(p.densidade==="confortavel")h.setAttribute(${JSON.stringify(
+  ATRIBUTO_DENSIDADE
+)},p.densidade)}catch(e){}})()`
 
 // --- Demonstração ------------------------------------------------------------------------
 
@@ -540,4 +550,19 @@ export async function importarEstado(json: string): Promise<void> {
 export async function reiniciarDemo(): Promise<void> {
   await esperar()
   gravar(criarEstadoInicial(new Date()))
+}
+
+/**
+ * "Limpar meus dados locais" (tela de Configurações, seção Sessão): apaga as
+ * atividades registradas neste navegador e os arquivos de comprovante
+ * enviados. Reaproveita reiniciarDemo() para a parte do localStorage — o
+ * estado nunca fica de fato vazio, porque ler() sempre recria o seed quando a
+ * chave está ausente ou inválida — e remove TODOS os blobs do IndexedDB,
+ * inclusive os que não pertencem a nenhuma atividade restante. Preferências
+ * (lib/preferencias.ts) não são tocadas: são dados pessoais, não dados da
+ * demonstração.
+ */
+export async function limparDadosLocais(): Promise<void> {
+  await reiniciarDemo()
+  await limparTodosBlobs()
 }

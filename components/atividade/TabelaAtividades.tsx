@@ -100,7 +100,7 @@ export function TabelaAtividades({
                 onClick={() => router.push(`/atividades/${atividade.id}`)}
                 className="h-row cursor-pointer transition-colors hover:bg-muted"
               >
-                <td className="px-4 py-2">
+                <td className="celula-densidade px-4">
                   <Link
                     href={`/atividades/${atividade.id}`}
                     onClick={(e) => e.stopPropagation()}
@@ -109,10 +109,10 @@ export function TabelaAtividades({
                     {atividade.titulo}
                   </Link>
                 </td>
-                <td className="px-4 py-2 text-body text-muted-foreground">{nomeDoTipo(atividade.tipoId)}</td>
-                <td className="px-4 py-2 text-body">{formatarCreditos(creditosDaAtividade(atividade))}</td>
-                <td className="px-4 py-2 text-body text-muted-foreground">{textoDoPeriodo(atividade)}</td>
-                <td className="px-4 py-2">
+                <td className="celula-densidade px-4 text-body text-muted-foreground">{nomeDoTipo(atividade.tipoId)}</td>
+                <td className="celula-densidade px-4 text-body">{formatarCreditos(creditosDaAtividade(atividade))}</td>
+                <td className="celula-densidade px-4 text-body text-muted-foreground">{textoDoPeriodo(atividade)}</td>
+                <td className="celula-densidade px-4">
                   <StatusBadge status={atividade.status} />
                 </td>
               </tr>

@@ -9,3 +9,9 @@ export const INICIO_DO_PERFIL: Record<Perfil, string> = {
   discente: "/painel",
   docente: "/docente",
 }
+
+/** Tela de Configurações de cada perfil, alcançável pelo bloco de perfil na sidebar. */
+export const CONFIGURACOES_DO_PERFIL: Record<Perfil, string> = {
+  discente: "/configuracoes",
+  docente: "/docente/configuracoes",
+}
