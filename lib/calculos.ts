@@ -55,8 +55,14 @@ export const TETOS_POR_TIPO: Partial<Record<TipoAtividadeId, number>> = {}
 
 /** Erro de regra de negócio, com mensagens prontas para mostrar ao usuário. */
 export class ErroDeRegra extends Error {
-  constructor(readonly erros: string[]) {
+  // Campo explícito em vez de `constructor(readonly erros)`: parameter property
+  // é sintaxe que o Node não consegue apagar sozinho, e scripts/verificar-migracao.mjs
+  // importa este módulo direto, sem bundler.
+  readonly erros: string[]
+
+  constructor(erros: string[]) {
     super(erros.join(" "))
+    this.erros = erros
     this.name = "ErroDeRegra"
   }
 }

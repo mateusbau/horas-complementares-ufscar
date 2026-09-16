@@ -518,7 +518,7 @@ function historicoDosDemais(agora: Date): Atividade[] {
 
 export function criarEstadoInicial(agora: Date): EstadoDemo {
   return {
-    versao: 2,
+    versao: 3,
     discenteAtualId: ID_DISCENTE_DEMO,
     docenteAtualId: ID_DOCENTE_DEMO,
     discentes: DISCENTES.map((d) => ({ ...d })),

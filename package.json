@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/verificar-tokens.mjs",
+    "prebuild": "node scripts/verificar-tokens.mjs && node scripts/verificar-migracao.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "verificar:tokens": "node scripts/verificar-tokens.mjs"
+    "verificar:tokens": "node scripts/verificar-tokens.mjs",
+    "verificar:migracao": "node scripts/verificar-migracao.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

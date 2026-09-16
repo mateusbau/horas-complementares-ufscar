@@ -66,11 +66,23 @@ function armazenamento(): Storage {
   return window.localStorage
 }
 
+/**
+ * PROCEDIMENTO OBRIGATÓRIO: toda mudança no seed (lib/mock-data.ts) exige subir
+ * `versao` aqui, em `EstadoDemo` (lib/types.ts) e em `criarEstadoInicial`.
+ *
+ * Sem isso a mudança não aparece para ninguém que já abriu o sistema antes: o
+ * estado salvo continua válido, `ler()` o devolve e `criarEstadoInicial` nunca
+ * roda. Em um navegador limpo tudo funciona, o que torna a falha invisível
+ * justamente em teste — daí `scripts/verificar-migracao.mjs`, que carrega um
+ * estado de versão anterior antes de ler. Aconteceu na v2 → v3 (comprovantes
+ * do seed): o seed mudou, a versão não, e a tela seguiu mostrando os dados
+ * antigos.
+ */
 function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   if (typeof valor !== "object" || valor === null) return false
   const e = valor as Partial<EstadoDemo>
   return (
-    e.versao === 2 && // estado de versão anterior é descartado e o seed é recriado
+    e.versao === 3 && // estado de versão anterior é descartado e o seed é recriado
     typeof e.discenteAtualId === "string" &&
     typeof e.docenteAtualId === "string" &&
     Array.isArray(e.discentes) &&

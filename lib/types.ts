@@ -246,8 +246,14 @@ export type ItemFila = {
 // --- Estado da demonstração -------------------------------------------------------
 
 export type EstadoDemo = {
-  /** 2: quantidade em horas nos tipos "h/semestre" (leitura da seção 3.5.4 do PPC). */
-  versao: 2
+  /**
+   * 3: comprovantes do seed apontando para arquivos reais em /public/comprovantes
+   * (campo `comprovanteId` em `Comprovante`). 2: quantidade em horas nos tipos
+   * "h/semestre" (leitura da seção 3.5.4 do PPC).
+   *
+   * Sobe a cada mudança no seed — ver lib/storage.ts, `ehEstadoValido`.
+   */
+  versao: 3
   /** Quem está usando o sistema na demonstração. */
   discenteAtualId: string
   docenteAtualId: string
