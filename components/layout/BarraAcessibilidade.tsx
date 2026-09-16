@@ -2,9 +2,10 @@
 
 // components/layout/BarraAcessibilidade.tsx
 //
-// Fixa no topo de todas as telas, inclusive o login: alto contraste, tamanho do
-// texto (A− / A / A+) e atalhos de teclado. Cada mudança é aplicada no <html>,
-// persistida em lib/storage.ts e anunciada na região aria-live única.
+// Header real, de largura total, no topo de todas as telas (inclusive o
+// login): alto contraste, tamanho do texto (A− / A / A+) e atalhos de
+// teclado. Cada mudança é aplicada no <html>, persistida em lib/storage.ts e
+// anunciada na região aria-live única.
 //
 // O estado em si vem de hooks/use-preferencias.ts, compartilhado com a tela
 // de Configurações: mudar aqui reflete lá, e vice-versa, sem recarregar.
@@ -18,8 +19,13 @@ import { usePreferencias } from "@/hooks/use-preferencias"
 import { TAMANHOS_TEXTO, anuncioDePreferencia, type Preferencias } from "@/lib/preferencias"
 import { cn } from "@/lib/utils"
 
-/** Estado pressionado visível sem depender de cor: fundo escuro e texto claro. */
-const PRESSIONADO = "aria-pressed:border-foreground aria-pressed:bg-foreground aria-pressed:text-primary-foreground aria-pressed:hover:bg-foreground"
+/**
+ * Estado pressionado com peso visual reduzido: nunca fundo preto (competiria
+ * com o conteúdo da página). Borda em --primary e fundo --accent-soft, como o
+ * fundo do item ativo da navegação (Sidebar) — mesmo tratamento do resto do
+ * sistema para "isto está selecionado".
+ */
+const PRESSIONADO = "aria-pressed:border-primary aria-pressed:bg-accent-soft aria-pressed:hover:bg-accent-soft"
 
 const TAMANHO_VISUAL = { menor: "text-caption", padrao: "text-label", maior: "text-h3" } as const
 
@@ -42,7 +48,7 @@ export function BarraAcessibilidade() {
           variant="outline"
           aria-pressed={preferencias.altoContraste}
           onClick={() => aoMudar({ altoContraste: !preferencias.altoContraste })}
-          className={PRESSIONADO}
+          className={cn(PRESSIONADO, "aria-pressed:font-medium")}
         >
           <Contrast aria-hidden="true" />
           <span className="max-sm:sr-only">Alto contraste</span>
