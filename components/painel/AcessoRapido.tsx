@@ -32,7 +32,12 @@ export function AcessoRapido({ pendentes }: { pendentes: number }) {
 
   return (
     <section aria-labelledby="titulo-atalhos" className="flex flex-col gap-4">
-      <h2 id="titulo-atalhos">Acesso rápido</h2>
+      {/* text-body + font-bold, não a escala h2/h3 padrão: no painel do discente, título é
+          uma única cor (grande, text-h1) e o resto do texto some em só mais duas — corpo e
+          auxiliar. O peso, não o tamanho, é o que ainda marca "isto é um título" aqui. */}
+      <h2 id="titulo-atalhos" className="text-body font-bold">
+        Acesso rápido
+      </h2>
       <ul className="grid gap-4 sm:grid-cols-3">
         {atalhos.map((atalho) => {
           const Icone = atalho.icone
@@ -48,7 +53,9 @@ export function AcessoRapido({ pendentes }: { pendentes: number }) {
                 className="flex h-full flex-col gap-2 rounded-lg border bg-surface p-4 transition-colors hover:bg-muted"
               >
                 <Icone aria-hidden="true" className="size-6 text-accent-text" />
-                <h3 id={idTitulo}>{atalho.titulo}</h3>
+                <h3 id={idTitulo} className="text-body font-medium">
+                  {atalho.titulo}
+                </h3>
                 <p id={idDescricao} className="leading-secondary text-muted-foreground">
                   {atalho.descricao}
                 </p>
