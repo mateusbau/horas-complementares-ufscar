@@ -2,11 +2,17 @@
 
 // components/layout/AtalhosDeTeclado.tsx
 //
-// Modal com as teclas que operam o sistema. Deliberadamente sem atalhos de uma
-// tecla só: eles conflitam com leitores de tela e com o navegador (WCAG 2.1.4).
+// Modal com as teclas que operam o sistema. Só há uma tecla de caractere único
+// no sistema — "?", para abrir este próprio painel — e ela segue a mitigação
+// exigida pela WCAG 2.1.4 (atalhos de tecla única): não dispara com o foco em
+// campo editável (use-atalho-tecla.ts), então nunca conflita com o que se
+// digita. As demais teclas listadas abaixo (Tab, Enter, Esc...) são todas
+// combinações ou teclas de navegação do próprio navegador, fora do escopo da
+// 2.1.4.
 
 import { Keyboard } from "lucide-react"
-import type { ReactNode } from "react"
+import type { ComponentProps, ReactNode } from "react"
+import { useRef, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,16 +24,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useAtalhoTecla } from "@/hooks/use-atalho-tecla"
+import { cn } from "@/lib/utils"
 
-function Tecla({ children }: { children: ReactNode }) {
+function Tecla({ children, className, ...props }: ComponentProps<"kbd">) {
   return (
-    <kbd className="inline-flex min-w-8 items-center justify-center rounded-lg border border-input-border bg-surface px-2 font-mono text-label">
+    <kbd
+      className={cn(
+        "inline-flex min-w-8 items-center justify-center rounded-lg border border-input-border bg-surface px-2 font-mono text-label",
+        className
+      )}
+      {...props}
+    >
       {children}
     </kbd>
   )
 }
 
 const GRUPOS: { titulo: string; itens: { teclas: ReactNode; acao: string }[] }[] = [
+  {
+    titulo: "Este painel",
+    itens: [
+      { teclas: <Tecla>?</Tecla>, acao: "Abre e fecha esta lista." },
+      { teclas: <Tecla>Esc</Tecla>, acao: "Fecha esta lista." },
+    ],
+  },
   {
     titulo: "Navegar",
     itens: [
@@ -64,18 +85,30 @@ const GRUPOS: { titulo: string; itens: { teclas: ReactNode; acao: string }[] }[]
 ]
 
 export function AtalhosDeTeclado() {
+  const [aberto, setAberto] = useState(false)
+  // O gatilho é o retorno de foco ao fechar (finalFocus), tanto pelo clique
+  // quanto pelo "?": sem ref, o Base UI devolveria o foco a quem tinha foco no
+  // momento do "?", que pode não ser este botão.
+  const gatilhoRef = useRef<HTMLButtonElement>(null)
+
+  useAtalhoTecla("?", () => setAberto((estava) => !estava))
+
   return (
-    <Dialog>
-      <DialogTrigger render={<Button variant="outline" />}>
+    <Dialog open={aberto} onOpenChange={setAberto}>
+      <DialogTrigger render={<Button ref={gatilhoRef} variant="outline" />}>
         <Keyboard aria-hidden="true" />
         <span className="max-sm:sr-only">Atalhos de teclado</span>
+        <Tecla className="max-sm:hidden" aria-hidden="true">
+          ?
+        </Tecla>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-form">
+      <DialogContent finalFocus={() => gatilhoRef.current ?? undefined} className="sm:max-w-form">
         <DialogHeader>
           <DialogTitle>Atalhos de teclado</DialogTitle>
           <DialogDescription>
-            Todo o sistema pode ser usado só com o teclado. Não há atalhos de uma tecla só, para não
-            conflitar com leitores de tela e com os atalhos do navegador.
+            Todo o sistema pode ser usado só com o teclado. A única tecla de caractere único é "?", que
+            abre e fecha esta lista e não dispara com o foco em um campo de texto; as demais são
+            combinações, para não conflitar com leitores de tela e com os atalhos do navegador.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-6">
