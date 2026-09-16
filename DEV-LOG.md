@@ -809,3 +809,8 @@ Não houve merge em `main`. O envio pelo conector retornou 403: instalação enc
 em `rhedymarques`, repositório pertence a `mateusbau`; Git local sem autenticação. Código
 preparado em commit/patch local para envio após corrigir a conexão. Limites e decisões
 atuais estão no topo do `HANDOFF.md`.
+
+**Continuação em 2026-09-16:** Git local autenticado; simulação de push autorizada.
+Incorporado `eb8cea3` sem reescrever histórico. As 21 rotas copiadas para fora de `app/`
+foram comparadas com as versões corretas e removidas somente após confirmar igualdade.
+Publicação pela conexão Git na branch `ocr`; a pendência de autenticação acima é histórica.

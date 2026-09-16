@@ -2,8 +2,8 @@
 
 ## 2026-09-16 — continuidade do OCR
 
-A implementação de OCR está preparada para a branch `ocr`; o envio está bloqueado pela
-permissão da integração (403). Leia primeiro a atualização de 2026-09-16 em
+A implementação de OCR está preparada para a branch `ocr`, com Git autenticado e histórico
+remoto incorporado. Leia primeiro a atualização de 2026-09-16 em
 `HANDOFF.md` e a entrada OCR no `DEV-LOG.md`: validação do preview Vercel, leitores de tela,
 certificados com layouts variados e as pendências anteriores de lint são os próximos itens.
 O texto abaixo registra o estado anterior à solicitação de OCR.

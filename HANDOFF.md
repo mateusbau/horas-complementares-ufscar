@@ -10,11 +10,10 @@ O código da pasta fornecida foi comparado com essa base; as diferenças de cód
 na branch eram os arquivos de configuração enviados por upload. A implementação completa
 está preparada localmente para a branch `ocr`, sem merge automático em `main`.
 
-**Publicação pendente:** em 2026-09-16, a leitura do repositório e a permissão de colaborador
-foram confirmadas, mas criar a árvore Git retornou HTTP 403 (`Resource not accessible by
-integration`). A instalação disponível do app cobre apenas a conta `rhedymarques`, não
-`mateusbau`. Git local também está sem autenticação. Habilitar a integração no repositório
-do proprietário ou autenticar Git e então enviar a branch; não repetir uploads soltos.
+**Publicação via Git:** o acesso local de escrita foi liberado em 2026-09-16. A atualização
+remota `eb8cea3` foi incorporada preservando o histórico. Cópias idênticas de rotas enviadas
+fora de `app/` foram removidas; os arquivos corretos continuam em `app/`. O envio é para
+`ocr`, sem merge em `main`. A restrição 403 anterior do conector não impede o Git autenticado.
 
 ### Implementado
 
