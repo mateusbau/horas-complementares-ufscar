@@ -5,27 +5,31 @@
 // Régua do crédito (CLAUDE.md): o crédito é a medida principal. Dados do
 // storage (300 ms): skeleton com a forma final enquanto carrega, estado de erro
 // com nova tentativa.
+//
+// O h1 é a saudação (nome do aluno); o status da integralização é comunicado
+// pela faixa de progresso, não pelo cabeçalho da página — por isso não há
+// subtítulo nem ação aqui (as ações primárias, "Nova atividade" e "Gerar
+// relatório", ficam na própria faixa, ao lado do número que justifica cada
+// uma). "Painel" só aparece como h1 provisório enquanto o nome carrega: a
+// página nunca fica sem h1 (CLAUDE.md, seção 3).
 
-import { Plus } from "lucide-react"
-import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { AcessoRapido } from "@/components/painel/AcessoRapido"
-import { AnelProgressoEsqueleto } from "@/components/progresso/AnelProgresso"
-import { BarrasPorGrupo } from "@/components/progresso/BarrasPorGrupo"
+import { AtividadesRecentes } from "@/components/painel/AtividadesRecentes"
+import { ExigenciasPPC } from "@/components/progresso/ExigenciasPPC"
+import { FaixaProgresso } from "@/components/progresso/FaixaProgresso"
 import { OQueFechaOQueFalta } from "@/components/progresso/OQueFechaOQueFalta"
-import { ResumoProgresso } from "@/components/progresso/ResumoProgresso"
-import { buttonVariants } from "@/components/ui/button"
-import { listarAtividades, obterProgresso } from "@/lib/storage"
-import type { Progresso } from "@/lib/types"
+import { listarAtividades, obterDiscenteAtual, obterProgresso } from "@/lib/storage"
+import type { Atividade, Discente, Progresso } from "@/lib/types"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; progresso: Progresso; pendentes: number }
+  | { status: "pronto"; progresso: Progresso; atividades: Atividade[]; discente: Discente }
 
 export function PainelDiscente() {
   const [estado, setEstado] = useState<Estado>({ status: "carregando" })
@@ -33,10 +37,10 @@ export function PainelDiscente() {
 
   useEffect(() => {
     let ativo = true
-    Promise.all([obterProgresso(), listarAtividades()])
-      .then(([progresso, atividades]) => {
+    Promise.all([obterProgresso(), listarAtividades(), obterDiscenteAtual()])
+      .then(([progresso, atividades, discente]) => {
         if (!ativo) return
-        setEstado({ status: "pronto", progresso, pendentes: atividades.filter((a) => a.status === "pendente").length })
+        setEstado({ status: "pronto", progresso, atividades, discente })
       })
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
@@ -49,43 +53,24 @@ export function PainelDiscente() {
     setTentativa((t) => t + 1)
   }
 
+  const primeiroNome = estado.status === "pronto" ? estado.discente.nome.split(" ")[0] : null
+
   return (
     <>
-      <PageHeader
-        titulo="Painel"
-        subtitulo="Acompanhe o andamento das suas horas complementares no curso."
-        acao={
-          <Link href="/atividades/nova" className={buttonVariants()}>
-            <Plus aria-hidden="true" />
-            Nova atividade
-          </Link>
-        }
-      />
+      <PageHeader titulo={primeiroNome ? `Olá, ${primeiroNome}` : "Painel"} />
 
       {estado.status === "carregando" && (
         <AreaCarregando texto="Carregando seu progresso…" className="flex flex-col gap-8">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="flex flex-col gap-6 rounded-lg border bg-surface p-6">
-              <Skeleton className="h-8 w-40" />
-              <div className="flex flex-col items-center gap-6 sm:flex-row">
-                <AnelProgressoEsqueleto />
-                <div className="flex w-full flex-col gap-2">
-                  <Skeleton className="h-6 w-1/2" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-4 rounded-lg border bg-surface p-6">
-              <Skeleton className="h-8 w-56" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-row" />
-              <Skeleton className="h-row" />
-              <Skeleton className="h-row" />
-              <Skeleton className="h-row" />
-            </div>
+          <div className="flex flex-col gap-3 rounded-lg p-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-3 w-full" />
           </div>
-          <Skeleton className="h-48" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Skeleton className="h-64 rounded-lg" />
+            <Skeleton className="h-64 rounded-lg" />
+          </div>
+          <Skeleton className="h-40 rounded-lg" />
         </AreaCarregando>
       )}
 
@@ -99,12 +84,19 @@ export function PainelDiscente() {
 
       {estado.status === "pronto" && (
         <div className="flex flex-col gap-8">
-          <div className="grid items-start gap-8 lg:grid-cols-2">
-            <ResumoProgresso progresso={estado.progresso} />
-            <OQueFechaOQueFalta progresso={estado.progresso} />
-          </div>
-          <BarrasPorGrupo progresso={estado.progresso} />
-          <AcessoRapido pendentes={estado.pendentes} />
+          <FaixaProgresso progresso={estado.progresso} atividades={estado.atividades} />
+
+          {estado.progresso.integralizado ? (
+            <AtividadesRecentes atividades={estado.atividades} />
+          ) : (
+            <div className="grid items-stretch gap-6 lg:grid-cols-2">
+              <OQueFechaOQueFalta progresso={estado.progresso} />
+              <AtividadesRecentes atividades={estado.atividades} />
+            </div>
+          )}
+
+          <ExigenciasPPC progresso={estado.progresso} atividades={estado.atividades} />
+          <AcessoRapido pendentes={estado.atividades.filter((a) => a.status === "pendente").length} />
         </div>
       )}
     </>
