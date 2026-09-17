@@ -31,7 +31,7 @@ function Tecla({ children, className, ...props }: ComponentProps<"kbd">) {
   return (
     <kbd
       className={cn(
-        "inline-flex min-w-8 items-center justify-center rounded-lg border border-input-border bg-surface px-2 font-mono text-label",
+        "inline-flex min-w-8 max-w-full items-center justify-center whitespace-nowrap rounded-lg border border-input-border bg-surface px-2 font-mono text-label",
         className
       )}
       {...props}
@@ -47,6 +47,68 @@ const GRUPOS: { titulo: string; itens: { teclas: ReactNode; acao: string }[] }[]
     itens: [
       { teclas: <Tecla>?</Tecla>, acao: "Abre e fecha esta lista." },
       { teclas: <Tecla>Esc</Tecla>, acao: "Fecha esta lista." },
+    ],
+  },
+  {
+    titulo: "Atalhos de acesso",
+    itens: [
+      { teclas: <Tecla>1</Tecla>, acao: "Vai para o conteúdo principal." },
+      { teclas: <Tecla>2</Tecla>, acao: "Vai para a navegação principal ou abre o menu em telas menores." },
+      {
+        teclas: <Tecla>3</Tecla>,
+        acao: "Vai para a busca, quando disponível na página Minhas atividades.",
+      },
+      { teclas: <Tecla>4</Tecla>, acao: "Vai para o rodapé." },
+    ],
+  },
+  {
+    titulo: "Como usar os atalhos de acesso",
+    itens: [
+      {
+        teclas: (
+          <>
+            <Tecla>Alt</Tecla> + <Tecla>número</Tecla>
+          </>
+        ),
+        acao: "Chrome e Edge no Windows e no Linux.",
+      },
+      {
+        teclas: (
+          <>
+            <Tecla>Alt</Tecla> + <Tecla>Shift</Tecla> + <Tecla>número</Tecla>
+          </>
+        ),
+        acao: "Firefox no Windows e no Linux.",
+      },
+      {
+        teclas: (
+          <>
+            <Tecla>Control</Tecla> + <Tecla>Option</Tecla> + <Tecla>número</Tecla>
+          </>
+        ),
+        acao: "Safari, Chrome, Edge e Firefox no macOS.",
+      },
+    ],
+  },
+  {
+    titulo: "Zoom do navegador",
+    itens: [
+      {
+        teclas: (
+          <>
+            <Tecla>Ctrl</Tecla> + <Tecla>+</Tecla> / <Tecla>-</Tecla>
+          </>
+        ),
+        acao: "Aumenta ou diminui o zoom no Windows, Linux e ChromeOS.",
+      },
+      {
+        teclas: (
+          <>
+            <Tecla>Command ⌘</Tecla> + <Tecla>+</Tecla> / <Tecla>-</Tecla>
+          </>
+        ),
+        acao: "Aumenta ou diminui o zoom no macOS.",
+      },
     ],
   },
   {
@@ -106,7 +168,7 @@ export function AtalhosDeTeclado() {
         <DialogHeader>
           <DialogTitle>Atalhos de teclado</DialogTitle>
           <DialogDescription>
-            Todo o sistema pode ser usado só com o teclado. A única tecla de caractere único é "?", que
+            Todo o sistema pode ser usado só com o teclado. A única tecla de caractere único é &quot;?&quot;, que
             abre e fecha esta lista e não dispara com o foco em um campo de texto; as demais são
             combinações, para não conflitar com leitores de tela e com os atalhos do navegador.
           </DialogDescription>
@@ -121,10 +183,10 @@ export function AtalhosDeTeclado() {
                 {grupo.itens.map((item) => (
                   <div
                     key={item.acao}
-                    className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4"
+                    className="grid min-w-0 grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] sm:items-center sm:gap-4"
                   >
-                    <dt className="flex shrink-0 items-center gap-1 sm:w-40">{item.teclas}</dt>
-                    <dd className="leading-secondary text-muted-foreground">{item.acao}</dd>
+                    <dt className="flex min-w-0 flex-wrap items-center gap-1">{item.teclas}</dt>
+                    <dd className="min-w-0 leading-secondary text-muted-foreground">{item.acao}</dd>
                   </div>
                 ))}
               </dl>

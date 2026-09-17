@@ -12,6 +12,9 @@ import type { Perfil } from "@/lib/types"
 export function Sidebar({ perfil }: { perfil: Perfil }) {
   return (
     <aside
+      id="navegacao-principal"
+      accessKey="2"
+      tabIndex={-1}
       aria-label="Barra lateral"
       className="sticky top-(--altura-barra) hidden h-[calc(100dvh-var(--altura-barra))] w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-r bg-surface px-3 py-6 md:flex print:hidden"
     >

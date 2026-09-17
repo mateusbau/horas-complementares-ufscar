@@ -26,7 +26,7 @@ export function MobileNav({ perfil }: { perfil: Perfil }) {
       {/* w-14, não o w-40 da sidebar: aqui a marca compartilha uma faixa baixa (py-2) com o botão de menu — na largura da sidebar, a altura proporcional da logo estouraria a faixa. */}
       <Marca href={INICIO_DO_PERFIL[perfil]} largura="w-14" />
       <Sheet open={aberto} onOpenChange={setAberto}>
-        <SheetTrigger render={<Button variant="outline" size="icon" />}>
+        <SheetTrigger render={<Button accessKey="2" variant="outline" size="icon" />}>
           <Menu aria-hidden="true" />
           <span className="sr-only">Abrir menu de navegação</span>
         </SheetTrigger>
