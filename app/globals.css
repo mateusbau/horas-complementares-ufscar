@@ -119,6 +119,28 @@ html.reduzir-animacoes *::after {
    */
   --overlay: rgb(28 25 23 / 0.5);  /* #1C1917 (--foreground) a 50 % */
 
+  /*
+   * Card "Integralização" do painel do discente: paleta própria deste bloco,
+   * fora da paleta central da seção 4 do CLAUDE.md, a pedido explícito do
+   * redesign — cores criadas como tokens de verdade (não hex solto no JSX),
+   * conferidas contra AA nos fundos onde aparecem. --integralizacao-texto-pendente
+   * é mais escuro que o pedido original (#9A928B): esse tom dava só 3,1:1
+   * sobre branco, abaixo do mínimo de 4,5:1 para texto pequeno; escurecido
+   * até 5,1:1, mantendo o mesmo matiz.
+   */
+  --integralizacao-fundo-area:      #EFEDE9; /* área ao redor do card — não é --background do site */
+  --integralizacao-card-borda:      #E4E0DA;
+  --integralizacao-texto-titulo:    #1A1714; /* título grande e rótulo "Cumprido" */
+  --integralizacao-texto-subtitulo: #6B645E;
+  --integralizacao-texto-auxiliar:  #7A726B; /* linhas sob o percentual; explicação de cada item */
+  --integralizacao-texto-item:      #3A342F; /* rótulo do item cumprido; legenda do anel */
+  --integralizacao-texto-pendente:  #736D67;
+  --integralizacao-anel-em-analise: #E8A88E;
+  --integralizacao-anel-falta:      #E7E3DD;
+  --integralizacao-aviso-fundo:     #FBF3EF;
+  --integralizacao-aviso-borda:     #F0DCD3;
+  --integralizacao-aviso-texto:     #6A4234;
+
   /* Aliases com os nomes que os componentes shadcn/ui esperam */
   --primary-foreground:   var(--primary-fg);
   --card:                 var(--surface);
@@ -151,6 +173,11 @@ html.alto-contraste {
   --border: #78716C;
   --input-border: #1C1917;
   --muted-foreground: #1C1917;
+
+  /* Mesmo princípio acima, aplicado aos tons de texto do card Integralização. */
+  --integralizacao-texto-subtitulo: #1C1917;
+  --integralizacao-texto-auxiliar: #1C1917;
+  --integralizacao-texto-pendente: #44403A;
 }
 
 /*
@@ -215,6 +242,19 @@ html[data-densidade="confortavel"] .celula-densidade {
   --color-muted-foreground: var(--muted-foreground);
   --color-overlay: var(--overlay);
   --color-trilha: var(--trilha);
+
+  --color-integralizacao-fundo-area: var(--integralizacao-fundo-area);
+  --color-integralizacao-card-borda: var(--integralizacao-card-borda);
+  --color-integralizacao-texto-titulo: var(--integralizacao-texto-titulo);
+  --color-integralizacao-texto-subtitulo: var(--integralizacao-texto-subtitulo);
+  --color-integralizacao-texto-auxiliar: var(--integralizacao-texto-auxiliar);
+  --color-integralizacao-texto-item: var(--integralizacao-texto-item);
+  --color-integralizacao-texto-pendente: var(--integralizacao-texto-pendente);
+  --color-integralizacao-anel-em-analise: var(--integralizacao-anel-em-analise);
+  --color-integralizacao-anel-falta: var(--integralizacao-anel-falta);
+  --color-integralizacao-aviso-fundo: var(--integralizacao-aviso-fundo);
+  --color-integralizacao-aviso-borda: var(--integralizacao-aviso-borda);
+  --color-integralizacao-aviso-texto: var(--integralizacao-aviso-texto);
 
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
