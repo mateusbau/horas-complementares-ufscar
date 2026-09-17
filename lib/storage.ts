@@ -12,7 +12,6 @@
 
 import { ehTipoAtividadeId } from "./catalogo"
 import { supabase } from "./supabase"
-import { gravarBlob, lerBlob, limparTodosBlobs, removerBlob } from "./comprovantes-db"
 import { redimensionarImagem } from "./imagem"
 import {
   ATRIBUTO_DENSIDADE,
@@ -53,10 +52,15 @@ import type {
   TipoAviso,
 } from "./types"
 
-const CHAVE = "horas-complementares:estado"
 const ATRASO_MS = 300
+const BUCKET_COMPROVANTES = "comprovantes"
 const STATUS: readonly StatusAtividade[] = ["validada", "analise", "pendente", "recusada"]
 const TIPOS_AVISO: readonly TipoAviso[] = ["validada", "recusada", "aguardando", "marco", "regra"]
+
+// Uploads acontecem quando o arquivo é escolhido, antes de a atividade ser
+// gravada. Este conjunto permite desfazer apenas uploads ainda não associados
+// a um estado persistido quando a gravação seguinte falha.
+const comprovantesPendentes = new Set<string>()
 
 // --- Infraestrutura -----------------------------------------------------------------
 
@@ -223,15 +227,22 @@ export async function obterAtividade(id: string): Promise<Atividade | null> {
 /** Envia uma nova atividade para validação; ela entra na fila do docente. */
 export async function criarAtividade(dados: NovaAtividade): Promise<Atividade> {
   await esperar()
-  const estado = await ler()
-  const atividade = montarAtividade(
-    dados,
-    { id: novoId("atv"), discenteId: estado.discenteAtualId },
-    new Date()
-  )
-  estado.atividades.push(atividade)
-  await gravar(estado)
-  return copia(atividade)
+  const comprovanteNovo = dados.comprovante?.comprovanteId
+  try {
+    const estado = await ler()
+    const atividade = montarAtividade(
+      dados,
+      { id: novoId("atv"), discenteId: estado.discenteAtualId },
+      new Date()
+    )
+    estado.atividades.push(atividade)
+    await gravar(estado)
+    if (comprovanteNovo) comprovantesPendentes.delete(comprovanteNovo)
+    return copia(atividade)
+  } catch (erro) {
+    if (comprovanteNovo) await descartarComprovantePendente(comprovanteNovo)
+    throw erro
+  }
 }
 
 /**
@@ -243,27 +254,42 @@ export async function atualizarAtividade(
   patch: Partial<NovaAtividade>
 ): Promise<Atividade> {
   await esperar()
-  const estado = await ler()
-  const indice = localizar(estado, id)
-  const atual = estado.atividades[indice]
-  if (atual.discenteId !== estado.discenteAtualId) {
-    throw new ErroDeRegra(["Só é possível editar as próprias atividades."])
+  let comprovanteAnterior: string | null = null
+  const comprovanteNovo = patch.comprovante?.comprovanteId
+  try {
+    const estado = await ler()
+    const indice = localizar(estado, id)
+    const atual = estado.atividades[indice]
+    comprovanteAnterior = atual.comprovante?.comprovanteId ?? null
+    if (atual.discenteId !== estado.discenteAtualId) {
+      throw new ErroDeRegra(["Só é possível editar as próprias atividades."])
+    }
+    if (atual.status !== "pendente") {
+      throw new ErroDeRegra(["Só atividades pendentes podem ser editadas."])
+    }
+    // `null` em tipoId é uma escolha (não previsto), diferente de não informar.
+    const tipoId = patch.tipoId !== undefined ? patch.tipoId : atual.tipoId
+    const quantidade = patch.quantidade !== undefined ? patch.quantidade : atual.quantidade
+    const atualizada: Atividade = {
+      ...atual,
+      ...patch,
+      tipoId,
+      quantidade: tipoId === null ? null : quantidade,
+    }
+    estado.atividades[indice] = atualizada
+    await gravar(estado)
+
+    if (comprovanteNovo) comprovantesPendentes.delete(comprovanteNovo)
+    if (comprovanteAnterior && comprovanteAnterior !== comprovanteNovo) {
+      await removerComprovante(comprovanteAnterior)
+    }
+    return copia(atualizada)
+  } catch (erro) {
+    if (comprovanteNovo && comprovanteNovo !== comprovanteAnterior) {
+      await descartarComprovantePendente(comprovanteNovo)
+    }
+    throw erro
   }
-  if (atual.status !== "pendente") {
-    throw new ErroDeRegra(["Só atividades pendentes podem ser editadas."])
-  }
-  // `null` em tipoId é uma escolha (não previsto), diferente de não informar.
-  const tipoId = patch.tipoId !== undefined ? patch.tipoId : atual.tipoId
-  const quantidade = patch.quantidade !== undefined ? patch.quantidade : atual.quantidade
-  const atualizada: Atividade = {
-    ...atual,
-    ...patch,
-    tipoId,
-    quantidade: tipoId === null ? null : quantidade,
-  }
-  estado.atividades[indice] = atualizada
-  await gravar(estado)
-  return copia(atualizada)
 }
 
 /** Envia (ou reenvia, após devolução) uma atividade pendente. */
@@ -309,63 +335,89 @@ export async function marcarTodosAvisosComoLidos(): Promise<void> {
 }
 
 // --- Comprovantes --------------------------------------------------------------------------
-// O blob nunca vai para o localStorage (a cota por origem é ~5 MB); vai para
-// o IndexedDB, por lib/comprovantes-db.ts, que só este arquivo importa. Sem
-// os 300 ms de esperar(): o processamento da imagem e a escrita no IndexedDB
-// já são trabalho assíncrono de verdade, a mesma exceção já aberta para as
-// preferências de acessibilidade.
+// O arquivo fica no Supabase Storage; o EstadoDemo guarda somente seu caminho.
+// Sem os 300 ms de esperar(): o processamento e o upload já são assíncronos.
 
 const LADO_MAIOR_COMPROVANTE = 1400
 const QUALIDADE_JPEG_COMPROVANTE = 0.7
 
 /**
- * Processa (imagem: redimensiona e recomprime; PDF: mantém como está) e grava
- * o arquivo no IndexedDB. Devolve só a referência — o componente nunca vê o
- * blob nem o IndexedDB.
+ * Processa (imagem: redimensiona e recomprime; PDF: mantém como está) e envia
+ * o arquivo ao Supabase Storage. Devolve somente a referência ao objeto.
  */
 export async function salvarComprovante(arquivo: File): Promise<Comprovante> {
-  const id = novoId("comp")
+  const caminho = arquivo.type.startsWith("image/")
+    ? `${novoId("comp")}.jpg`
+    : `${novoId("comp")}.pdf`
+  let conteudo: Blob = arquivo
+  let tipoMime = arquivo.type
+
   if (arquivo.type.startsWith("image/")) {
-    const imagemProcessada = await redimensionarImagem(arquivo, LADO_MAIOR_COMPROVANTE, QUALIDADE_JPEG_COMPROVANTE)
-    await gravarBlob(id, imagemProcessada)
-    return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: imagemProcessada.size, tipoMime: "image/jpeg" }
+    conteudo = await redimensionarImagem(arquivo, LADO_MAIOR_COMPROVANTE, QUALIDADE_JPEG_COMPROVANTE)
+    tipoMime = "image/jpeg"
   }
-  await gravarBlob(id, arquivo)
-  return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: arquivo.size, tipoMime: arquivo.type }
+
+  const { error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .upload(caminho, conteudo, { contentType: tipoMime, upsert: false })
+
+  if (error) {
+    console.error("Erro ao enviar comprovante ao Supabase Storage:", error)
+    throw new Error("Não foi possível salvar o comprovante.")
+  }
+
+  comprovantesPendentes.add(caminho)
+  return { comprovanteId: caminho, nome: arquivo.name, tamanhoBytes: conteudo.size, tipoMime }
 }
 
 /**
  * URL para exibir o comprovante — `<img src>` ou `<embed src>`. Uma
  * referência começando com "/" já é um arquivo público da demonstração
- * (lib/mock-data.ts) e volta direto, sem tocar no IndexedDB. `null` quando o
- * blob não é encontrado (nunca lança: quem chama mostra o estado de erro,
- * em vez de quebrar a tela).
+ * (lib/mock-data.ts) e volta direto. Os demais são objetos do bucket público.
  */
 export async function obterUrlComprovante(comprovante: Comprovante): Promise<string | null> {
   if (comprovante.comprovanteId.startsWith("/")) return comprovante.comprovanteId
   try {
-    const blob = await lerBlob(comprovante.comprovanteId)
-    return blob ? URL.createObjectURL(blob) : null
+    const { data } = supabase.storage
+      .from(BUCKET_COMPROVANTES)
+      .getPublicUrl(comprovante.comprovanteId)
+    return data.publicUrl
   } catch {
     return null
   }
 }
 
-/** Recupera o arquivo local para OCR, inclusive ao reabrir um rascunho. */
+/** Recupera o arquivo remoto para OCR, inclusive ao reabrir um rascunho. */
 export async function obterArquivoComprovante(comprovante: Comprovante): Promise<File | null> {
   if (comprovante.comprovanteId.startsWith("/")) return null
-  const blob = await lerBlob(comprovante.comprovanteId)
-  return blob ? new File([blob], comprovante.nome, { type: blob.type }) : null
+  const { data, error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .download(comprovante.comprovanteId)
+  if (error || !data) return null
+  return new File([data], comprovante.nome, { type: data.type || comprovante.tipoMime })
 }
 
-/** Best-effort: usado ao trocar ou remover um comprovante já enviado, para não acumular blob órfão. */
+async function removerObjetoComprovante(comprovanteId: string): Promise<boolean> {
+  const { error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .remove([comprovanteId])
+  if (error) {
+    console.error("Erro ao remover comprovante do Supabase Storage:", error)
+    return false
+  }
+  comprovantesPendentes.delete(comprovanteId)
+  return true
+}
+
+async function descartarComprovantePendente(comprovanteId: string): Promise<void> {
+  if (!comprovantesPendentes.has(comprovanteId)) return
+  await removerObjetoComprovante(comprovanteId)
+}
+
+/** Best-effort: remove somente objetos remotos; arquivos públicos do seed são preservados. */
 export async function removerComprovante(comprovanteId: string): Promise<void> {
   if (comprovanteId.startsWith("/")) return
-  try {
-    await removerBlob(comprovanteId)
-  } catch {
-    // Falha ao limpar não deve impedir a ação principal (a troca ou remoção do campo).
-  }
+  await removerObjetoComprovante(comprovanteId)
 }
 
 // --- Rascunho da tela 04 ------------------------------------------------------------------
@@ -646,16 +698,10 @@ export async function reiniciarDemo(): Promise<void> {
 }
 
 /**
- * "Limpar meus dados locais" (tela de Configurações, seção Sessão): apaga as
- * atividades registradas neste navegador e os arquivos de comprovante
- * enviados. Reaproveita reiniciarDemo() para a parte do localStorage — o
- * estado nunca fica de fato vazio, porque ler() sempre recria o seed quando a
- * chave está ausente ou inválida — e remove TODOS os blobs do IndexedDB,
- * inclusive os que não pertencem a nenhuma atividade restante. Preferências
- * (lib/preferencias.ts) não são tocadas: são dados pessoais, não dados da
- * demonstração.
+ * Reinicia o estado da demonstração. Comprovantes remotos não são apagados em
+ * massa, pois o bucket é compartilhado entre navegadores; trocas e remoções
+ * individuais fazem sua própria limpeza best-effort.
  */
 export async function limparDadosLocais(): Promise<void> {
   await reiniciarDemo()
-  await limparTodosBlobs()
 }

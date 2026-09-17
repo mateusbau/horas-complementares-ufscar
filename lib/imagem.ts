@@ -1,6 +1,6 @@
 // lib/imagem.ts
 //
-// Redimensiona e comprime uma imagem antes de gravar no IndexedDB, no envio
+// Redimensiona e comprime uma imagem antes de enviar ao Supabase Storage, no envio
 // do comprovante (lib/storage.ts, salvarComprovante): lado maior no alvo
 // dado, exportada como JPEG na qualidade dada. Só roda no navegador (usa
 // FileReader, Image e canvas). PDFs não passam por aqui — o storage grava o
