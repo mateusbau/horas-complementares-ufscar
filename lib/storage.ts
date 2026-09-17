@@ -298,7 +298,7 @@ export async function marcarAvisoComoLido(id: string): Promise<void> {
   await esperar()
   const estado = await ler()
   estado.avisos = estado.avisos.map((a) => (a.id === id ? { ...a, lido: true } : a))
-  await ravar(estado)
+  await gravar(estado)
 }
 
 export async function marcarTodosAvisosComoLidos(): Promise<void> {
