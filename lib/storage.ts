@@ -568,7 +568,7 @@ export async function obterRelatorioTurma(): Promise<RelatorioTurma> {
  */
 export async function listarAtividadesDosOrientandos(): Promise<{ discente: Discente; atividades: Atividade[] }[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(
     estado.discentes
       .filter((d) => d.orientadorId === estado.docenteAtualId)

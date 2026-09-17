@@ -9,6 +9,7 @@
     "predev": "node scripts/preparar-ocr.mjs",
     "dev": "next dev",
     "prebuild": "node scripts/preparar-ocr.mjs && node scripts/verificar-tokens.mjs",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "verificar:ocr": "node scripts/verificar-ocr.mjs",
