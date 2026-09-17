@@ -11,6 +11,7 @@
 // componente "use client", e mostre skeleton até a resposta chegar.
 
 import { ehTipoAtividadeId } from "./catalogo"
+import { supabase } from "./supabase"
 import { gravarBlob, lerBlob, limparTodosBlobs, removerBlob } from "./comprovantes-db"
 import { redimensionarImagem } from "./imagem"
 import {
