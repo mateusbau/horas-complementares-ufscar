@@ -814,3 +814,26 @@ atuais estão no topo do `HANDOFF.md`.
 Incorporado `eb8cea3` sem reescrever histórico. As 21 rotas copiadas para fora de `app/`
 foram comparadas com as versões corretas e removidas somente após confirmar igualdade.
 Publicação pela conexão Git na branch `ocr`; a pendência de autenticação acima é histórica.
+
+---
+
+## 2026-09-16 · Compartilhamento por e-mail no relatório
+
+**Feito.** O relatório individual e o relatório da turma agora têm a ação “Enviar por e-mail”.
+Ela abre um diálogo acessível, valida o destinatário e inicia o aplicativo de e-mail do usuário
+com assunto e resumo do relatório já preparados. No relatório individual, o docente orientador é
+pré-preenchido quando há vínculo; no relatório da turma, o docente escolhe o destinatário.
+
+**Decisões.** Sem backend, a aplicação não pode anexar PDF nem confirmar entrega. A interface
+explica isso antes de abrir o cliente: a pessoa salva/imprime em PDF e o anexa sob seu próprio
+controle. O e-mail só é aberto após a confirmação explícita; nome, RA, créditos, horas e data
+de emissão entram no resumo. A classificação e os dados do domínio continuam inalterados.
+
+**Acessibilidade.** Rótulo visível, validação no blur/ao confirmar, foco no campo inválido,
+modal com foco devolvido ao gatilho e anúncio pela única região ao vivo já existente. A ajuda e
+a página Sobre explicam o limite do envio.
+
+**Verificação.** Lint dos arquivos novos/alterados, `npm run verificar:email` (quatro
+endereços/links), verificador de tokens e `npm run build` passaram. No navegador, o diálogo
+abre pelo botão do relatório, dá foco ao destinatário e bloqueia um endereço inválido sem abrir
+o cliente de e-mail.

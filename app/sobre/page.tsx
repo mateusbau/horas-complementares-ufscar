@@ -40,7 +40,8 @@ export default function PaginaSobre() {
             (com a prévia do cálculo antes de enviar), acompanha a fila pelo status e recebe o
             parecer; o docente vê a fila derivada do status, valida uma atividade por vez — com
             reclassificação e antes/depois — ou em lote, por grupo da Tabela 7; o discente gera,
-            a qualquer momento, um relatório imprimível do que já foi validado.
+            a qualquer momento, um relatório imprimível do que já foi validado. Também pode abrir o aplicativo de e-mail
+            com um resumo pronto e anexar o PDF manualmente antes de enviar.
           </p>
         </section>
 

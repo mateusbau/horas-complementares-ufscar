@@ -86,6 +86,11 @@ const PERGUNTAS = [
     pergunta: "Por que uma atividade não aparece no relatório?",
     resposta: "O relatório só reúne atividades validadas. Pendentes, recusadas e em análise ficam fora dele, porque ainda não têm créditos confirmados.",
   },
+  {
+    id: "enviar-relatorio-email",
+    pergunta: "Como envio meu relatório por e-mail?",
+    resposta: "No relatório, escolha “Enviar por e-mail”, confira o destinatário e abra o aplicativo de e-mail. Salve o relatório em PDF e anexe-o antes de enviar; o sistema prepara a mensagem, mas não envia nem anexa arquivos sozinho.",
+  },
 ]
 
 const ITENS_ACESSIBILIDADE = [
@@ -108,7 +113,7 @@ const GLOSSARIO = [
 const LIMITACOES = [
   "Os dados ficam salvos apenas neste navegador. Limpar os dados do site (ou os dados deste site nas configurações do navegador) apaga as atividades e os comprovantes.",
   "Os comprovantes exibidos nesta demonstração são documentos fictícios, criados só para ilustrar o sistema.",
-  "Não há integração com o sistema acadêmico da UFSCar: nenhum dado sai deste navegador nem chega a ele de fora.",
+  "Não há integração automática com o sistema acadêmico da UFSCar. Ao escolher enviar o relatório por e-mail, o aplicativo de e-mail do dispositivo abre com uma mensagem pronta; o envio e o anexo do PDF continuam sob seu controle.",
 ]
 
 export function TelaAjuda() {

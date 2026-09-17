@@ -11,22 +11,9 @@
 import { useEffect, useState } from "react"
 
 import { Skeleton } from "@/components/feedback/Skeleton"
+import { emailInstitucionalDiscente, emailInstitucionalDocente } from "@/lib/email"
 import { obterDiscenteAtual, obterDocenteAtual } from "@/lib/storage"
 import type { Perfil } from "@/lib/types"
-
-function removerAcentos(texto: string): string {
-  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "")
-}
-
-function emailInstitucionalDiscente(ra: string): string {
-  return `${ra}@estudante.ufscar.br`
-}
-
-function emailInstitucionalDocente(nome: string): string {
-  const semTitulo = nome.replace(/^Prof\.ª?\s+/i, "")
-  const usuario = removerAcentos(semTitulo).toLowerCase().trim().split(/\s+/).join(".")
-  return `${usuario}@ufscar.br`
-}
 
 type Linha = { rotulo: string; valor: string }
 
@@ -41,12 +28,12 @@ export function SecaoConta({ perfil }: { perfil: Perfil }) {
             { rotulo: "Nome", valor: d.nome },
             { rotulo: "RA", valor: d.ra },
             { rotulo: "Curso", valor: d.curso },
-            { rotulo: "E-mail institucional", valor: emailInstitucionalDiscente(d.ra) },
+            { rotulo: "E-mail institucional", valor: emailInstitucionalDiscente(d) },
           ])
         : obterDocenteAtual().then((d) => [
             { rotulo: "Nome", valor: d.nome },
             { rotulo: "Departamento", valor: d.departamento },
-            { rotulo: "E-mail institucional", valor: emailInstitucionalDocente(d.nome) },
+            { rotulo: "E-mail institucional", valor: emailInstitucionalDocente(d) },
           ])
     carregar.then((valor) => ativo && setLinhas(valor)).catch(() => undefined)
     return () => {

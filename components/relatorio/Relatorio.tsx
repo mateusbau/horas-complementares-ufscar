@@ -20,11 +20,13 @@ import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { EnviarRelatorioPorEmail } from "@/components/relatorio/EnviarRelatorioPorEmail"
 import { FiltrosRelatorio } from "@/components/relatorio/FiltrosRelatorio"
 import { Button } from "@/components/ui/button"
 import { calcularProgresso, creditosDaAtividade } from "@/lib/calculos"
 import { FONTE_TABELA_7, GRUPOS, obterTipo } from "@/lib/catalogo"
 import { baixarCSV, montarCSV } from "@/lib/csv"
+import { emailInstitucionalDocente } from "@/lib/email"
 import {
   formatarCreditos,
   formatarData,
@@ -45,13 +47,22 @@ import {
   filtrosSaoPadrao,
   type FiltrosRelatorio as TipoFiltros,
 } from "@/lib/relatorio-filtros"
-import { listarAtividades, obterDiscenteAtual, obterDocenteAtual } from "@/lib/storage"
+import { listarAtividades, obterDiscenteAtual, obterDocente, obterDocenteAtual } from "@/lib/storage"
 import type { Atividade, Discente, Docente, Progresso, StatusAtividade } from "@/lib/types"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; discente: Discente; docente: Docente; atividades: Atividade[] }
+  | {
+      status: "pronto"
+      discente: Discente
+      /** Quem homologa créditos — vai no CSV ("Validado por"). Único docente da demo hoje, mas é
+       *  um papel distinto do orientador: não dá pra colapsar os dois num só. */
+      docente: Docente
+      /** Vínculo do discente (discente.orientadorId) — sugestão de destinatário do e-mail. */
+      orientador: Docente | null
+      atividades: Atividade[]
+    }
 
 const ROTULO_STATUS_EXCLUIDO: Record<Exclude<StatusAtividade, "validada">, { singular: string; plural: string }> = {
   analise: { singular: "em análise", plural: "em análise" },
@@ -117,9 +128,10 @@ export function Relatorio() {
   useEffect(() => {
     let ativo = true
     Promise.all([obterDiscenteAtual(), obterDocenteAtual(), listarAtividades()])
-      .then(([discente, docente, atividades]) => {
+      .then(async ([discente, docente, atividades]) => {
+        const orientador = discente.orientadorId ? await obterDocente(discente.orientadorId) : null
         if (!ativo) return
-        setEstado({ status: "pronto", discente, docente, atividades })
+        setEstado({ status: "pronto", discente, docente, orientador, atividades })
       })
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
@@ -186,6 +198,14 @@ export function Relatorio() {
                 <Download aria-hidden="true" />
                 Baixar CSV
               </Button>
+              <EnviarRelatorioPorEmail
+                destinatarioInicial={estado.orientador ? emailInstitucionalDocente(estado.orientador) : ""}
+                assunto={`Relatório de horas complementares — ${estado.discente.nome}`}
+                mensagem={mensagemDoRelatorio(estado.discente, progressoFiltrado!, filtros, emitidoEm)}
+                rotulo="Enviar por e-mail"
+                desabilitado={!podeExportar}
+                ariaDescribedbyGatilho="relatorio-sem-resultado"
+              />
               <Button
                 onClick={() => window.print()}
                 disabled={!podeExportar}
@@ -229,6 +249,29 @@ export function Relatorio() {
       )}
     </>
   )
+}
+
+/**
+ * `progresso` aqui é o FILTRADO (progressoFiltrado, recalculado sobre o subconjunto do período
+ * de validação e tipos marcados na tela), nunca o total sem filtro — senão o e-mail relataria
+ * números diferentes da tela e do CSV que a mesma pessoa acabou de gerar. A linha de filtros
+ * (descreverFiltros) é a mesma do cabeçalho e do CSV.
+ */
+function mensagemDoRelatorio(discente: Discente, progresso: Progresso, filtros: TipoFiltros, emitidoEm: Date): string {
+  return [
+    "Olá,",
+    "",
+    `Compartilho o relatório de horas complementares de ${discente.nome} (RA ${discente.ra}).`,
+    descreverFiltros(filtros),
+    `Créditos validados: ${formatarCreditos(progresso.creditosObtidos)} de ${formatarNumero(progresso.creditosExigidos)} exigidos.`,
+    `Horas contabilizadas: ${formatarHoras(progresso.horasObtidas)} de ${formatarHoras(progresso.horasExigidas)} exigidas.`,
+    `Data de emissão: ${formatarDataHora(emitidoEm.toISOString())}.`,
+    "",
+    "Vou anexar o PDF do relatório a esta mensagem antes de enviar.",
+    "",
+    "Atenciosamente,",
+    discente.nome,
+  ].join("\n")
 }
 
 function ConteudoRelatorio({

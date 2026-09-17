@@ -17,6 +17,11 @@ fora de `app/` foram removidas; os arquivos corretos continuam em `app/`. O envi
 
 ### Implementado
 
+- Relatórios individual e da turma: botão “Enviar por e-mail”, diálogo com destinatário
+  editável, resumo pré-preenchido e abertura do cliente local por `mailto:`. O e-mail não é
+  enviado pelo site e o PDF não pode ser anexado automaticamente sem backend; a pessoa salva e
+  anexa o PDF antes de enviar. O docente orientador é sugerido para o relatório individual.
+
 - Nova atividade: anexar → **Ler comprovante** → revisar/corrigir → confirmar campos vazios.
 - Tesseract.js 7 em português para JPG/PNG; PDF.js 6 extrai texto de PDFs digitais e renderiza
   páginas sem texto suficiente para OCR. Até 10 MB e 5 páginas; sem truncamento silencioso.
@@ -43,6 +48,7 @@ fora de `app/` foram removidas; os arquivos corretos continuam em `app/`. O envi
 npm ci
 npm run dev
 npm run verificar:ocr
+npm run verificar:email
 npm run build
 npm run lint
 ```
