@@ -54,7 +54,7 @@ export function AnelIntegralizacao({
         aria-valuemin={0}
         aria-valuemax={denominador}
         aria-label={`Créditos: ${formatarCreditos(validado)} validados, ${formatarCreditos(analise)} em análise, de ${formatarCreditos(progresso.creditosExigidos)} exigidos.`}
-        className="relative size-[196px] shrink-0"
+        className="relative size-[12.25rem] shrink-0"
       >
         <svg aria-hidden="true" viewBox={`0 0 ${DIAMETRO} ${DIAMETRO}`} className="size-full -rotate-90">
           <defs>
@@ -102,33 +102,33 @@ export function AnelIntegralizacao({
           )}
         </svg>
 
-        <div className="absolute inset-[25px] flex flex-col items-center justify-center rounded-full bg-surface text-center">
+        <div className="absolute inset-[1.5625rem] flex flex-col items-center justify-center rounded-full bg-surface px-1 text-center">
           <p className="flex items-baseline text-integralizacao-texto-titulo">
-            <span className="text-[2.75rem] leading-none font-bold tracking-[-0.03em]">{percentualExibido}</span>
+            <span className="text-[2.5rem] leading-none font-bold tracking-[-0.03em]">{percentualExibido}</span>
             <span className="text-h2 font-bold">%</span>
           </p>
-          <p className="mt-1 text-label leading-tight font-medium text-integralizacao-texto-auxiliar">
-            {formatarCreditos(progresso.creditosObtidos)} de {formatarCreditos(progresso.creditosExigidos)}
+          <p className="mt-1 whitespace-nowrap text-label leading-tight font-medium text-integralizacao-texto-auxiliar">
+            {formatarNumero(progresso.creditosObtidos)} de {formatarCreditos(progresso.creditosExigidos)}
           </p>
-          <p className="text-label leading-tight font-medium text-integralizacao-texto-auxiliar">
+          <p className="whitespace-nowrap text-label leading-tight font-medium text-integralizacao-texto-auxiliar">
             {formatarNumero(progresso.horasObtidas)} de {formatarNumero(progresso.horasExigidas)} horas
           </p>
         </div>
       </div>
 
       {/* Alternativa textual obrigatória, não decorativa: os mesmos três valores da barra, por extenso. */}
-      <ul className="flex flex-col gap-2 text-label text-integralizacao-texto-item">
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="size-[10px] shrink-0 rounded-full bg-primary" />
-          Validado: {formatarCreditos(validado)}
+      <ul className="flex w-full flex-col gap-2 text-label text-integralizacao-texto-item">
+        <li className="flex min-w-0 items-start gap-2">
+          <span aria-hidden="true" className="mt-[0.25em] size-[10px] shrink-0 rounded-full bg-primary" />
+          <span className="min-w-0">Validado: {formatarCreditos(validado)}</span>
         </li>
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="size-[10px] shrink-0 rounded-full" style={HACHURA_LEGENDA} />
-          Em análise: {formatarCreditos(analise)}
+        <li className="flex min-w-0 items-start gap-2">
+          <span aria-hidden="true" className="mt-[0.25em] size-[10px] shrink-0 rounded-full" style={HACHURA_LEGENDA} />
+          <span className="min-w-0">Em análise: {formatarCreditos(analise)}</span>
         </li>
-        <li className="flex items-center gap-2">
-          <span aria-hidden="true" className="size-[10px] shrink-0 rounded-full bg-integralizacao-anel-falta" />
-          Falta: {formatarCreditos(falta)}
+        <li className="flex min-w-0 items-start gap-2">
+          <span aria-hidden="true" className="mt-[0.25em] size-[10px] shrink-0 rounded-full bg-integralizacao-anel-falta" />
+          <span className="min-w-0">Falta: {formatarCreditos(falta)}</span>
         </li>
       </ul>
     </div>

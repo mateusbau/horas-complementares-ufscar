@@ -94,10 +94,17 @@ const PERGUNTAS = [
 ]
 
 const ITENS_ACESSIBILIDADE = [
-  "Tamanho do texto (A−, A e A+) e alto contraste: os mesmos dois controles aparecem na barra superior de toda tela e na tela de Configurações, e compartilham a mesma preferência — mudar num lugar reflete no outro.",
-  "A tecla “?” abre e fecha a lista de atalhos de teclado, em qualquer tela (exceto com o foco num campo de texto).",
+  "A barra de acessibilidade fica no topo de todas as telas e reúne tamanho do texto, alto contraste, mapa do site e ajuda de atalhos de teclado.",
+  "Os controles A−, A e A+ diminuem, restauram e aumentam o tamanho do texto. Eles também aparecem em Configurações e compartilham a mesma preferência, que continua valendo nas próximas visitas.",
+  "Também é possível usar o zoom nativo do navegador: Ctrl + (+) e Ctrl + (-) no Windows, Linux e ChromeOS; Command ⌘ + (+) e Command ⌘ + (-) no macOS.",
+  "O modo de alto contraste usa fundo preto, textos e ícones brancos, links amarelos sublinhados e contornos visíveis. A preferência também é mantida entre visitas.",
+  "O Mapa do site, disponível na barra de acessibilidade, organiza os destinos reais das áreas discente e docente.",
+  "A tecla “?” abre e fecha a lista completa de atalhos de teclado, em qualquer tela, exceto quando o foco está em um campo de texto.",
+  "Os atalhos de acesso são: 1 para o início do conteúdo principal, 2 para a navegação principal, 3 para a busca em Minhas atividades quando disponível e 4 para o rodapé.",
+  "Para usar os atalhos de acesso: Alt + número no Chrome e Edge para Windows e Linux; Alt + Shift + número no Firefox para Windows e Linux; Control + Option + número no Safari, Chrome, Edge e Firefox para macOS.",
+  "Na navegação comum, Tab avança e Shift + Tab retorna entre controles; Enter aciona links e botões, e Espaço aciona botões e caixas de seleção. Todo elemento focável possui contorno visível.",
   "A tecla Esc fecha diálogos e janelas abertos.",
-  "O link “Pular para o conteúdo” é o primeiro elemento focável de toda página e só aparece visualmente quando recebe foco pelo teclado.",
+  "O link “Pular para o conteúdo” é o primeiro elemento focável de toda página, também é o destino do atalho 1 e só aparece visualmente quando recebe foco pelo teclado.",
   "As preferências de aparência — incluindo reduzir animações e a densidade da lista — são salvas e continuam valendo nas próximas visitas.",
   "O status de uma atividade (validada, em análise, pendente ou recusada) é sempre indicado por ícone, cor e texto ao mesmo tempo, nunca só por cor.",
 ]

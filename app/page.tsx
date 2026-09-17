@@ -15,7 +15,7 @@ import Link from "next/link"
 
 import { FormularioEntrada } from "@/components/entrada/FormularioEntrada"
 import { ReiniciarDemonstracao } from "@/components/entrada/ReiniciarDemonstracao"
-import { ID_CONTEUDO } from "@/components/layout/SkipLink"
+import { ID_CONTEUDO, ID_RODAPE } from "@/components/layout/SkipLink"
 import ufscarLogo from "@/public/ufscar-logo.png"
 
 export const metadata: Metadata = { title: "Entrar · Horas Complementares" }
@@ -30,7 +30,7 @@ export default function PaginaEntrada() {
         e a superfície da página também não, então sem isso o logo continuaria
         exatamente igual nos dois modos.
       */}
-      <span className="mb-6 inline-flex shrink-0 rounded-md [html.alto-contraste_&]:bg-surface [html.alto-contraste_&]:p-1 [html.alto-contraste_&]:ring-1 [html.alto-contraste_&]:ring-foreground">
+      <span className="mb-6 inline-flex shrink-0 rounded-md [html.alto-contraste_&]:bg-foreground [html.alto-contraste_&]:p-1 [html.alto-contraste_&]:ring-1 [html.alto-contraste_&]:ring-foreground">
         <Image src={ufscarLogo} alt="Universidade Federal de São Carlos" className="h-12 w-auto sm:h-16" />
       </span>
       <main
@@ -63,7 +63,12 @@ export default function PaginaEntrada() {
         </header>
         <FormularioEntrada />
       </main>
-      <footer className="mt-6 flex w-full max-w-form flex-col items-center gap-3 text-center">
+      <footer
+        id={ID_RODAPE}
+        accessKey="4"
+        tabIndex={-1}
+        className="mt-6 flex w-full max-w-form scroll-mt-(--altura-barra) flex-col items-center gap-3 text-center"
+      >
         <p className="text-caption leading-secondary text-muted-foreground">
           Acesso institucional. Em caso de dúvida procure a Secretaria de Coordenação de Curso ·
           SeCoT XVIII

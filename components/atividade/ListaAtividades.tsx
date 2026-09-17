@@ -161,6 +161,7 @@ export function ListaAtividades({ vazioForcado = false }: { vazioForcado?: boole
             </label>
             <Input
               id="busca-atividades"
+              accessKey="3"
               type="search"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}

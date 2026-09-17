@@ -9,7 +9,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 import { VoltarPaginaAnterior } from "@/components/feedback/VoltarPaginaAnterior"
-import { ID_CONTEUDO } from "@/components/layout/SkipLink"
+import { ID_CONTEUDO, ID_RODAPE } from "@/components/layout/SkipLink"
 import { buttonVariants } from "@/components/ui/button"
 import { CREDITOS_EXIGIDOS, HORAS_EXIGIDAS, TIPOS_DISTINTOS_EXIGIDOS } from "@/lib/calculos"
 import { FONTE_TABELA_7 } from "@/lib/catalogo"
@@ -45,8 +45,16 @@ export default function PaginaSobre() {
           </p>
         </section>
 
-        <section aria-labelledby="titulo-acessibilidade" className="mb-8 flex flex-col gap-3">
+        <section
+          id="acessibilidade"
+          aria-labelledby="titulo-acessibilidade"
+          className="mb-8 flex scroll-mt-(--altura-barra) flex-col gap-3"
+        >
           <h2 id="titulo-acessibilidade">Decisões de acessibilidade</h2>
+          <p className="leading-secondary text-muted-foreground">
+            A barra de acessibilidade fica no topo de todas as telas. Nela estão o alto contraste,
+            o mapa do site, os controles A−/A/A+ e a ajuda de atalhos de teclado.
+          </p>
           <ul className="flex flex-col gap-2 leading-secondary text-muted-foreground">
             <li>
               Todo percurso funciona só com teclado, inclusive a validação em lote: caixas de
@@ -64,6 +72,20 @@ export default function PaginaSobre() {
               de ação, sem repetir avisos nem competir com outros anúncios.
             </li>
             <li>Foco visível de 2 px em todo elemento que recebe teclado, sem exceção.</li>
+            <li>
+              Os atalhos de acesso levam ao conteúdo principal (1), à navegação (2), à busca da
+              lista de atividades (3, quando ela está disponível) e ao rodapé (4). A combinação
+              exata depende do navegador e do sistema operacional e está detalhada no botão
+              &quot;Atalhos de teclado&quot; da barra.
+            </li>
+            <li>
+              O zoom nativo do navegador também pode ser usado: Ctrl + (+) e Ctrl + (-) no
+              Windows, Linux e ChromeOS; Command ⌘ + (+) e Command ⌘ + (-) no macOS.
+            </li>
+            <li>
+              O <Link href="/mapa-do-site">mapa do site</Link> organiza os destinos disponíveis
+              para os perfis discente e docente.
+            </li>
           </ul>
         </section>
 
@@ -97,6 +119,16 @@ export default function PaginaSobre() {
           </Link>
         </div>
       </main>
+      <footer
+        id={ID_RODAPE}
+        accessKey="4"
+        tabIndex={-1}
+        className="mt-6 w-full max-w-form scroll-mt-(--altura-barra) text-center"
+      >
+        <Link href="/mapa-do-site" className="text-caption text-accent-text underline underline-offset-4">
+          Mapa do site
+        </Link>
+      </footer>
     </div>
   )
 }

@@ -11,9 +11,8 @@
 // leva alt="" (decorativa dentro do link) para não duplicar o anúncio.
 //
 // Alto contraste: o PNG não muda de cor com a preferência (é raster, não
-// token). Como a superfície da barra lateral também não muda de cor nesse
-// modo, o logo por si só continua legível; ainda assim, um contorno e um
-// leve fundo aparecem só quando `.alto-contraste` está ativo (variante
+// token). Um fundo branco restrito à imagem e um contorno aparecem só quando
+// `.alto-contraste` está ativo (variante
 // arbitrária, escopada ao componente — não é um token novo em
 // app/globals.css, porque é um uso único, não reaproveitado em outro
 // lugar), para reforçar a separação também numa imagem que a preferência
@@ -41,7 +40,7 @@ export function Marca({
       aria-label="Horas Complementares — UFSCar Sorocaba"
       className={cn("inline-flex w-fit items-center rounded-md transition-opacity hover:opacity-80", className)}
     >
-      <span className="rounded-md [html.alto-contraste_&]:bg-surface [html.alto-contraste_&]:p-1 [html.alto-contraste_&]:ring-1 [html.alto-contraste_&]:ring-foreground">
+      <span className="rounded-md [html.alto-contraste_&]:bg-foreground [html.alto-contraste_&]:p-1 [html.alto-contraste_&]:ring-1 [html.alto-contraste_&]:ring-foreground">
         <Image src={ufscarLogo} alt="" className={cn("h-auto", largura)} />
       </span>
     </Link>

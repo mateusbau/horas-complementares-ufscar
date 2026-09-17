@@ -170,14 +170,79 @@ html[data-tamanho-texto="maior"] { font-size: 125%; }
  * porque --border apontando para --input-border herdaria a redefinição abaixo.
  */
 html.alto-contraste {
-  --border: #78716C;
-  --input-border: #1C1917;
-  --muted-foreground: #1C1917;
+  color-scheme: dark;
 
-  /* Mesmo princípio acima, aplicado aos tons de texto do card Integralização. */
-  --integralizacao-texto-subtitulo: #1C1917;
-  --integralizacao-texto-auxiliar: #1C1917;
-  --integralizacao-texto-pendente: #44403A;
+  --brand: #000000;
+  --primary: #FFFFFF;
+  --primary-hover: #FFFFFF;
+  --primary-fg: #000000;
+  --accent-text: #FFF333;
+  --accent-soft: #000000;
+
+  --background: #000000;
+  --surface: #000000;
+  --border: #FFFFFF;
+  --input-border: #FFFFFF;
+  --foreground: #FFFFFF;
+  --muted-foreground: #FFFFFF;
+  --muted: #000000;
+  --trilha: #FFFFFF;
+  --overlay: rgb(255 255 255 / 0.35);
+
+  --success: #FFFFFF;
+  --success-bg: #000000;
+  --review: #FFFFFF;
+  --review-bg: #000000;
+  --pending: #FFFFFF;
+  --pending-bg: #000000;
+  --danger: #FFFFFF;
+  --danger-bg: #000000;
+  --ring: #FFFFFF;
+  --ring-offset: #000000;
+
+  --integralizacao-fundo-area: #000000;
+  --integralizacao-card-borda: #FFFFFF;
+  --integralizacao-texto-titulo: #FFFFFF;
+  --integralizacao-texto-subtitulo: #FFFFFF;
+  --integralizacao-texto-auxiliar: #FFFFFF;
+  --integralizacao-texto-item: #FFFFFF;
+  --integralizacao-texto-pendente: #FFFFFF;
+  --integralizacao-anel-em-analise: #FFFFFF;
+  --integralizacao-anel-falta: #78716C;
+  --integralizacao-aviso-fundo: #000000;
+  --integralizacao-aviso-borda: #FFFFFF;
+  --integralizacao-aviso-texto: #FFFFFF;
+}
+
+html.alto-contraste :where(a, a:visited, a:hover, a:active) {
+  background-color: #000000;
+  color: #FFF333;
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.2em;
+}
+
+html.alto-contraste button {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+html.alto-contraste :where(button, input, select, textarea, [role="dialog"], table, th, td) {
+  border-color: #FFFFFF;
+}
+
+html.alto-contraste :where(input, select, textarea) {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+html.alto-contraste ::placeholder {
+  color: #FFFFFF;
+  opacity: 1;
+}
+
+html.alto-contraste svg {
+  color: #FFFFFF;
 }
 
 /*
