@@ -100,7 +100,7 @@ function periodo(agora: Date, inicioHaDias: number, terminoHaDias: number) {
 
 // Comprovante fictício, sem arquivo por trás (a maioria do seed): o
 // visualizador (VisualizadorComprovante) mostra "não foi possível carregar"
-// para eles, corretamente — nunca existiu blob nenhum, no IndexedDB ou fora
+// para eles, corretamente — nunca existiu arquivo correspondente, local ou remoto
 // dele. O prefixo evita colidir com os ids reais gerados no upload (lib/storage.ts, novoId("comp")).
 function pdf(nome: string, kb: number): Comprovante {
   return { comprovanteId: `demo-sem-arquivo-${nome}`, nome, tamanhoBytes: kb * 1024, tipoMime: "application/pdf" }
@@ -108,7 +108,7 @@ function pdf(nome: string, kb: number): Comprovante {
 
 // Comprovante real, servido de /public/comprovantes — comprovanteId começando
 // com "/" é como lib/storage.ts (obterUrlComprovante) reconhece um arquivo
-// público da demonstração e não tenta buscar no IndexedDB.
+// público da demonstração e não tenta buscar no Supabase Storage.
 function arquivoPublico(nome: string, tipoMime: string, tamanhoBytes: number): Comprovante {
   return { comprovanteId: `/comprovantes/${nome}`, nome, tamanhoBytes, tipoMime }
 }
@@ -356,7 +356,7 @@ function atividadesDaAna(agora: Date): Atividade[] {
 // Os cinco primeiros por tempo de espera mantêm nomes e RAs do protótipo
 // (remapeados para tipos da Tabela 7). Bruno, Larissa, Marcos e Camila têm
 // comprovante de verdade (public/comprovantes/, servido direto — não passa
-// pelo IndexedDB, ver arquivoPublico() acima): Bruno e Larissa em dois tipos
+// pelo Supabase Storage, ver arquivoPublico() acima): Bruno e Larissa em dois tipos
 // diferentes cada um (mostra a exigência de 2 tipos da PPC 3.5.4 sendo
 // cumprida); o de Marcos ("Grupo de estudos", sem tipo previsto e sem carga
 // horária no documento) é o caso pensado para recusa; o de Camila é o único
