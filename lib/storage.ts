@@ -202,6 +202,13 @@ export async function obterDocenteAtual(): Promise<Docente> {
   return copia(docente)
 }
 
+/** Docente vinculado ao discente, para preparar o compartilhamento do relatório. */
+export async function obterDocente(id: string): Promise<Docente | null> {
+  await esperar()
+  const estado = await ler()
+  return copia(estado.docentes.find((d) => d.id === id) ?? null)
+}
+
 export async function obterDiscente(id: string): Promise<Discente | null> {
   await esperar()
   const estado = await ler()

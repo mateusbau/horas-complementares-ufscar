@@ -26,6 +26,7 @@ import { EstadoVazio } from "@/components/feedback/EstadoVazio"
 import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { EnviarRelatorioPorEmail } from "@/components/relatorio/EnviarRelatorioPorEmail"
 import { FiltrosRelatorio } from "@/components/relatorio/FiltrosRelatorio"
 import { Button } from "@/components/ui/button"
 import { HORAS_EXIGIDAS } from "@/lib/calculos"
@@ -143,6 +144,13 @@ export function RelatorioTurma() {
                 <Download aria-hidden="true" />
                 Baixar CSV
               </Button>
+              <EnviarRelatorioPorEmail
+                assunto={`Relatório da turma — ${CURSO.sigla}`}
+                mensagem={mensagemDoRelatorioTurma(estado.docente, dados, filtros, emitidoEm)}
+                rotulo="Enviar por e-mail"
+                desabilitado={!podeExportar}
+                ariaDescribedbyGatilho="relatorio-turma-sem-resultado"
+              />
               <Button
                 onClick={() => window.print()}
                 disabled={!podeExportar}
@@ -195,6 +203,37 @@ export function RelatorioTurma() {
       )}
     </>
   )
+}
+
+/**
+ * Os números vêm de `dados` — já o RelatorioTurma FILTRADO (agregarTurma sobre os
+ * ResumoOrientando recalculados com os filtros da tela), nunca o total sem filtro. Se a pessoa
+ * filtra por período/tipo e o e-mail contasse outra coisa, o e-mail mentiria sobre a própria tela
+ * que o gerou. A linha de filtros (descreverFiltros) é a mesma do cabeçalho e do CSV.
+ */
+function mensagemDoRelatorioTurma(
+  docente: Docente,
+  dados: DadosRelatorioTurma,
+  filtros: TipoFiltros,
+  emitidoEm: Date
+): string {
+  const mediaArredondada = Math.round(dados.mediaCreditos * 10) / 10
+  return [
+    "Olá,",
+    "",
+    `Compartilho o relatório da turma de orientandos de ${docente.nome}.`,
+    descreverFiltros(filtros),
+    `Total de alunos: ${formatarNumero(dados.totalAlunos)}.`,
+    `Já integralizaram: ${formatarPercentual(dados.percentualIntegralizado)}.`,
+    `Média de créditos validados: ${formatarCreditos(mediaArredondada)}.`,
+    `Aguardando validação: ${formatarNumero(dados.pendentesAguardando)}.`,
+    `Data de emissão: ${formatarDataHora(emitidoEm.toISOString())}.`,
+    "",
+    "Vou anexar o PDF do relatório a esta mensagem antes de enviar.",
+    "",
+    "Atenciosamente,",
+    docente.nome,
+  ].join("\n")
 }
 
 function ConteudoRelatorio({
