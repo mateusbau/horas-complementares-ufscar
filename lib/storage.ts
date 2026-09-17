@@ -122,24 +122,43 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   )
 }
 
-/** Lê o estado; na primeira visita (ou se estiver corrompido), cria o seed. */
-function ler(): EstadoDemo {
-  const bruto = armazenamento().getItem(CHAVE)
-  if (bruto) {
-    try {
-      const estado: unknown = JSON.parse(bruto)
-      if (ehEstadoValido(estado)) return estado
-    } catch {
-      // JSON inválido: recomeça do seed abaixo.
-    }
+/** Lê o estado do Supabase; se ainda não existir, cria a partir do seed. */
+async function ler(): Promise<EstadoDemo> {
+  const { data, error } = await supabase
+    .from("estado_demo")
+    .select("dados")
+    .eq("id", "principal")
+    .maybeSingle()
+
+  if (error) {
+    console.error("Erro ao ler estado do Supabase:", error)
+    throw new Error("Não foi possível carregar os dados.")
   }
+
+  if (data?.dados && ehEstadoValido(data.dados)) {
+    return data.dados as EstadoDemo
+  }
+
   const inicial = criarEstadoInicial(new Date())
-  gravar(inicial)
+
+  await gravar(inicial)
+
   return inicial
 }
 
-function gravar(estado: EstadoDemo): void {
-  armazenamento().setItem(CHAVE, JSON.stringify(estado))
+async function gravar(estado: EstadoDemo): Promise<void> {
+  const { error } = await supabase
+    .from("estado_demo")
+    .upsert({
+      id: "principal",
+      dados: estado,
+      atualizado_em: new Date().toISOString(),
+    })
+
+  if (error) {
+    console.error("Erro ao gravar estado no Supabase:", error)
+    throw new Error("Não foi possível salvar os dados.")
+  }
 }
 
 /** Cópia profunda: quem chama nunca altera o estado guardado por referência. */
@@ -165,7 +184,7 @@ function localizar(estado: EstadoDemo, id: string): number {
 
 export async function obterDiscenteAtual(): Promise<Discente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const discente = estado.discentes.find((d) => d.id === estado.discenteAtualId)
   if (!discente) throw new ErroDeRegra(["Discente da demonstração não encontrado."])
   return copia(discente)
@@ -173,7 +192,7 @@ export async function obterDiscenteAtual(): Promise<Discente> {
 
 export async function obterDocenteAtual(): Promise<Docente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const docente = estado.docentes.find((d) => d.id === estado.docenteAtualId)
   if (!docente) throw new ErroDeRegra(["Docente da demonstração não encontrado."])
   return copia(docente)
@@ -181,7 +200,8 @@ export async function obterDocenteAtual(): Promise<Docente> {
 
 export async function obterDiscente(id: string): Promise<Discente | null> {
   await esperar()
-  return copia(ler().discentes.find((d) => d.id === id) ?? null)
+  const estado = await ler()
+  return copia(estado.discentes.find((d) => d.id === id) ?? null)
 }
 
 // --- Atividades do discente ------------------------------------------------------------
@@ -189,27 +209,28 @@ export async function obterDiscente(id: string): Promise<Discente | null> {
 /** Atividades do discente da demonstração, na ordem em que foram registradas. */
 export async function listarAtividades(): Promise<Atividade[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(estado.atividades.filter((a) => a.discenteId === estado.discenteAtualId))
 }
 
 /** Qualquer atividade, de qualquer discente (a tela 07 do docente também usa). */
 export async function obterAtividade(id: string): Promise<Atividade | null> {
   await esperar()
-  return copia(ler().atividades.find((a) => a.id === id) ?? null)
+  const estado = await ler()
+  return copia(estado.atividades.find((a) => a.id === id) ?? null)
 }
 
 /** Envia uma nova atividade para validação; ela entra na fila do docente. */
 export async function criarAtividade(dados: NovaAtividade): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const atividade = montarAtividade(
     dados,
     { id: novoId("atv"), discenteId: estado.discenteAtualId },
     new Date()
   )
   estado.atividades.push(atividade)
-  gravar(estado)
+  await gravar(estado)
   return copia(atividade)
 }
 
@@ -222,7 +243,7 @@ export async function atualizarAtividade(
   patch: Partial<NovaAtividade>
 ): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const indice = localizar(estado, id)
   const atual = estado.atividades[indice]
   if (atual.discenteId !== estado.discenteAtualId) {
@@ -241,25 +262,25 @@ export async function atualizarAtividade(
     quantidade: tipoId === null ? null : quantidade,
   }
   estado.atividades[indice] = atualizada
-  gravar(estado)
+  await gravar(estado)
   return copia(atualizada)
 }
 
 /** Envia (ou reenvia, após devolução) uma atividade pendente. */
 export async function enviarAtividade(id: string): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const indice = localizar(estado, id)
   const enviada = enviarParaValidacao(estado.atividades[indice], new Date())
   estado.atividades[indice] = enviada
-  gravar(estado)
+  await gravar(estado)
   return copia(enviada)
 }
 
 /** Progresso do discente da demonstração ou, se informado, de outro discente. */
 export async function obterProgresso(discenteId?: string): Promise<Progresso> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const alvo = discenteId ?? estado.discenteAtualId
   return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
 }
@@ -269,22 +290,22 @@ export async function obterProgresso(discenteId?: string): Promise<Progresso> {
 /** Do mais recente para o mais antigo. */
 export async function listarAvisos(): Promise<Aviso[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(estado.avisos).sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime())
 }
 
 export async function marcarAvisoComoLido(id: string): Promise<void> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   estado.avisos = estado.avisos.map((a) => (a.id === id ? { ...a, lido: true } : a))
-  gravar(estado)
+  await ravar(estado)
 }
 
 export async function marcarTodosAvisosComoLidos(): Promise<void> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   estado.avisos = estado.avisos.map((a) => ({ ...a, lido: true }))
-  gravar(estado)
+  await gravar(estado)
 }
 
 // --- Comprovantes --------------------------------------------------------------------------
@@ -392,7 +413,7 @@ export async function limparRascunho(): Promise<void> {
  */
 export async function listarFilaValidacao(): Promise<ItemFila[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const agora = new Date()
   const discentes = new Map(estado.discentes.map((d) => [d.id, d]))
 
@@ -419,11 +440,11 @@ export async function listarFilaValidacao(): Promise<ItemFila[]> {
 /** Aprova, devolve com pendência ou recusa; pode reclassificar o tipo. */
 export async function registrarParecer(id: string, parecer: NovoParecer): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const indice = localizar(estado, id)
   const resultado = aplicarParecer(estado.atividades[indice], parecer, estado.docenteAtualId, new Date())
   estado.atividades[indice] = resultado
-  gravar(estado)
+  await gravar(estado)
   return copia(resultado)
 }
 
@@ -445,7 +466,7 @@ export type EstatisticasDocente = {
 /** Indicadores do painel do docente (tela 06): sempre sobre todas as atividades do sistema. */
 export async function obterEstatisticasDocente(): Promise<EstatisticasDocente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const agora = new Date()
 
   const emAnalise = estado.atividades.filter(
@@ -477,13 +498,13 @@ function construirResumosOrientandos(estado: EstadoDemo, agora: Date): ResumoOri
 
 export async function listarOrientandos(): Promise<ResumoOrientando[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(construirResumosOrientandos(estado, new Date()))
 }
 
 export async function obterRelatorioTurma(): Promise<RelatorioTurma> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(agregarTurma(construirResumosOrientandos(estado, new Date())))
 }
 
@@ -601,7 +622,7 @@ export const SCRIPT_PREFERENCIAS = `(function(){try{var p=JSON.parse(localStorag
 
 export async function exportarEstado(): Promise<string> {
   await esperar()
-  return JSON.stringify(ler(), null, 2)
+  return JSON.stringify(await ler(), null, 2)
 }
 
 export async function importarEstado(json: string): Promise<void> {
@@ -615,13 +636,13 @@ export async function importarEstado(json: string): Promise<void> {
   if (!ehEstadoValido(estado)) {
     throw new ErroDeRegra(["O arquivo não é um estado exportado por este sistema."])
   }
-  gravar(estado)
+  await gravar(estado)
 }
 
 /** Volta ao seed, com datas recalculadas a partir de agora. */
 export async function reiniciarDemo(): Promise<void> {
   await esperar()
-  gravar(criarEstadoInicial(new Date()))
+  await gravar(criarEstadoInicial(new Date()))
 }
 
 /**
