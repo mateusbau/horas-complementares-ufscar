@@ -33,7 +33,7 @@ export function OQueFechaOQueFalta({ progresso }: { progresso: Progresso }) {
   return (
     <section aria-labelledby="titulo-fecha" className="flex h-full flex-col gap-4 rounded-lg border bg-surface p-4">
       <h2 id="titulo-fecha" className="text-body font-bold">
-        O que fecha o que falta
+        Sugestões para integralização
       </h2>
       <div className="flex flex-col gap-1">
         <p className="text-label text-muted-foreground">{introducao}</p>

@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 
+import { VoltarPaginaAnterior } from "@/components/feedback/VoltarPaginaAnterior"
 import { ID_CONTEUDO, ID_RODAPE } from "@/components/layout/SkipLink"
+import { buttonVariants } from "@/components/ui/button"
 
 export const metadata: Metadata = { title: "Mapa do site · Horas Complementares" }
 
@@ -79,10 +81,11 @@ export default function PaginaMapaDoSite() {
         id={ID_RODAPE}
         accessKey="4"
         tabIndex={-1}
-        className="mt-6 w-full max-w-form scroll-mt-(--altura-barra) text-center"
+        className="mt-6 flex w-full max-w-form scroll-mt-(--altura-barra) flex-wrap gap-4"
       >
-        <Link href="/" className="text-caption text-accent-text underline underline-offset-4 hover:decoration-2">
-          Voltar para a entrada
+        <VoltarPaginaAnterior />
+        <Link href="/" className={buttonVariants({ variant: "outline" })}>
+          Ir para a tela de entrada
         </Link>
       </footer>
     </div>
