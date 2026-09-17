@@ -98,6 +98,11 @@ export function formatarData(valor: string): string {
   return data.format(paraData(valor))
 }
 
+/** "2026-09-17", para nome de arquivo exportado — não é formatarData (que é pt-BR, DD/MM/AAAA). */
+export function formatarDataArquivo(valor: Date): string {
+  return valor.toISOString().slice(0, 10)
+}
+
 /** "20/08". */
 export function formatarDiaMes(valor: string): string {
   return diaMes.format(paraData(valor))

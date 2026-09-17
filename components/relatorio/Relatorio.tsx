@@ -13,17 +13,20 @@
 // a barra de acessibilidade, a navegação e os botões, deixando só o conteúdo
 // do documento.
 
-import { CircleCheck, CircleDashed, Printer } from "lucide-react"
+import { CircleCheck, CircleDashed, Download, Printer } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
-import { calcularProgresso } from "@/lib/calculos"
+import { calcularProgresso, creditosDaAtividade, horasDeCreditos } from "@/lib/calculos"
 import { FONTE_TABELA_7, GRUPOS, obterTipo } from "@/lib/catalogo"
+import { baixarCSV, montarCSV } from "@/lib/csv"
 import {
   formatarCreditos,
+  formatarData,
+  formatarDataArquivo,
   formatarDataHora,
   formatarHoras,
   formatarHorasContabilizadas,
@@ -31,18 +34,59 @@ import {
   formatarPremissaCredito,
   formatarUnidade,
 } from "@/lib/formatacao"
-import { listarAtividades, obterDiscenteAtual } from "@/lib/storage"
-import type { Atividade, Discente, Progresso, StatusAtividade } from "@/lib/types"
+import { listarAtividades, obterDiscenteAtual, obterDocenteAtual } from "@/lib/storage"
+import type { Atividade, Discente, Docente, Progresso, StatusAtividade } from "@/lib/types"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; discente: Discente; atividades: Atividade[]; progresso: Progresso }
+  | { status: "pronto"; discente: Discente; docente: Docente; atividades: Atividade[]; progresso: Progresso }
 
 const ROTULO_STATUS_EXCLUIDO: Record<Exclude<StatusAtividade, "validada">, { singular: string; plural: string }> = {
   analise: { singular: "em análise", plural: "em análise" },
   pendente: { singular: "pendente", plural: "pendentes" },
   recusada: { singular: "recusada", plural: "recusadas" },
+}
+
+/** Uma linha do CSV/tabela "Atividades validadas" — mesma lista para os dois, nunca calculada duas vezes. */
+type LinhaAtividadeValidada = {
+  atividadeId: string
+  dataISO: string
+  data: string
+  tipo: string
+  descricao: string
+  cargaHoraria: string
+  creditos: string
+  status: string
+  validadoPor: string
+}
+
+/**
+ * Só atividades validadas (mesma regra do resto do relatório). "Data" é a do
+ * parecer que aprovou — é o evento que este relatório documenta; sem
+ * parecer de aprovação (não deveria acontecer com status "validada", mas o
+ * TypeScript não sabe disso), cai para o envio ou a criação.
+ */
+function construirLinhasValidadas(atividades: readonly Atividade[], docente: Docente): LinhaAtividadeValidada[] {
+  return atividades
+    .filter((a) => a.status === "validada")
+    .map((a) => {
+      const parecerAprovacao = [...a.pareceres].reverse().find((p) => p.decisao === "aprovar")
+      const dataISO = parecerAprovacao?.em ?? a.enviadaEm ?? a.criadaEm
+      const creditos = creditosDaAtividade(a)
+      return {
+        atividadeId: a.id,
+        dataISO,
+        data: formatarData(dataISO),
+        tipo: a.tipoId === null ? "Sem tipo previsto" : obterTipo(a.tipoId).nome,
+        descricao: a.titulo,
+        cargaHoraria: formatarHoras(horasDeCreditos(creditos)),
+        creditos: formatarCreditos(creditos),
+        status: "Validada",
+        validadoPor: docente.nome,
+      }
+    })
+    .sort((a, b) => a.dataISO.localeCompare(b.dataISO))
 }
 
 export function Relatorio() {
@@ -52,16 +96,27 @@ export function Relatorio() {
 
   useEffect(() => {
     let ativo = true
-    Promise.all([obterDiscenteAtual(), listarAtividades()])
-      .then(([discente, atividades]) => {
+    Promise.all([obterDiscenteAtual(), obterDocenteAtual(), listarAtividades()])
+      .then(([discente, docente, atividades]) => {
         if (!ativo) return
-        setEstado({ status: "pronto", discente, atividades, progresso: calcularProgresso(atividades) })
+        setEstado({ status: "pronto", discente, docente, atividades, progresso: calcularProgresso(atividades) })
       })
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
       ativo = false
     }
   }, [tentativa])
+
+  const linhasValidadas = estado.status === "pronto" ? construirLinhasValidadas(estado.atividades, estado.docente) : []
+
+  function aoBaixarCSV() {
+    if (estado.status !== "pronto") return
+    const conteudo = montarCSV(
+      ["Data", "Tipo de atividade (Tabela 7)", "Descrição", "Carga horária", "Créditos reconhecidos", "Status", "Validado por"],
+      linhasValidadas.map((l) => [l.data, l.tipo, l.descricao, l.cargaHoraria, l.creditos, l.status, l.validadoPor])
+    )
+    baixarCSV(`relatorio-${estado.discente.ra}-${formatarDataArquivo(emitidoEm)}.csv`, conteudo)
+  }
 
   return (
     <>
@@ -70,10 +125,16 @@ export function Relatorio() {
         subtitulo="Documento consolidado das suas atividades validadas, pronto para impressão ou PDF."
         acao={
           estado.status === "pronto" ? (
-            <Button onClick={() => window.print()}>
-              <Printer aria-hidden="true" />
-              Imprimir ou salvar em PDF
-            </Button>
+            <>
+              <Button variant="outline" onClick={aoBaixarCSV}>
+                <Download aria-hidden="true" />
+                Baixar CSV
+              </Button>
+              <Button onClick={() => window.print()}>
+                <Printer aria-hidden="true" />
+                Imprimir ou salvar em PDF
+              </Button>
+            </>
           ) : undefined
         }
       />
@@ -96,6 +157,7 @@ export function Relatorio() {
           atividades={estado.atividades}
           progresso={estado.progresso}
           emitidoEm={emitidoEm}
+          linhasValidadas={linhasValidadas}
         />
       )}
     </>
@@ -107,11 +169,13 @@ function ConteudoRelatorio({
   atividades,
   progresso,
   emitidoEm,
+  linhasValidadas,
 }: {
   discente: Discente
   atividades: Atividade[]
   progresso: Progresso
   emitidoEm: Date
+  linhasValidadas: LinhaAtividadeValidada[]
 }) {
   const naoValidadas = atividades.filter((a) => a.status !== "validada")
   const contagemExcluidas = naoValidadas.reduce(
@@ -277,6 +341,81 @@ function ConteudoRelatorio({
           Os quatro grupos ({GRUPOS.map((g) => g.nome).join(", ")}) são só organização visual; a tabela acima
           agrupa pelo tipo de atividade, que é o que a Tabela 7 reconhece.
         </p>
+      </section>
+
+      <section
+        aria-labelledby="titulo-atividades-validadas"
+        className="flex flex-col gap-3 rounded-lg border bg-surface p-6 print:break-inside-avoid print:border-0 print:p-0"
+      >
+        <h2 id="titulo-atividades-validadas">Atividades validadas</h2>
+        <p className="leading-secondary text-muted-foreground">
+          Uma linha por atividade — mesmos dados do arquivo gerado pelo botão &quot;Baixar CSV&quot;.
+        </p>
+
+        {linhasValidadas.length === 0 ? (
+          <p className="leading-secondary text-muted-foreground">Nenhuma atividade validada até o momento.</p>
+        ) : (
+          <>
+            <div className="hidden overflow-x-auto md:block print:block">
+              <table className="w-full">
+                <caption className="mb-2 text-left text-label text-foreground">
+                  Atividades validadas, uma linha por atividade, com data, tipo, créditos reconhecidos e quem
+                  validou.
+                </caption>
+                <thead className="border-b bg-muted print:bg-transparent">
+                  <tr>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Data
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Tipo (Tabela 7)
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Descrição
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Carga horária
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Créditos
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Status
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                      Validado por
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {linhasValidadas.map((linha) => (
+                    <tr key={linha.atividadeId} className="print:break-inside-avoid">
+                      <td className="tabular px-4 py-2 text-body">{linha.data}</td>
+                      <td className="px-4 py-2 text-body">{linha.tipo}</td>
+                      <td className="px-4 py-2 text-body">{linha.descricao}</td>
+                      <td className="tabular px-4 py-2 text-body">{linha.cargaHoraria}</td>
+                      <td className="tabular px-4 py-2 text-body">{linha.creditos}</td>
+                      <td className="px-4 py-2 text-body">{linha.status}</td>
+                      <td className="px-4 py-2 text-body">{linha.validadoPor}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <ul className="flex flex-col gap-2 md:hidden print:hidden">
+              {linhasValidadas.map((linha) => (
+                <li key={linha.atividadeId} className="flex flex-col gap-1 rounded-lg border p-4">
+                  <span className="text-body font-medium">{linha.descricao}</span>
+                  <span className="tabular text-label text-muted-foreground">
+                    {linha.data} · {linha.tipo} · {linha.creditos}
+                  </span>
+                  <span className="text-label text-muted-foreground">Validado por {linha.validadoPor}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
 
       <footer className="border-t pt-4 text-caption leading-secondary text-muted-foreground">

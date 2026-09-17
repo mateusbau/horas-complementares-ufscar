@@ -16,7 +16,7 @@
 // integralização e na lista de risco aqui é exatamente quem a outra tela já
 // mostra.
 
-import { Printer, TrendingUp } from "lucide-react"
+import { Download, Printer, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
@@ -26,16 +26,24 @@ import { EstadoVazio } from "@/components/feedback/EstadoVazio"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
+import { HORAS_EXIGIDAS } from "@/lib/calculos"
 import { CURSO } from "@/lib/catalogo"
-import { formatarCreditos, formatarDataHora, formatarNumero, formatarPercentual } from "@/lib/formatacao"
-import { obterDocenteAtual, obterRelatorioTurma } from "@/lib/storage"
+import { baixarCSV, montarCSV } from "@/lib/csv"
+import {
+  formatarCreditos,
+  formatarDataArquivo,
+  formatarDataHora,
+  formatarNumero,
+  formatarPercentual,
+} from "@/lib/formatacao"
+import { listarOrientandos, obterDocenteAtual, obterRelatorioTurma } from "@/lib/storage"
 import type { Docente } from "@/lib/types"
-import type { RelatorioTurma as DadosRelatorioTurma } from "@/lib/orientandos"
+import type { RelatorioTurma as DadosRelatorioTurma, ResumoOrientando } from "@/lib/orientandos"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; docente: Docente; dados: DadosRelatorioTurma }
+  | { status: "pronto"; docente: Docente; dados: DadosRelatorioTurma; orientandos: ResumoOrientando[] }
 
 export function RelatorioTurma() {
   const [estado, setEstado] = useState<Estado>({ status: "carregando" })
@@ -44,13 +52,31 @@ export function RelatorioTurma() {
 
   useEffect(() => {
     let ativo = true
-    Promise.all([obterDocenteAtual(), obterRelatorioTurma()])
-      .then(([docente, dados]) => ativo && setEstado({ status: "pronto", docente, dados }))
+    Promise.all([obterDocenteAtual(), obterRelatorioTurma(), listarOrientandos()])
+      .then(([docente, dados, orientandos]) => ativo && setEstado({ status: "pronto", docente, dados, orientandos }))
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
       ativo = false
     }
   }, [tentativa])
+
+  function aoBaixarCSV() {
+    if (estado.status !== "pronto") return
+    const linhas = [...estado.orientandos]
+      .sort((a, b) => a.discente.nome.localeCompare(b.discente.nome, "pt-BR"))
+      .map((r) => [
+        r.discente.nome,
+        r.discente.ra,
+        formatarCreditos(r.progresso.creditosObtidos),
+        formatarCreditos(r.progresso.creditosFaltantes),
+        formatarPercentual(r.progresso.percentual),
+      ])
+    const conteudo = montarCSV(
+      ["Aluno", "RA", "Créditos reconhecidos", "Créditos pendentes", `% de conclusão dos ${formatarNumero(HORAS_EXIGIDAS)}h`],
+      linhas
+    )
+    baixarCSV(`relatorio-turma-${formatarDataArquivo(emitidoEm)}.csv`, conteudo)
+  }
 
   return (
     <>
@@ -59,10 +85,16 @@ export function RelatorioTurma() {
         subtitulo="Créditos homologados e sinais de risco dos seus orientandos, consolidados para a coordenação."
         acao={
           estado.status === "pronto" && estado.dados.totalAlunos > 0 ? (
-            <Button onClick={() => window.print()}>
-              <Printer aria-hidden="true" />
-              Imprimir relatório
-            </Button>
+            <>
+              <Button variant="outline" onClick={aoBaixarCSV}>
+                <Download aria-hidden="true" />
+                Baixar CSV
+              </Button>
+              <Button onClick={() => window.print()}>
+                <Printer aria-hidden="true" />
+                Imprimir relatório
+              </Button>
+            </>
           ) : undefined
         }
       />
@@ -89,7 +121,12 @@ export function RelatorioTurma() {
       )}
 
       {estado.status === "pronto" && estado.dados.totalAlunos > 0 && (
-        <ConteudoRelatorio docente={estado.docente} dados={estado.dados} emitidoEm={emitidoEm} />
+        <ConteudoRelatorio
+          docente={estado.docente}
+          dados={estado.dados}
+          orientandos={estado.orientandos}
+          emitidoEm={emitidoEm}
+        />
       )}
     </>
   )
@@ -98,13 +135,16 @@ export function RelatorioTurma() {
 function ConteudoRelatorio({
   docente,
   dados,
+  orientandos,
   emitidoEm,
 }: {
   docente: Docente
   dados: DadosRelatorioTurma
+  orientandos: ResumoOrientando[]
   emitidoEm: Date
 }) {
   const mediaArredondada = Math.round(dados.mediaCreditos * 10) / 10
+  const orientandosOrdenados = [...orientandos].sort((a, b) => a.discente.nome.localeCompare(b.discente.nome, "pt-BR"))
 
   const indicadores = [
     { id: "total", rotulo: "Total de alunos", valor: formatarNumero(dados.totalAlunos) },
@@ -187,6 +227,80 @@ function ConteudoRelatorio({
             })}
           </ul>
         )}
+      </section>
+
+      <section
+        aria-labelledby="titulo-orientandos"
+        className="flex flex-col gap-3 rounded-lg border bg-surface p-6 print:break-inside-avoid print:border-0 print:p-0"
+      >
+        <h2 id="titulo-orientandos">Todos os orientandos</h2>
+        <p className="leading-secondary text-muted-foreground">
+          Uma linha por aluno — mesmos dados do arquivo gerado pelo botão &quot;Baixar CSV&quot;.
+        </p>
+
+        <div className="hidden overflow-x-auto md:block print:block">
+          <table className="w-full">
+            <caption className="mb-2 text-left text-label text-foreground">
+              Créditos reconhecidos, créditos pendentes e percentual de conclusão dos {formatarNumero(HORAS_EXIGIDAS)}{" "}
+              h, por aluno.
+            </caption>
+            <thead className="border-b bg-muted print:bg-transparent">
+              <tr>
+                <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                  Aluno
+                </th>
+                <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                  RA
+                </th>
+                <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                  Créditos reconhecidos
+                </th>
+                <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                  Créditos pendentes
+                </th>
+                <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
+                  % de conclusão dos {formatarNumero(HORAS_EXIGIDAS)}h
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {orientandosOrdenados.map((r) => (
+                <tr key={r.discente.id} className="print:break-inside-avoid">
+                  <td className="px-4 py-2 text-body">
+                    <Link
+                      href={`/docente/fila?discente=${r.discente.id}`}
+                      className="font-medium text-foreground underline-offset-4 hover:text-accent-text hover:underline print:no-underline"
+                    >
+                      {r.discente.nome}
+                    </Link>
+                  </td>
+                  <td className="tabular px-4 py-2 text-body">{r.discente.ra}</td>
+                  <td className="tabular px-4 py-2 text-body">{formatarCreditos(r.progresso.creditosObtidos)}</td>
+                  <td className="tabular px-4 py-2 text-body">{formatarCreditos(r.progresso.creditosFaltantes)}</td>
+                  <td className="tabular px-4 py-2 text-body">{formatarPercentual(r.progresso.percentual)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <ul className="flex flex-col gap-2 md:hidden print:hidden">
+          {orientandosOrdenados.map((r) => (
+            <li key={r.discente.id} className="flex flex-col gap-1 rounded-lg border p-4">
+              <Link
+                href={`/docente/fila?discente=${r.discente.id}`}
+                className="text-body font-medium text-foreground underline-offset-4 hover:text-accent-text hover:underline"
+              >
+                {r.discente.nome}
+              </Link>
+              <span className="tabular text-label text-muted-foreground">
+                RA {r.discente.ra} · {formatarCreditos(r.progresso.creditosObtidos)} reconhecidos ·{" "}
+                {formatarCreditos(r.progresso.creditosFaltantes)} pendentes ·{" "}
+                {formatarPercentual(r.progresso.percentual)}
+              </span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section
