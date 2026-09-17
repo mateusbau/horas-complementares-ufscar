@@ -19,9 +19,11 @@ import { useEffect, useState } from "react"
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { EnviarRelatorioPorEmail } from "@/components/relatorio/EnviarRelatorioPorEmail"
 import { Button } from "@/components/ui/button"
 import { calcularProgresso } from "@/lib/calculos"
 import { FONTE_TABELA_7, GRUPOS, obterTipo } from "@/lib/catalogo"
+import { emailInstitucionalDocente } from "@/lib/email"
 import {
   formatarCreditos,
   formatarDataHora,
@@ -31,13 +33,13 @@ import {
   formatarPremissaCredito,
   formatarUnidade,
 } from "@/lib/formatacao"
-import { listarAtividades, obterDiscenteAtual } from "@/lib/storage"
-import type { Atividade, Discente, Progresso, StatusAtividade } from "@/lib/types"
+import { listarAtividades, obterDiscenteAtual, obterDocente } from "@/lib/storage"
+import type { Atividade, Discente, Docente, Progresso, StatusAtividade } from "@/lib/types"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; discente: Discente; atividades: Atividade[]; progresso: Progresso }
+  | { status: "pronto"; discente: Discente; orientador: Docente | null; atividades: Atividade[]; progresso: Progresso }
 
 const ROTULO_STATUS_EXCLUIDO: Record<Exclude<StatusAtividade, "validada">, { singular: string; plural: string }> = {
   analise: { singular: "em análise", plural: "em análise" },
@@ -53,9 +55,10 @@ export function Relatorio() {
   useEffect(() => {
     let ativo = true
     Promise.all([obterDiscenteAtual(), listarAtividades()])
-      .then(([discente, atividades]) => {
+      .then(async ([discente, atividades]) => {
+        const orientador = discente.orientadorId ? await obterDocente(discente.orientadorId) : null
         if (!ativo) return
-        setEstado({ status: "pronto", discente, atividades, progresso: calcularProgresso(atividades) })
+        setEstado({ status: "pronto", discente, orientador, atividades, progresso: calcularProgresso(atividades) })
       })
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
@@ -70,10 +73,18 @@ export function Relatorio() {
         subtitulo="Documento consolidado das suas atividades validadas, pronto para impressão ou PDF."
         acao={
           estado.status === "pronto" ? (
-            <Button onClick={() => window.print()}>
-              <Printer aria-hidden="true" />
-              Imprimir ou salvar em PDF
-            </Button>
+            <>
+              <EnviarRelatorioPorEmail
+                destinatarioInicial={estado.orientador ? emailInstitucionalDocente(estado.orientador) : ""}
+                assunto={`Relatório de horas complementares — ${estado.discente.nome}`}
+                mensagem={mensagemDoRelatorio(estado.discente, estado.progresso, emitidoEm)}
+                rotulo="Enviar por e-mail"
+              />
+              <Button onClick={() => window.print()}>
+                <Printer aria-hidden="true" />
+                Imprimir ou salvar em PDF
+              </Button>
+            </>
           ) : undefined
         }
       />
@@ -100,6 +111,22 @@ export function Relatorio() {
       )}
     </>
   )
+}
+
+function mensagemDoRelatorio(discente: Discente, progresso: Progresso, emitidoEm: Date): string {
+  return [
+    "Olá,",
+    "",
+    `Compartilho o relatório de horas complementares de ${discente.nome} (RA ${discente.ra}).`,
+    `Créditos validados: ${formatarCreditos(progresso.creditosObtidos)} de ${formatarNumero(progresso.creditosExigidos)} exigidos.`,
+    `Horas contabilizadas: ${formatarHoras(progresso.horasObtidas)} de ${formatarHoras(progresso.horasExigidas)} exigidas.`,
+    `Data de emissão: ${formatarDataHora(emitidoEm.toISOString())}.`,
+    "",
+    "O PDF do relatório será anexado a esta mensagem.",
+    "",
+    "Atenciosamente,",
+    discente.nome,
+  ].join("\n")
 }
 
 function ConteudoRelatorio({

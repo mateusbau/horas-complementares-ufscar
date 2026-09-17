@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "verificar:ocr": "node scripts/verificar-ocr.mjs",
+    "verificar:email": "node scripts/verificar-email.mjs",
     "verificar:tokens": "node scripts/verificar-tokens.mjs",
     "verificar:migracao": "node scripts/verificar-migracao.mjs"
   },

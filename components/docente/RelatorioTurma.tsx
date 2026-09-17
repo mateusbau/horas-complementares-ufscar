@@ -25,6 +25,7 @@ import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { EstadoVazio } from "@/components/feedback/EstadoVazio"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { EnviarRelatorioPorEmail } from "@/components/relatorio/EnviarRelatorioPorEmail"
 import { Button } from "@/components/ui/button"
 import { CURSO } from "@/lib/catalogo"
 import { formatarCreditos, formatarDataHora, formatarNumero, formatarPercentual } from "@/lib/formatacao"
@@ -59,10 +60,17 @@ export function RelatorioTurma() {
         subtitulo="Créditos homologados e sinais de risco dos seus orientandos, consolidados para a coordenação."
         acao={
           estado.status === "pronto" && estado.dados.totalAlunos > 0 ? (
-            <Button onClick={() => window.print()}>
-              <Printer aria-hidden="true" />
-              Imprimir relatório
-            </Button>
+            <>
+              <EnviarRelatorioPorEmail
+                assunto={`Relatório da turma — ${CURSO.sigla}`}
+                mensagem={mensagemDoRelatorioTurma(estado.docente, estado.dados, emitidoEm)}
+                rotulo="Enviar por e-mail"
+              />
+              <Button onClick={() => window.print()}>
+                <Printer aria-hidden="true" />
+                Imprimir relatório
+              </Button>
+            </>
           ) : undefined
         }
       />
@@ -93,6 +101,25 @@ export function RelatorioTurma() {
       )}
     </>
   )
+}
+
+function mensagemDoRelatorioTurma(docente: Docente, dados: DadosRelatorioTurma, emitidoEm: Date): string {
+  const mediaArredondada = Math.round(dados.mediaCreditos * 10) / 10
+  return [
+    "Olá,",
+    "",
+    `Compartilho o relatório da turma de orientandos de ${docente.nome}.`,
+    `Total de alunos: ${formatarNumero(dados.totalAlunos)}.`,
+    `Já integralizaram: ${formatarPercentual(dados.percentualIntegralizado)}.`,
+    `Média de créditos validados: ${formatarCreditos(mediaArredondada)}.`,
+    `Aguardando validação: ${formatarNumero(dados.pendentesAguardando)}.`,
+    `Data de emissão: ${formatarDataHora(emitidoEm.toISOString())}.`,
+    "",
+    "O PDF do relatório será anexado a esta mensagem.",
+    "",
+    "Atenciosamente,",
+    docente.nome,
+  ].join("\n")
 }
 
 function ConteudoRelatorio({
