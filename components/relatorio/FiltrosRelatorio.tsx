@@ -53,11 +53,11 @@ export function FiltrosRelatorio({
       </div>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-label text-foreground">Período</legend>
+        <legend className="text-label text-foreground">Período de validação</legend>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:max-w-form">
           <div className="flex flex-col gap-2">
             <label htmlFor="filtro-data-inicial" className="text-label text-foreground">
-              Data inicial
+              Validado a partir de
             </label>
             <Input
               id="filtro-data-inicial"
@@ -68,7 +68,7 @@ export function FiltrosRelatorio({
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="filtro-data-final" className="text-label text-foreground">
-              Data final
+              Validado até
             </label>
             <Input
               id="filtro-data-final"
@@ -89,7 +89,8 @@ export function FiltrosRelatorio({
           </p>
         )}
         <p className="text-caption leading-secondary text-muted-foreground">
-          Datas vazias não limitam o período. O filtro considera a data do parecer que validou cada atividade.
+          Datas vazias não limitam o período. O critério é a data em que a atividade foi validada pelo docente, não
+          a data em que foi realizada.
         </p>
       </fieldset>
 

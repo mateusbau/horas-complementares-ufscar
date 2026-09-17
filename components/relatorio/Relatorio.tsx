@@ -284,7 +284,7 @@ function ConteudoRelatorio({
           </span>
           {filtroPadrao
             ? "Você ainda não tem nenhuma atividade validada. Os botões de exportação ficam disponíveis quando houver alguma."
-            : "Nenhuma atividade validada corresponde ao período e aos tipos selecionados. Ajuste os filtros para ver e exportar o relatório."}
+            : "Nenhuma atividade validada corresponde ao período de validação e aos tipos selecionados. Ajuste os filtros para ver e exportar o relatório."}
         </p>
       )}
 
@@ -348,7 +348,7 @@ function ConteudoRelatorio({
             ? `Todas as ${formatarNumero(atividades.length)} atividades registradas foram validadas.`
             : `${formatarNumero(naoValidadas.length)} de ${formatarNumero(atividades.length)} atividades registradas não entram, porque ainda não foram validadas (${partesExcluidas.join(", ")}).`}
           {!filtroPadrao &&
-            ` Com os filtros de período e tipo aplicados, ${formatarNumero(linhasValidadas.length)} de ${formatarNumero(validadasTotais.length)} atividades validadas aparecem abaixo.`}
+            ` Com os filtros de período de validação e tipo aplicados, ${formatarNumero(linhasValidadas.length)} de ${formatarNumero(validadasTotais.length)} atividades validadas aparecem abaixo.`}
         </p>
 
         {progresso.porTipo.length === 0 ? (

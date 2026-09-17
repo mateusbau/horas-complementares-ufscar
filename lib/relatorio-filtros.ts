@@ -73,14 +73,20 @@ export function filtrarAtividades(
   })
 }
 
-/** "01/03/2026 a 30/06/2026", "a partir de 01/03/2026", "até 30/06/2026" ou null (sem limite). */
+/**
+ * "validado de 01/03/2026 a 30/06/2026", "validado a partir de 01/03/2026",
+ * "validado até 30/06/2026" ou null (sem limite). O critério é sempre a data
+ * de validação (dataDeValidacao), nunca a data de realização da atividade —
+ * por isso o texto nomeia "validado", não só "período", em todo lugar onde
+ * aparece (rótulos dos campos, cabeçalho do relatório, CSV).
+ */
 function descreverPeriodo(filtros: FiltrosRelatorio): string | null {
   const { dataInicial, dataFinal } = filtros
   if (!dataInicial && !dataFinal) return null
   const formatarISO = (v: string) => `${v.slice(8, 10)}/${v.slice(5, 7)}/${v.slice(0, 4)}`
-  if (dataInicial && dataFinal) return `${formatarISO(dataInicial)} a ${formatarISO(dataFinal)}`
-  if (dataInicial) return `a partir de ${formatarISO(dataInicial)}`
-  return `até ${formatarISO(dataFinal)}`
+  if (dataInicial && dataFinal) return `validado de ${formatarISO(dataInicial)} a ${formatarISO(dataFinal)}`
+  if (dataInicial) return `validado a partir de ${formatarISO(dataInicial)}`
+  return `validado até ${formatarISO(dataFinal)}`
 }
 
 /**
@@ -90,7 +96,7 @@ function descreverPeriodo(filtros: FiltrosRelatorio): string | null {
  */
 export function descreverFiltros(filtros: FiltrosRelatorio): string {
   if (filtrosSaoPadrao(filtros)) {
-    return "Nenhum filtro aplicado: todas as atividades validadas, todos os tipos da Tabela 7."
+    return "Nenhum filtro aplicado: todas as atividades validadas, qualquer data de validação, todos os tipos da Tabela 7."
   }
   const periodo = descreverPeriodo(filtros)
   const tipos =
@@ -99,5 +105,5 @@ export function descreverFiltros(filtros: FiltrosRelatorio): string {
       : CATALOGO.filter((t) => filtros.tiposIncluidos.has(t.id))
           .map((t) => t.nomeCurto)
           .join(", ")
-  return `Filtros aplicados — período: ${periodo ?? "sem limite"}; tipos: ${tipos}.`
+  return `Filtros aplicados — ${periodo ?? "qualquer data de validação"}; tipos: ${tipos}.`
 }

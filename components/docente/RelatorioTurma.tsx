@@ -86,6 +86,11 @@ export function RelatorioTurma() {
 
   const orientandos = estado.status === "pronto" ? recalcular(estado.bruto, filtros) : []
   const dados = agregarTurma(orientandos)
+  // Risco de não integralizar é propriedade do HISTÓRICO INTEIRO do orientando, não do recorte
+  // que o filtro da tela mostra — por isso usa sempre filtrosPadrao(), nunca `filtros`. Se
+  // respondesse ao filtro, um docente que filtrasse por um tipo/período específico poderia achar
+  // a turma em dia quando não está.
+  const emRiscoTotal = estado.status === "pronto" ? agregarTurma(recalcular(estado.bruto, filtrosPadrao())).emRisco : []
   const semOrientandos = estado.status === "pronto" && estado.bruto.length === 0
   const semResultado = !semOrientandos && dados.totalAlunos > 0 && dados.mediaCreditos === 0 && dados.distribuicaoPorTipo.length === 0
   const podeExportar = estado.status === "pronto" && !semOrientandos && !semResultado && !erroPeriodo(filtros)
@@ -181,6 +186,7 @@ export function RelatorioTurma() {
             docente={estado.docente}
             dados={dados}
             orientandos={orientandos}
+            emRiscoTotal={emRiscoTotal}
             filtros={filtros}
             semResultado={semResultado}
             emitidoEm={emitidoEm}
@@ -195,6 +201,7 @@ function ConteudoRelatorio({
   docente,
   dados,
   orientandos,
+  emRiscoTotal,
   filtros,
   semResultado,
   emitidoEm,
@@ -202,6 +209,7 @@ function ConteudoRelatorio({
   docente: Docente
   dados: DadosRelatorioTurma
   orientandos: ResumoOrientando[]
+  emRiscoTotal: ResumoOrientando[]
   filtros: TipoFiltros
   semResultado: boolean
   emitidoEm: Date
@@ -230,8 +238,8 @@ function ConteudoRelatorio({
           <span className="flex h-[1.45em] shrink-0 items-center">
             <CircleAlert aria-hidden="true" className="size-4 text-accent-text" />
           </span>
-          Nenhuma atividade validada corresponde ao período e aos tipos selecionados. Ajuste os filtros para ver e
-          exportar o relatório.
+          Nenhuma atividade validada corresponde ao período de validação e aos tipos selecionados. Ajuste os
+          filtros para ver e exportar o relatório.
         </p>
       )}
 
@@ -388,11 +396,15 @@ function ConteudoRelatorio({
         className="flex flex-col gap-3 rounded-lg border bg-surface p-6 print:break-inside-avoid print:border-0 print:p-0"
       >
         <h2 id="titulo-risco">Alunos em risco de não integralizar</h2>
-        {dados.emRisco.length === 0 ? (
+        <p className="text-caption leading-secondary text-muted-foreground">
+          Esta lista considera o histórico completo de cada aluno, independentemente do período de validação e dos
+          tipos filtrados acima — risco de não integralizar os 90h é propriedade do histórico inteiro.
+        </p>
+        {emRiscoTotal.length === 0 ? (
           <p className="leading-secondary text-muted-foreground">Nenhum orientando com sinal de risco no momento.</p>
         ) : (
           <ul className="flex flex-col gap-3">
-            {dados.emRisco.map((r) => (
+            {emRiscoTotal.map((r) => (
               <li key={r.discente.id} className="flex flex-col gap-2 rounded-lg border p-4 print:break-inside-avoid">
                 <Link
                   href={`/docente/fila?discente=${r.discente.id}`}
