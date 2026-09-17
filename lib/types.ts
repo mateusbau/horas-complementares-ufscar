@@ -61,8 +61,8 @@ export type Periodo = {
  * chave e valor de `lib/storage.ts` — só cabe ~5 MB por origem, e uma imagem
  * só já estoura a cota. `comprovanteId` referencia o blob: começando com "/" é um arquivo
  * público da demonstração (lib/mock-data.ts, servido de /public/comprovantes);
- * qualquer outro valor é a chave de um blob gravado no IndexedDB no envio
- * (lib/comprovantes-db.ts, só acessado por lib/storage.ts).
+ * qualquer outro valor é o caminho de um objeto no bucket `comprovantes` do
+ * Supabase Storage (acessado somente por lib/storage.ts).
  */
 export type Comprovante = {
   comprovanteId: string

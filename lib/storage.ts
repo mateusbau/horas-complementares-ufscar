@@ -11,7 +11,7 @@
 // componente "use client", e mostre skeleton até a resposta chegar.
 
 import { ehTipoAtividadeId } from "./catalogo"
-import { gravarBlob, lerBlob, limparTodosBlobs, removerBlob } from "./comprovantes-db"
+import { supabase } from "./supabase"
 import { redimensionarImagem } from "./imagem"
 import {
   ATRIBUTO_DENSIDADE,
@@ -52,10 +52,15 @@ import type {
   TipoAviso,
 } from "./types"
 
-const CHAVE = "horas-complementares:estado"
 const ATRASO_MS = 300
+const BUCKET_COMPROVANTES = "comprovantes"
 const STATUS: readonly StatusAtividade[] = ["validada", "analise", "pendente", "recusada"]
 const TIPOS_AVISO: readonly TipoAviso[] = ["validada", "recusada", "aguardando", "marco", "regra"]
+
+// Uploads acontecem quando o arquivo é escolhido, antes de a atividade ser
+// gravada. Este conjunto permite desfazer apenas uploads ainda não associados
+// a um estado persistido quando a gravação seguinte falha.
+const comprovantesPendentes = new Set<string>()
 
 // --- Infraestrutura -----------------------------------------------------------------
 
@@ -121,24 +126,43 @@ function ehEstadoValido(valor: unknown): valor is EstadoDemo {
   )
 }
 
-/** Lê o estado; na primeira visita (ou se estiver corrompido), cria o seed. */
-function ler(): EstadoDemo {
-  const bruto = armazenamento().getItem(CHAVE)
-  if (bruto) {
-    try {
-      const estado: unknown = JSON.parse(bruto)
-      if (ehEstadoValido(estado)) return estado
-    } catch {
-      // JSON inválido: recomeça do seed abaixo.
-    }
+/** Lê o estado do Supabase; se ainda não existir, cria a partir do seed. */
+async function ler(): Promise<EstadoDemo> {
+  const { data, error } = await supabase
+    .from("estado_demo")
+    .select("dados")
+    .eq("id", "principal")
+    .maybeSingle()
+
+  if (error) {
+    console.error("Erro ao ler estado do Supabase:", error)
+    throw new Error("Não foi possível carregar os dados.")
   }
+
+  if (data?.dados && ehEstadoValido(data.dados)) {
+    return data.dados as EstadoDemo
+  }
+
   const inicial = criarEstadoInicial(new Date())
-  gravar(inicial)
+
+  await gravar(inicial)
+
   return inicial
 }
 
-function gravar(estado: EstadoDemo): void {
-  armazenamento().setItem(CHAVE, JSON.stringify(estado))
+async function gravar(estado: EstadoDemo): Promise<void> {
+  const { error } = await supabase
+    .from("estado_demo")
+    .upsert({
+      id: "principal",
+      dados: estado,
+      atualizado_em: new Date().toISOString(),
+    })
+
+  if (error) {
+    console.error("Erro ao gravar estado no Supabase:", error)
+    throw new Error("Não foi possível salvar os dados.")
+  }
 }
 
 /** Cópia profunda: quem chama nunca altera o estado guardado por referência. */
@@ -164,7 +188,7 @@ function localizar(estado: EstadoDemo, id: string): number {
 
 export async function obterDiscenteAtual(): Promise<Discente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const discente = estado.discentes.find((d) => d.id === estado.discenteAtualId)
   if (!discente) throw new ErroDeRegra(["Discente da demonstração não encontrado."])
   return copia(discente)
@@ -172,7 +196,7 @@ export async function obterDiscenteAtual(): Promise<Discente> {
 
 export async function obterDocenteAtual(): Promise<Docente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const docente = estado.docentes.find((d) => d.id === estado.docenteAtualId)
   if (!docente) throw new ErroDeRegra(["Docente da demonstração não encontrado."])
   return copia(docente)
@@ -180,7 +204,8 @@ export async function obterDocenteAtual(): Promise<Docente> {
 
 export async function obterDiscente(id: string): Promise<Discente | null> {
   await esperar()
-  return copia(ler().discentes.find((d) => d.id === id) ?? null)
+  const estado = await ler()
+  return copia(estado.discentes.find((d) => d.id === id) ?? null)
 }
 
 // --- Atividades do discente ------------------------------------------------------------
@@ -188,28 +213,36 @@ export async function obterDiscente(id: string): Promise<Discente | null> {
 /** Atividades do discente da demonstração, na ordem em que foram registradas. */
 export async function listarAtividades(): Promise<Atividade[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(estado.atividades.filter((a) => a.discenteId === estado.discenteAtualId))
 }
 
 /** Qualquer atividade, de qualquer discente (a tela 07 do docente também usa). */
 export async function obterAtividade(id: string): Promise<Atividade | null> {
   await esperar()
-  return copia(ler().atividades.find((a) => a.id === id) ?? null)
+  const estado = await ler()
+  return copia(estado.atividades.find((a) => a.id === id) ?? null)
 }
 
 /** Envia uma nova atividade para validação; ela entra na fila do docente. */
 export async function criarAtividade(dados: NovaAtividade): Promise<Atividade> {
   await esperar()
-  const estado = ler()
-  const atividade = montarAtividade(
-    dados,
-    { id: novoId("atv"), discenteId: estado.discenteAtualId },
-    new Date()
-  )
-  estado.atividades.push(atividade)
-  gravar(estado)
-  return copia(atividade)
+  const comprovanteNovo = dados.comprovante?.comprovanteId
+  try {
+    const estado = await ler()
+    const atividade = montarAtividade(
+      dados,
+      { id: novoId("atv"), discenteId: estado.discenteAtualId },
+      new Date()
+    )
+    estado.atividades.push(atividade)
+    await gravar(estado)
+    if (comprovanteNovo) comprovantesPendentes.delete(comprovanteNovo)
+    return copia(atividade)
+  } catch (erro) {
+    if (comprovanteNovo) await descartarComprovantePendente(comprovanteNovo)
+    throw erro
+  }
 }
 
 /**
@@ -221,44 +254,59 @@ export async function atualizarAtividade(
   patch: Partial<NovaAtividade>
 ): Promise<Atividade> {
   await esperar()
-  const estado = ler()
-  const indice = localizar(estado, id)
-  const atual = estado.atividades[indice]
-  if (atual.discenteId !== estado.discenteAtualId) {
-    throw new ErroDeRegra(["Só é possível editar as próprias atividades."])
+  let comprovanteAnterior: string | null = null
+  const comprovanteNovo = patch.comprovante?.comprovanteId
+  try {
+    const estado = await ler()
+    const indice = localizar(estado, id)
+    const atual = estado.atividades[indice]
+    comprovanteAnterior = atual.comprovante?.comprovanteId ?? null
+    if (atual.discenteId !== estado.discenteAtualId) {
+      throw new ErroDeRegra(["Só é possível editar as próprias atividades."])
+    }
+    if (atual.status !== "pendente") {
+      throw new ErroDeRegra(["Só atividades pendentes podem ser editadas."])
+    }
+    // `null` em tipoId é uma escolha (não previsto), diferente de não informar.
+    const tipoId = patch.tipoId !== undefined ? patch.tipoId : atual.tipoId
+    const quantidade = patch.quantidade !== undefined ? patch.quantidade : atual.quantidade
+    const atualizada: Atividade = {
+      ...atual,
+      ...patch,
+      tipoId,
+      quantidade: tipoId === null ? null : quantidade,
+    }
+    estado.atividades[indice] = atualizada
+    await gravar(estado)
+
+    if (comprovanteNovo) comprovantesPendentes.delete(comprovanteNovo)
+    if (comprovanteAnterior && comprovanteAnterior !== comprovanteNovo) {
+      await removerComprovante(comprovanteAnterior)
+    }
+    return copia(atualizada)
+  } catch (erro) {
+    if (comprovanteNovo && comprovanteNovo !== comprovanteAnterior) {
+      await descartarComprovantePendente(comprovanteNovo)
+    }
+    throw erro
   }
-  if (atual.status !== "pendente") {
-    throw new ErroDeRegra(["Só atividades pendentes podem ser editadas."])
-  }
-  // `null` em tipoId é uma escolha (não previsto), diferente de não informar.
-  const tipoId = patch.tipoId !== undefined ? patch.tipoId : atual.tipoId
-  const quantidade = patch.quantidade !== undefined ? patch.quantidade : atual.quantidade
-  const atualizada: Atividade = {
-    ...atual,
-    ...patch,
-    tipoId,
-    quantidade: tipoId === null ? null : quantidade,
-  }
-  estado.atividades[indice] = atualizada
-  gravar(estado)
-  return copia(atualizada)
 }
 
 /** Envia (ou reenvia, após devolução) uma atividade pendente. */
 export async function enviarAtividade(id: string): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const indice = localizar(estado, id)
   const enviada = enviarParaValidacao(estado.atividades[indice], new Date())
   estado.atividades[indice] = enviada
-  gravar(estado)
+  await gravar(estado)
   return copia(enviada)
 }
 
 /** Progresso do discente da demonstração ou, se informado, de outro discente. */
 export async function obterProgresso(discenteId?: string): Promise<Progresso> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const alvo = discenteId ?? estado.discenteAtualId
   return calcularProgresso(estado.atividades.filter((a) => a.discenteId === alvo))
 }
@@ -268,82 +316,108 @@ export async function obterProgresso(discenteId?: string): Promise<Progresso> {
 /** Do mais recente para o mais antigo. */
 export async function listarAvisos(): Promise<Aviso[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(estado.avisos).sort((a, b) => new Date(b.em).getTime() - new Date(a.em).getTime())
 }
 
 export async function marcarAvisoComoLido(id: string): Promise<void> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   estado.avisos = estado.avisos.map((a) => (a.id === id ? { ...a, lido: true } : a))
-  gravar(estado)
+  await gravar(estado)
 }
 
 export async function marcarTodosAvisosComoLidos(): Promise<void> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   estado.avisos = estado.avisos.map((a) => ({ ...a, lido: true }))
-  gravar(estado)
+  await gravar(estado)
 }
 
 // --- Comprovantes --------------------------------------------------------------------------
-// O blob nunca vai para o localStorage (a cota por origem é ~5 MB); vai para
-// o IndexedDB, por lib/comprovantes-db.ts, que só este arquivo importa. Sem
-// os 300 ms de esperar(): o processamento da imagem e a escrita no IndexedDB
-// já são trabalho assíncrono de verdade, a mesma exceção já aberta para as
-// preferências de acessibilidade.
+// O arquivo fica no Supabase Storage; o EstadoDemo guarda somente seu caminho.
+// Sem os 300 ms de esperar(): o processamento e o upload já são assíncronos.
 
 const LADO_MAIOR_COMPROVANTE = 1400
 const QUALIDADE_JPEG_COMPROVANTE = 0.7
 
 /**
- * Processa (imagem: redimensiona e recomprime; PDF: mantém como está) e grava
- * o arquivo no IndexedDB. Devolve só a referência — o componente nunca vê o
- * blob nem o IndexedDB.
+ * Processa (imagem: redimensiona e recomprime; PDF: mantém como está) e envia
+ * o arquivo ao Supabase Storage. Devolve somente a referência ao objeto.
  */
 export async function salvarComprovante(arquivo: File): Promise<Comprovante> {
-  const id = novoId("comp")
+  const caminho = arquivo.type.startsWith("image/")
+    ? `${novoId("comp")}.jpg`
+    : `${novoId("comp")}.pdf`
+  let conteudo: Blob = arquivo
+  let tipoMime = arquivo.type
+
   if (arquivo.type.startsWith("image/")) {
-    const imagemProcessada = await redimensionarImagem(arquivo, LADO_MAIOR_COMPROVANTE, QUALIDADE_JPEG_COMPROVANTE)
-    await gravarBlob(id, imagemProcessada)
-    return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: imagemProcessada.size, tipoMime: "image/jpeg" }
+    conteudo = await redimensionarImagem(arquivo, LADO_MAIOR_COMPROVANTE, QUALIDADE_JPEG_COMPROVANTE)
+    tipoMime = "image/jpeg"
   }
-  await gravarBlob(id, arquivo)
-  return { comprovanteId: id, nome: arquivo.name, tamanhoBytes: arquivo.size, tipoMime: arquivo.type }
+
+  const { error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .upload(caminho, conteudo, { contentType: tipoMime, upsert: false })
+
+  if (error) {
+    console.error("Erro ao enviar comprovante ao Supabase Storage:", error)
+    throw new Error("Não foi possível salvar o comprovante.")
+  }
+
+  comprovantesPendentes.add(caminho)
+  return { comprovanteId: caminho, nome: arquivo.name, tamanhoBytes: conteudo.size, tipoMime }
 }
 
 /**
  * URL para exibir o comprovante — `<img src>` ou `<embed src>`. Uma
  * referência começando com "/" já é um arquivo público da demonstração
- * (lib/mock-data.ts) e volta direto, sem tocar no IndexedDB. `null` quando o
- * blob não é encontrado (nunca lança: quem chama mostra o estado de erro,
- * em vez de quebrar a tela).
+ * (lib/mock-data.ts) e volta direto. Os demais são objetos do bucket público.
  */
 export async function obterUrlComprovante(comprovante: Comprovante): Promise<string | null> {
   if (comprovante.comprovanteId.startsWith("/")) return comprovante.comprovanteId
   try {
-    const blob = await lerBlob(comprovante.comprovanteId)
-    return blob ? URL.createObjectURL(blob) : null
+    const { data } = supabase.storage
+      .from(BUCKET_COMPROVANTES)
+      .getPublicUrl(comprovante.comprovanteId)
+    return data.publicUrl
   } catch {
     return null
   }
 }
 
-/** Recupera o arquivo local para OCR, inclusive ao reabrir um rascunho. */
+/** Recupera o arquivo remoto para OCR, inclusive ao reabrir um rascunho. */
 export async function obterArquivoComprovante(comprovante: Comprovante): Promise<File | null> {
   if (comprovante.comprovanteId.startsWith("/")) return null
-  const blob = await lerBlob(comprovante.comprovanteId)
-  return blob ? new File([blob], comprovante.nome, { type: blob.type }) : null
+  const { data, error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .download(comprovante.comprovanteId)
+  if (error || !data) return null
+  return new File([data], comprovante.nome, { type: data.type || comprovante.tipoMime })
 }
 
-/** Best-effort: usado ao trocar ou remover um comprovante já enviado, para não acumular blob órfão. */
+async function removerObjetoComprovante(comprovanteId: string): Promise<boolean> {
+  const { error } = await supabase.storage
+    .from(BUCKET_COMPROVANTES)
+    .remove([comprovanteId])
+  if (error) {
+    console.error("Erro ao remover comprovante do Supabase Storage:", error)
+    return false
+  }
+  comprovantesPendentes.delete(comprovanteId)
+  return true
+}
+
+async function descartarComprovantePendente(comprovanteId: string): Promise<void> {
+  if (!comprovantesPendentes.has(comprovanteId)) return
+  await removerObjetoComprovante(comprovanteId)
+}
+
+/** Best-effort: remove somente objetos remotos; arquivos públicos do seed são preservados. */
 export async function removerComprovante(comprovanteId: string): Promise<void> {
   if (comprovanteId.startsWith("/")) return
-  try {
-    await removerBlob(comprovanteId)
-  } catch {
-    // Falha ao limpar não deve impedir a ação principal (a troca ou remoção do campo).
-  }
+  await removerObjetoComprovante(comprovanteId)
 }
 
 // --- Rascunho da tela 04 ------------------------------------------------------------------
@@ -391,7 +465,7 @@ export async function limparRascunho(): Promise<void> {
  */
 export async function listarFilaValidacao(): Promise<ItemFila[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const agora = new Date()
   const discentes = new Map(estado.discentes.map((d) => [d.id, d]))
 
@@ -418,11 +492,11 @@ export async function listarFilaValidacao(): Promise<ItemFila[]> {
 /** Aprova, devolve com pendência ou recusa; pode reclassificar o tipo. */
 export async function registrarParecer(id: string, parecer: NovoParecer): Promise<Atividade> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const indice = localizar(estado, id)
   const resultado = aplicarParecer(estado.atividades[indice], parecer, estado.docenteAtualId, new Date())
   estado.atividades[indice] = resultado
-  gravar(estado)
+  await gravar(estado)
   return copia(resultado)
 }
 
@@ -444,7 +518,7 @@ export type EstatisticasDocente = {
 /** Indicadores do painel do docente (tela 06): sempre sobre todas as atividades do sistema. */
 export async function obterEstatisticasDocente(): Promise<EstatisticasDocente> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   const agora = new Date()
 
   const emAnalise = estado.atividades.filter(
@@ -476,13 +550,13 @@ function construirResumosOrientandos(estado: EstadoDemo, agora: Date): ResumoOri
 
 export async function listarOrientandos(): Promise<ResumoOrientando[]> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(construirResumosOrientandos(estado, new Date()))
 }
 
 export async function obterRelatorioTurma(): Promise<RelatorioTurma> {
   await esperar()
-  const estado = ler()
+  const estado = await ler()
   return copia(agregarTurma(construirResumosOrientandos(estado, new Date())))
 }
 
@@ -616,7 +690,7 @@ export const SCRIPT_PREFERENCIAS = `(function(){try{var p=JSON.parse(localStorag
 
 export async function exportarEstado(): Promise<string> {
   await esperar()
-  return JSON.stringify(ler(), null, 2)
+  return JSON.stringify(await ler(), null, 2)
 }
 
 export async function importarEstado(json: string): Promise<void> {
@@ -630,26 +704,20 @@ export async function importarEstado(json: string): Promise<void> {
   if (!ehEstadoValido(estado)) {
     throw new ErroDeRegra(["O arquivo não é um estado exportado por este sistema."])
   }
-  gravar(estado)
+  await gravar(estado)
 }
 
 /** Volta ao seed, com datas recalculadas a partir de agora. */
 export async function reiniciarDemo(): Promise<void> {
   await esperar()
-  gravar(criarEstadoInicial(new Date()))
+  await gravar(criarEstadoInicial(new Date()))
 }
 
 /**
- * "Limpar meus dados locais" (tela de Configurações, seção Sessão): apaga as
- * atividades registradas neste navegador e os arquivos de comprovante
- * enviados. Reaproveita reiniciarDemo() para a parte do localStorage — o
- * estado nunca fica de fato vazio, porque ler() sempre recria o seed quando a
- * chave está ausente ou inválida — e remove TODOS os blobs do IndexedDB,
- * inclusive os que não pertencem a nenhuma atividade restante. Preferências
- * (lib/preferencias.ts) não são tocadas: são dados pessoais, não dados da
- * demonstração.
+ * Reinicia o estado da demonstração. Comprovantes remotos não são apagados em
+ * massa, pois o bucket é compartilhado entre navegadores; trocas e remoções
+ * individuais fazem sua própria limpeza best-effort.
  */
 export async function limparDadosLocais(): Promise<void> {
   await reiniciarDemo()
-  await limparTodosBlobs()
 }
