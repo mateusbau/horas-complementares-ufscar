@@ -20,7 +20,7 @@ import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
-import { calcularProgresso, creditosDaAtividade, horasDeCreditos } from "@/lib/calculos"
+import { calcularProgresso, creditosDaAtividade } from "@/lib/calculos"
 import { FONTE_TABELA_7, GRUPOS, obterTipo } from "@/lib/catalogo"
 import { baixarCSV, montarCSV } from "@/lib/csv"
 import {
@@ -55,7 +55,7 @@ type LinhaAtividadeValidada = {
   data: string
   tipo: string
   descricao: string
-  cargaHoraria: string
+  cargaHorariaCertificado: string
   creditos: string
   status: string
   validadoPor: string
@@ -66,6 +66,14 @@ type LinhaAtividadeValidada = {
  * parecer que aprovou — é o evento que este relatório documenta; sem
  * parecer de aprovação (não deveria acontecer com status "validada", mas o
  * TypeScript não sabe disso), cai para o envio ou a criação.
+ *
+ * "Carga horária do certificado" é o valor bruto registrado (a.quantidade,
+ * na unidade do próprio tipo — horas, dias, palestras...), NUNCA
+ * creditosDaAtividade() convertido de volta em horas: a Tabela 7 do PPC usa
+ * a carga horária como requisito para chegar aos créditos, não o caminho
+ * inverso, e HORAS_POR_CREDITO não define uma carga horária "real" a
+ * partir do crédito. formatarUnidade é a mesma função que a tabela "Atividades
+ * por tipo" já usa na coluna "Você registrou" — dado bruto, sem conversão.
  */
 function construirLinhasValidadas(atividades: readonly Atividade[], docente: Docente): LinhaAtividadeValidada[] {
   return atividades
@@ -73,15 +81,15 @@ function construirLinhasValidadas(atividades: readonly Atividade[], docente: Doc
     .map((a) => {
       const parecerAprovacao = [...a.pareceres].reverse().find((p) => p.decisao === "aprovar")
       const dataISO = parecerAprovacao?.em ?? a.enviadaEm ?? a.criadaEm
-      const creditos = creditosDaAtividade(a)
       return {
         atividadeId: a.id,
         dataISO,
         data: formatarData(dataISO),
         tipo: a.tipoId === null ? "Sem tipo previsto" : obterTipo(a.tipoId).nome,
         descricao: a.titulo,
-        cargaHoraria: formatarHoras(horasDeCreditos(creditos)),
-        creditos: formatarCreditos(creditos),
+        cargaHorariaCertificado:
+          a.tipoId === null || a.quantidade === null ? "—" : formatarUnidade(a.tipoId, a.quantidade),
+        creditos: formatarCreditos(creditosDaAtividade(a)),
         status: "Validada",
         validadoPor: docente.nome,
       }
@@ -112,8 +120,16 @@ export function Relatorio() {
   function aoBaixarCSV() {
     if (estado.status !== "pronto") return
     const conteudo = montarCSV(
-      ["Data", "Tipo de atividade (Tabela 7)", "Descrição", "Carga horária", "Créditos reconhecidos", "Status", "Validado por"],
-      linhasValidadas.map((l) => [l.data, l.tipo, l.descricao, l.cargaHoraria, l.creditos, l.status, l.validadoPor])
+      [
+        "Data",
+        "Tipo de atividade (Tabela 7)",
+        "Descrição",
+        "Carga horária do certificado",
+        "Créditos reconhecidos",
+        "Status",
+        "Validado por",
+      ],
+      linhasValidadas.map((l) => [l.data, l.tipo, l.descricao, l.cargaHorariaCertificado, l.creditos, l.status, l.validadoPor])
     )
     baixarCSV(`relatorio-${estado.discente.ra}-${formatarDataArquivo(emitidoEm)}.csv`, conteudo)
   }
@@ -374,10 +390,10 @@ function ConteudoRelatorio({
                       Descrição
                     </th>
                     <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
-                      Carga horária
+                      Carga horária do certificado
                     </th>
                     <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
-                      Créditos
+                      Créditos reconhecidos
                     </th>
                     <th scope="col" className="px-4 py-2 text-left text-label text-foreground">
                       Status
@@ -393,7 +409,7 @@ function ConteudoRelatorio({
                       <td className="tabular px-4 py-2 text-body">{linha.data}</td>
                       <td className="px-4 py-2 text-body">{linha.tipo}</td>
                       <td className="px-4 py-2 text-body">{linha.descricao}</td>
-                      <td className="tabular px-4 py-2 text-body">{linha.cargaHoraria}</td>
+                      <td className="tabular px-4 py-2 text-body">{linha.cargaHorariaCertificado}</td>
                       <td className="tabular px-4 py-2 text-body">{linha.creditos}</td>
                       <td className="px-4 py-2 text-body">{linha.status}</td>
                       <td className="px-4 py-2 text-body">{linha.validadoPor}</td>
