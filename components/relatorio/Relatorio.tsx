@@ -13,12 +13,14 @@
 // a barra de acessibilidade, a navegação e os botões, deixando só o conteúdo
 // do documento.
 
-import { CircleCheck, CircleDashed, Download, Printer } from "lucide-react"
+import { CircleAlert, CircleCheck, CircleDashed, Download, Printer } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { EstadoErro } from "@/components/feedback/EstadoErro"
+import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { FiltrosRelatorio } from "@/components/relatorio/FiltrosRelatorio"
 import { Button } from "@/components/ui/button"
 import { calcularProgresso, creditosDaAtividade } from "@/lib/calculos"
 import { FONTE_TABELA_7, GRUPOS, obterTipo } from "@/lib/catalogo"
@@ -34,13 +36,22 @@ import {
   formatarPremissaCredito,
   formatarUnidade,
 } from "@/lib/formatacao"
+import {
+  dataDeValidacao,
+  descreverFiltros,
+  erroPeriodo,
+  filtrarAtividades,
+  filtrosPadrao,
+  filtrosSaoPadrao,
+  type FiltrosRelatorio as TipoFiltros,
+} from "@/lib/relatorio-filtros"
 import { listarAtividades, obterDiscenteAtual, obterDocenteAtual } from "@/lib/storage"
 import type { Atividade, Discente, Docente, Progresso, StatusAtividade } from "@/lib/types"
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; discente: Discente; docente: Docente; atividades: Atividade[]; progresso: Progresso }
+  | { status: "pronto"; discente: Discente; docente: Docente; atividades: Atividade[] }
 
 const ROTULO_STATUS_EXCLUIDO: Record<Exclude<StatusAtividade, "validada">, { singular: string; plural: string }> = {
   analise: { singular: "em análise", plural: "em análise" },
@@ -79,8 +90,7 @@ function construirLinhasValidadas(atividades: readonly Atividade[], docente: Doc
   return atividades
     .filter((a) => a.status === "validada")
     .map((a) => {
-      const parecerAprovacao = [...a.pareceres].reverse().find((p) => p.decisao === "aprovar")
-      const dataISO = parecerAprovacao?.em ?? a.enviadaEm ?? a.criadaEm
+      const dataISO = dataDeValidacao(a) ?? a.criadaEm
       return {
         atividadeId: a.id,
         dataISO,
@@ -101,13 +111,15 @@ export function Relatorio() {
   const [estado, setEstado] = useState<Estado>({ status: "carregando" })
   const [tentativa, setTentativa] = useState(0)
   const [emitidoEm] = useState(() => new Date())
+  const [filtros, setFiltros] = useState<TipoFiltros>(() => filtrosPadrao())
+  const anunciar = useAnunciar()
 
   useEffect(() => {
     let ativo = true
     Promise.all([obterDiscenteAtual(), obterDocenteAtual(), listarAtividades()])
       .then(([discente, docente, atividades]) => {
         if (!ativo) return
-        setEstado({ status: "pronto", discente, docente, atividades, progresso: calcularProgresso(atividades) })
+        setEstado({ status: "pronto", discente, docente, atividades })
       })
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
@@ -115,10 +127,32 @@ export function Relatorio() {
     }
   }, [tentativa])
 
-  const linhasValidadas = estado.status === "pronto" ? construirLinhasValidadas(estado.atividades, estado.docente) : []
+  // Estende a mesma calcularProgresso: filtra a lista de atividades ANTES de passar para ela,
+  // nunca reimplementa crédito/percentual. progresso e linhasValidadas do relatório filtrado
+  // vêm dos dois únicos caminhos que já existiam (calcularProgresso / construirLinhasValidadas).
+  const atividadesFiltradas =
+    estado.status === "pronto" ? filtrarAtividades(estado.atividades, filtros, dataDeValidacao) : []
+  const progressoFiltrado = estado.status === "pronto" ? calcularProgresso(atividadesFiltradas) : null
+  const linhasValidadas =
+    estado.status === "pronto" ? construirLinhasValidadas(atividadesFiltradas, estado.docente) : []
+  const semResultado = estado.status === "pronto" && linhasValidadas.length === 0
+  const podeExportar = estado.status === "pronto" && !semResultado && !erroPeriodo(filtros)
+
+  function aoMudarFiltros(novosFiltros: TipoFiltros) {
+    setFiltros(novosFiltros)
+    if (estado.status !== "pronto" || erroPeriodo(novosFiltros)) return
+    const novasAtividades = filtrarAtividades(estado.atividades, novosFiltros, dataDeValidacao)
+    const novoProgresso = calcularProgresso(novasAtividades)
+    const totalValidadas = novasAtividades.filter((a) => a.status === "validada").length
+    anunciar(
+      totalValidadas === 0
+        ? "Nenhuma atividade validada corresponde aos filtros selecionados."
+        : `Filtro aplicado: ${formatarCreditos(novoProgresso.creditosObtidos)} de ${formatarNumero(novoProgresso.creditosExigidos)}, ${formatarNumero(totalValidadas)} ${totalValidadas === 1 ? "atividade validada" : "atividades validadas"}.`
+    )
+  }
 
   function aoBaixarCSV() {
-    if (estado.status !== "pronto") return
+    if (estado.status !== "pronto" || !podeExportar) return
     const conteudo = montarCSV(
       [
         "Data",
@@ -129,7 +163,8 @@ export function Relatorio() {
         "Status",
         "Validado por",
       ],
-      linhasValidadas.map((l) => [l.data, l.tipo, l.descricao, l.cargaHorariaCertificado, l.creditos, l.status, l.validadoPor])
+      linhasValidadas.map((l) => [l.data, l.tipo, l.descricao, l.cargaHorariaCertificado, l.creditos, l.status, l.validadoPor]),
+      descreverFiltros(filtros)
     )
     baixarCSV(`relatorio-${estado.discente.ra}-${formatarDataArquivo(emitidoEm)}.csv`, conteudo)
   }
@@ -142,11 +177,20 @@ export function Relatorio() {
         acao={
           estado.status === "pronto" ? (
             <>
-              <Button variant="outline" onClick={aoBaixarCSV}>
+              <Button
+                variant="outline"
+                onClick={aoBaixarCSV}
+                disabled={!podeExportar}
+                aria-describedby={!podeExportar ? "relatorio-sem-resultado" : undefined}
+              >
                 <Download aria-hidden="true" />
                 Baixar CSV
               </Button>
-              <Button onClick={() => window.print()}>
+              <Button
+                onClick={() => window.print()}
+                disabled={!podeExportar}
+                aria-describedby={!podeExportar ? "relatorio-sem-resultado" : undefined}
+              >
                 <Printer aria-hidden="true" />
                 Imprimir ou salvar em PDF
               </Button>
@@ -167,14 +211,21 @@ export function Relatorio() {
         <EstadoErro nivelTitulo={2} titulo="Não foi possível carregar o relatório" onTentarNovamente={() => setTentativa((t) => t + 1)} />
       )}
 
-      {estado.status === "pronto" && (
-        <ConteudoRelatorio
-          discente={estado.discente}
-          atividades={estado.atividades}
-          progresso={estado.progresso}
-          emitidoEm={emitidoEm}
-          linhasValidadas={linhasValidadas}
-        />
+      {estado.status === "pronto" && progressoFiltrado && (
+        <div className="flex flex-col gap-8">
+          <div className="max-w-content">
+            <FiltrosRelatorio filtros={filtros} onChange={aoMudarFiltros} />
+          </div>
+          <ConteudoRelatorio
+            discente={estado.discente}
+            atividades={estado.atividades}
+            progresso={progressoFiltrado}
+            filtros={filtros}
+            semResultado={semResultado}
+            emitidoEm={emitidoEm}
+            linhasValidadas={linhasValidadas}
+          />
+        </div>
       )}
     </>
   )
@@ -184,15 +235,20 @@ function ConteudoRelatorio({
   discente,
   atividades,
   progresso,
+  filtros,
+  semResultado,
   emitidoEm,
   linhasValidadas,
 }: {
   discente: Discente
   atividades: Atividade[]
   progresso: Progresso
+  filtros: TipoFiltros
+  semResultado: boolean
   emitidoEm: Date
   linhasValidadas: LinhaAtividadeValidada[]
 }) {
+  const validadasTotais = atividades.filter((a) => a.status === "validada")
   const naoValidadas = atividades.filter((a) => a.status !== "validada")
   const contagemExcluidas = naoValidadas.reduce(
     (contagem, a) => {
@@ -210,9 +266,28 @@ function ConteudoRelatorio({
     })
 
   const tiposOk = progresso.tiposDistintos >= progresso.tiposExigidos
+  const filtroPadrao = filtrosSaoPadrao(filtros)
 
   return (
     <div className="flex max-w-content flex-col gap-8 print:gap-6">
+      <p className="rounded-lg border border-input-border bg-accent-soft p-4 leading-secondary text-foreground print:border-0 print:bg-transparent print:p-0">
+        {descreverFiltros(filtros)}
+      </p>
+
+      {semResultado && (
+        <p
+          id="relatorio-sem-resultado"
+          className="flex items-start gap-2 rounded-lg border border-input-border bg-surface p-4 leading-secondary text-foreground print:hidden"
+        >
+          <span className="flex h-[1.45em] shrink-0 items-center">
+            <CircleAlert aria-hidden="true" className="size-4 text-accent-text" />
+          </span>
+          {filtroPadrao
+            ? "Você ainda não tem nenhuma atividade validada. Os botões de exportação ficam disponíveis quando houver alguma."
+            : "Nenhuma atividade validada corresponde ao período e aos tipos selecionados. Ajuste os filtros para ver e exportar o relatório."}
+        </p>
+      )}
+
       <section
         aria-labelledby="titulo-identificacao"
         className="flex flex-col gap-4 rounded-lg border bg-surface p-6 print:break-inside-avoid print:border-0 print:p-0"
@@ -272,6 +347,8 @@ function ConteudoRelatorio({
           {naoValidadas.length === 0
             ? `Todas as ${formatarNumero(atividades.length)} atividades registradas foram validadas.`
             : `${formatarNumero(naoValidadas.length)} de ${formatarNumero(atividades.length)} atividades registradas não entram, porque ainda não foram validadas (${partesExcluidas.join(", ")}).`}
+          {!filtroPadrao &&
+            ` Com os filtros de período e tipo aplicados, ${formatarNumero(linhasValidadas.length)} de ${formatarNumero(validadasTotais.length)} atividades validadas aparecem abaixo.`}
         </p>
 
         {progresso.porTipo.length === 0 ? (

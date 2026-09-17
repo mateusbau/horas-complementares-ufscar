@@ -21,11 +21,24 @@ function escaparCampo(valor: string): string {
   return valor
 }
 
-/** Monta o texto do CSV a partir do cabeçalho e das linhas já formatadas para exibição. */
-export function montarCSV(colunas: readonly string[], linhas: readonly (readonly (string | number)[])[]): string {
+/**
+ * Monta o texto do CSV a partir do cabeçalho e das linhas já formatadas para
+ * exibição. `linhaMetadados`, quando informada, entra como a primeira linha
+ * do arquivo (período e tipos filtrados) — para o CSV se explicar sozinho
+ * fora do sistema, sem depender da tela que o gerou.
+ */
+export function montarCSV(
+  colunas: readonly string[],
+  linhas: readonly (readonly (string | number)[])[],
+  linhaMetadados?: string
+): string {
   const linhaCabecalho = colunas.map((coluna) => escaparCampo(coluna)).join(SEPARADOR)
   const linhasDados = linhas.map((linha) => linha.map((campo) => escaparCampo(String(campo))).join(SEPARADOR))
-  return BOM + [linhaCabecalho, ...linhasDados].join("\r\n")
+  const todasAsLinhas =
+    linhaMetadados !== undefined
+      ? [escaparCampo(linhaMetadados), linhaCabecalho, ...linhasDados]
+      : [linhaCabecalho, ...linhasDados]
+  return BOM + todasAsLinhas.join("\r\n")
 }
 
 /** Aciona o download do CSV como arquivo local, sem passar por servidor. */

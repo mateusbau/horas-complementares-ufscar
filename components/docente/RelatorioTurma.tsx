@@ -16,15 +16,17 @@
 // integralização e na lista de risco aqui é exatamente quem a outra tela já
 // mostra.
 
-import { Download, Printer, TrendingUp } from "lucide-react"
+import { CircleAlert, Download, Printer, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { EtiquetaRisco } from "@/components/docente/EtiquetaRisco"
 import { EstadoErro } from "@/components/feedback/EstadoErro"
 import { EstadoVazio } from "@/components/feedback/EstadoVazio"
+import { useAnunciar } from "@/components/feedback/RegiaoAoVivo"
 import { AreaCarregando, Skeleton } from "@/components/feedback/Skeleton"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { FiltrosRelatorio } from "@/components/relatorio/FiltrosRelatorio"
 import { Button } from "@/components/ui/button"
 import { HORAS_EXIGIDAS } from "@/lib/calculos"
 import { CURSO } from "@/lib/catalogo"
@@ -36,33 +38,73 @@ import {
   formatarNumero,
   formatarPercentual,
 } from "@/lib/formatacao"
-import { listarOrientandos, obterDocenteAtual, obterRelatorioTurma } from "@/lib/storage"
-import type { Docente } from "@/lib/types"
-import type { RelatorioTurma as DadosRelatorioTurma, ResumoOrientando } from "@/lib/orientandos"
+import { agregarTurma, resumirOrientando, type RelatorioTurma as DadosRelatorioTurma, type ResumoOrientando } from "@/lib/orientandos"
+import {
+  dataDeValidacao,
+  descreverFiltros,
+  erroPeriodo,
+  filtrarAtividades,
+  filtrosPadrao,
+  type FiltrosRelatorio as TipoFiltros,
+} from "@/lib/relatorio-filtros"
+import { listarAtividadesDosOrientandos, obterDocenteAtual } from "@/lib/storage"
+import type { Atividade, Discente, Docente } from "@/lib/types"
+
+type BrutoOrientando = { discente: Discente; atividades: Atividade[] }
 
 type Estado =
   | { status: "carregando" }
   | { status: "erro" }
-  | { status: "pronto"; docente: Docente; dados: DadosRelatorioTurma; orientandos: ResumoOrientando[] }
+  | { status: "pronto"; docente: Docente; bruto: BrutoOrientando[] }
 
 export function RelatorioTurma() {
   const [estado, setEstado] = useState<Estado>({ status: "carregando" })
   const [tentativa, setTentativa] = useState(0)
   const [emitidoEm] = useState(() => new Date())
+  const [filtros, setFiltros] = useState<TipoFiltros>(() => filtrosPadrao())
+  const anunciar = useAnunciar()
 
   useEffect(() => {
     let ativo = true
-    Promise.all([obterDocenteAtual(), obterRelatorioTurma(), listarOrientandos()])
-      .then(([docente, dados, orientandos]) => ativo && setEstado({ status: "pronto", docente, dados, orientandos }))
+    Promise.all([obterDocenteAtual(), listarAtividadesDosOrientandos()])
+      .then(([docente, bruto]) => ativo && setEstado({ status: "pronto", docente, bruto }))
       .catch(() => ativo && setEstado({ status: "erro" }))
     return () => {
       ativo = false
     }
   }, [tentativa])
 
+  // Estende a mesma agregação (resumirOrientando + agregarTurma, lib/orientandos.ts): filtra a
+  // lista de atividades de cada orientando ANTES de resumirOrientando, nunca reimplementa
+  // crédito/percentual. "Meus orientandos" (sem filtro) e este relatório continuam usando as
+  // duas mesmas funções — só a entrada muda.
+  function recalcular(bruto: BrutoOrientando[], filtrosAplicados: TipoFiltros): ResumoOrientando[] {
+    return bruto.map(({ discente, atividades }) =>
+      resumirOrientando(discente, filtrarAtividades(atividades, filtrosAplicados, dataDeValidacao), emitidoEm)
+    )
+  }
+
+  const orientandos = estado.status === "pronto" ? recalcular(estado.bruto, filtros) : []
+  const dados = agregarTurma(orientandos)
+  const semOrientandos = estado.status === "pronto" && estado.bruto.length === 0
+  const semResultado = !semOrientandos && dados.totalAlunos > 0 && dados.mediaCreditos === 0 && dados.distribuicaoPorTipo.length === 0
+  const podeExportar = estado.status === "pronto" && !semOrientandos && !semResultado && !erroPeriodo(filtros)
+
+  function aoMudarFiltros(novosFiltros: TipoFiltros) {
+    setFiltros(novosFiltros)
+    if (estado.status !== "pronto" || erroPeriodo(novosFiltros)) return
+    const novosOrientandos = recalcular(estado.bruto, novosFiltros)
+    const novosDados = agregarTurma(novosOrientandos)
+    anunciar(
+      novosDados.mediaCreditos === 0 && novosDados.distribuicaoPorTipo.length === 0
+        ? "Nenhuma atividade validada corresponde aos filtros selecionados."
+        : `Filtro aplicado: média de ${formatarCreditos(Math.round(novosDados.mediaCreditos * 10) / 10)} por aluno, ${formatarPercentual(novosDados.percentualIntegralizado)} já integralizaram.`
+    )
+  }
+
   function aoBaixarCSV() {
-    if (estado.status !== "pronto") return
-    const linhas = [...estado.orientandos]
+    if (!podeExportar) return
+    const linhas = [...orientandos]
       .sort((a, b) => a.discente.nome.localeCompare(b.discente.nome, "pt-BR"))
       .map((r) => [
         r.discente.nome,
@@ -73,7 +115,8 @@ export function RelatorioTurma() {
       ])
     const conteudo = montarCSV(
       ["Aluno", "RA", "Créditos reconhecidos", "Créditos pendentes", `% de conclusão dos ${formatarNumero(HORAS_EXIGIDAS)}h`],
-      linhas
+      linhas,
+      descreverFiltros(filtros)
     )
     baixarCSV(`relatorio-turma-${formatarDataArquivo(emitidoEm)}.csv`, conteudo)
   }
@@ -84,13 +127,22 @@ export function RelatorioTurma() {
         titulo="Relatório da turma"
         subtitulo="Créditos homologados e sinais de risco dos seus orientandos, consolidados para a coordenação."
         acao={
-          estado.status === "pronto" && estado.dados.totalAlunos > 0 ? (
+          estado.status === "pronto" && !semOrientandos ? (
             <>
-              <Button variant="outline" onClick={aoBaixarCSV}>
+              <Button
+                variant="outline"
+                onClick={aoBaixarCSV}
+                disabled={!podeExportar}
+                aria-describedby={!podeExportar ? "relatorio-turma-sem-resultado" : undefined}
+              >
                 <Download aria-hidden="true" />
                 Baixar CSV
               </Button>
-              <Button onClick={() => window.print()}>
+              <Button
+                onClick={() => window.print()}
+                disabled={!podeExportar}
+                aria-describedby={!podeExportar ? "relatorio-turma-sem-resultado" : undefined}
+              >
                 <Printer aria-hidden="true" />
                 Imprimir relatório
               </Button>
@@ -111,7 +163,7 @@ export function RelatorioTurma() {
         <EstadoErro nivelTitulo={2} titulo="Não foi possível carregar o relatório" onTentarNovamente={() => setTentativa((t) => t + 1)} />
       )}
 
-      {estado.status === "pronto" && estado.dados.totalAlunos === 0 && (
+      {estado.status === "pronto" && semOrientandos && (
         <EstadoVazio
           nivelTitulo={2}
           icone={TrendingUp}
@@ -120,13 +172,20 @@ export function RelatorioTurma() {
         />
       )}
 
-      {estado.status === "pronto" && estado.dados.totalAlunos > 0 && (
-        <ConteudoRelatorio
-          docente={estado.docente}
-          dados={estado.dados}
-          orientandos={estado.orientandos}
-          emitidoEm={emitidoEm}
-        />
+      {estado.status === "pronto" && !semOrientandos && (
+        <div className="flex flex-col gap-8">
+          <div className="max-w-content">
+            <FiltrosRelatorio filtros={filtros} onChange={aoMudarFiltros} />
+          </div>
+          <ConteudoRelatorio
+            docente={estado.docente}
+            dados={dados}
+            orientandos={orientandos}
+            filtros={filtros}
+            semResultado={semResultado}
+            emitidoEm={emitidoEm}
+          />
+        </div>
       )}
     </>
   )
@@ -136,11 +195,15 @@ function ConteudoRelatorio({
   docente,
   dados,
   orientandos,
+  filtros,
+  semResultado,
   emitidoEm,
 }: {
   docente: Docente
   dados: DadosRelatorioTurma
   orientandos: ResumoOrientando[]
+  filtros: TipoFiltros
+  semResultado: boolean
   emitidoEm: Date
 }) {
   const mediaArredondada = Math.round(dados.mediaCreditos * 10) / 10
@@ -155,6 +218,23 @@ function ConteudoRelatorio({
 
   return (
     <div className="flex max-w-content flex-col gap-8 print:gap-6">
+      <p className="rounded-lg border border-input-border bg-accent-soft p-4 leading-secondary text-foreground print:border-0 print:bg-transparent print:p-0">
+        {descreverFiltros(filtros)}
+      </p>
+
+      {semResultado && (
+        <p
+          id="relatorio-turma-sem-resultado"
+          className="flex items-start gap-2 rounded-lg border border-input-border bg-surface p-4 leading-secondary text-foreground print:hidden"
+        >
+          <span className="flex h-[1.45em] shrink-0 items-center">
+            <CircleAlert aria-hidden="true" className="size-4 text-accent-text" />
+          </span>
+          Nenhuma atividade validada corresponde ao período e aos tipos selecionados. Ajuste os filtros para ver e
+          exportar o relatório.
+        </p>
+      )}
+
       <section
         aria-labelledby="titulo-identificacao"
         className="flex flex-col gap-4 rounded-lg border bg-surface p-6 print:break-inside-avoid print:border-0 print:p-0"

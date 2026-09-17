@@ -486,6 +486,22 @@ export async function obterRelatorioTurma(): Promise<RelatorioTurma> {
   return copia(agregarTurma(construirResumosOrientandos(estado, new Date())))
 }
 
+/**
+ * Atividades brutas de cada orientando do docente atual, para o relatório da
+ * turma filtrar por período/tipo e reagregar (resumirOrientando + agregarTurma,
+ * lib/orientandos.ts) sobre o subconjunto filtrado — sem recalcular nada,
+ * só trocando o que entra na mesma agregação de sempre.
+ */
+export async function listarAtividadesDosOrientandos(): Promise<{ discente: Discente; atividades: Atividade[] }[]> {
+  await esperar()
+  const estado = ler()
+  return copia(
+    estado.discentes
+      .filter((d) => d.orientadorId === estado.docenteAtualId)
+      .map((d) => ({ discente: d, atividades: estado.atividades.filter((a) => a.discenteId === d.id) }))
+  )
+}
+
 // --- Sessão simulada ------------------------------------------------------------------------
 // Não há autenticação real: a sessão só guarda o perfil escolhido na entrada.
 // Com backend, estas funções passam a falar com o serviço de autenticação.
