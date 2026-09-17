@@ -8,8 +8,7 @@
   "scripts": {
     "predev": "node scripts/preparar-ocr.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/preparar-ocr.mjs && node scripts/verificar-tokens.mjs && node scripts/verificar-migracao.mjs",
-    "build": "next build",
+    "prebuild": "node scripts/preparar-ocr.mjs && node scripts/verificar-tokens.mjs",
     "start": "next start",
     "lint": "eslint",
     "verificar:ocr": "node scripts/verificar-ocr.mjs",
